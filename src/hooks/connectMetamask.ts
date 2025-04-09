@@ -19,6 +19,11 @@ const connectMetamask = () => {
       const initProvider = new ethers.BrowserProvider(window.ethereum);
       setProvider(initProvider);
     }
+    const savedAddress = localStorage.getItem("walletAddress");
+    if (savedAddress) {
+      setWalletAddress(savedAddress);
+    }
+    
   }, []);
 
   const connectWallet = useCallback(async () => {
@@ -39,6 +44,7 @@ const connectMetamask = () => {
       const newSigner = await newProvider.getSigner();
 
       setWalletAddress(selectedAccount);
+      localStorage.setItem("walletAddress", selectedAccount);
       setProvider(newProvider);
       setSigner(newSigner);
 
