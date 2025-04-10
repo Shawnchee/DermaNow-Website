@@ -1,0 +1,442 @@
+"use client";
+
+import type React from "react";
+
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  CheckCircle,
+  X,
+  ArrowRight,
+  Calendar,
+  Users,
+  Heart,
+  Search,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+
+interface ProjectProps {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  funding_percentage?: number;
+  funding_complete?: boolean;
+  in_progress?: boolean;
+  progress_percentage?: number;
+  supporters: number;
+  amount: number;
+}
+
+const ProjectCard: React.FC<ProjectProps> = ({
+  id,
+  title,
+  description,
+  image,
+  funding_percentage,
+  funding_complete,
+  in_progress,
+  progress_percentage,
+  supporters,
+  amount,
+}) => (
+  <div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+    <div className="relative">
+      <img
+        src={
+          image || "/placeholder.svg?height=200&width=400&text=Project+Image"
+        }
+        alt={title}
+        className="w-full h-48 object-cover"
+      />
+      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-2 bg-gradient-to-t from-black/60 to-transparent text-white">
+        <div className="flex items-center space-x-2">
+          <Users className="h-4 w-4" />
+          <span className="text-sm">{supporters}</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Heart className="h-4 w-4" />
+          <span className="text-sm">${amount.toLocaleString()}</span>
+        </div>
+      </div>
+    </div>
+    <div className="p-4">
+      <div className="mb-2">
+        <div className="bg-gray-200 h-2 rounded-full">
+          <div
+            className={`h-2 rounded-full ${
+              in_progress
+                ? "bg-yellow-500"
+                : funding_complete
+                ? "bg-green-500"
+                : "bg-blue-500"
+            }`}
+            style={{
+              width: `${
+                in_progress ? progress_percentage || 0 : funding_percentage || 0
+              }%`,
+            }}
+          ></div>
+        </div>
+        <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <span>
+            {funding_percentage === 100
+              ? funding_complete
+                ? "Complete"
+                : "In Progress"
+              : "Funding"}
+          </span>
+          {/* <span>{funding_percentage == 100 ? "In Progress" : "Funding"}</span> */}
+          <span>
+            {in_progress ? `${progress_percentage}%` : `${funding_percentage}%`}
+          </span>
+        </div>
+      </div>
+      <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">{title}</h3>
+      <p className="text-sm text-gray-600 line-clamp-3">{description}</p>
+    </div>
+  </div>
+);
+
+const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <motion.div
+          className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden"
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        >
+          {/* Header with gradient */}
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 relative">
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center">
+              <div className="bg-white rounded-full p-3 mr-4">
+                <CheckCircle className="h-8 w-8 text-blue-500" />
+              </div>
+              <div>
+                <h3 className="text-white text-xl font-bold">
+                  Project Listed!
+                </h3>
+                <p className="text-blue-100 text-sm">
+                  Your project is now live
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="p-6">
+            <p className="text-gray-700 mb-4">
+              Congratulations! Your charity project has been successfully listed
+              on our platform. Donors can now discover and support your cause.
+            </p>
+
+            <div className="bg-blue-50 rounded-lg p-4 mb-6">
+              <h4 className="font-medium text-blue-800 mb-3">What's next?</h4>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <div className="bg-blue-100 rounded-full p-1 mr-3 mt-0.5">
+                    <Users className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <span className="text-sm text-blue-700">
+                    Share your project with your network to gain initial support
+                  </span>
+                </li>
+                <li className="flex items-start">
+                  <div className="bg-blue-100 rounded-full p-1 mr-3 mt-0.5">
+                    <Calendar className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <span className="text-sm text-blue-700">
+                    Update your project regularly with progress and milestones
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex space-x-3">
+              <Button variant="outline" className="flex-1" onClick={onClose}>
+                View All Projects
+              </Button>
+              <Button className="flex-1 bg-blue-600 hover:bg-blue-700" asChild>
+                <Link href="/start-project">
+                  Create Another <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+export default function Page() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [projects, setProjects] = useState<ProjectProps[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [showSuccess, setShowSuccess] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortOption, setSortOption] = useState<string>("last-updated");
+
+  useEffect(() => {
+    // Check if success parameter is present
+    const success = searchParams.get("success");
+    if (success === "true") {
+      setShowSuccess(true);
+    }
+
+    // Simulate fetching projects
+    const fetchProjects = async () => {
+      setLoading(true);
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Mock data based on the screenshot
+      setProjects([
+        {
+          id: 1,
+          title: "Access to Clean Water in Rural Areas",
+          description:
+            "Providing clean and safe drinking water to underserved communities.",
+          image: "https://picsum.photos/200/300?random=7",
+          funding_percentage: 44.5,
+          supporters: 600,
+          amount: 22250,
+        },
+        {
+          id: 2,
+          title: "Emergency Relief for Natural Disasters",
+          description:
+            "Delivering immediate aid to victims of natural disasters worldwide.",
+          image: "https://picsum.photos/200/300?random=6",
+          funding_percentage: 100,
+          funding_complete: true,
+          supporters: 1000,
+          amount: 167080,
+        },
+        {
+          id: 3,
+          title: "Rebuilding Lives After Earthquakes",
+          description:
+            "Supporting earthquake survivors with shelter and essential supplies.",
+          image: "https://picsum.photos/200/300?random=5",
+          funding_percentage: 45.48,
+          supporters: 5000,
+          amount: 454900,
+        },
+        {
+          id: 4,
+          title: "School Meals for Underprivileged Children",
+          description:
+            "Providing nutritious meals to children to support their education.",
+          image: "https://picsum.photos/200/300?random=4",
+          funding_percentage: 100,
+          funding_complete: true,
+          supporters: 1000,
+          amount: 239090,
+        },
+        {
+          id: 5,
+          title: "Empowering Education Through Nutrition",
+          description:
+            "Ensuring children have access to meals to focus on their studies.",
+          image: "https://picsum.photos/200/300?random=3",
+          funding_percentage: 100,
+          in_progress: true,
+          progress_percentage: 56.7,
+          supporters: 492,
+          amount: 88020,
+        },
+        {
+          id: 6,
+          title: "Building a Brighter Future for Students",
+          description:
+            "Providing meals to help students achieve their educational goals.",
+          image: "https://picsum.photos/200/300",
+          funding_percentage: 100,
+          funding_complete: true,
+          supporters: 1000,
+          amount: 123540,
+        },
+        {
+          id: 7,
+          title: "Supporting Education Through Meal Programs",
+          description:
+            "Helping children stay in school by providing daily meals.",
+          image: "https://picsum.photos/200/300?random=2",
+          funding_percentage: 100,
+          funding_complete: true,
+          supporters: 1000,
+          amount: 81080,
+        },
+        {
+          id: 8,
+          title: "Nutrition for Academic Success",
+          description:
+            "Providing meals to ensure children can focus on learning.",
+          image: "https://picsum.photos/200/300?random=1",
+          funding_percentage: 100,
+          funding_complete: true,
+          supporters: 1000,
+          amount: 92320,
+        },
+      ]);
+      setLoading(false);
+    };
+
+    fetchProjects();
+  }, [searchParams]);
+
+  const closeSuccessDialog = () => {
+    setShowSuccess(false);
+    // Remove the success parameter from the URL
+    router.replace("/browse-projects");
+  };
+
+  const filteredProjects = projects
+    .filter((project) =>
+      project.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .filter((project) => {
+      if (statusFilter === "completed") {
+        return project.funding_complete;
+      }
+      if (statusFilter === "active") {
+        return project.in_progress;
+      }
+      return true; // Show all projects if "all" is selected
+    })
+    .sort((a, b) => {
+      if (sortOption === "last-updated" || sortOption === "newest") {
+        return b.id - a.id; // Sort by highest `id` first
+      }
+      if (sortOption === "oldest") {
+        return a.id - b.id; // Sort by lowest `id` first
+      }
+      return 0; // Default case (no sorting);
+    });
+
+  return (
+    <div className="container mx-auto py-8 px-4">
+      {showSuccess && <SuccessDialog onClose={closeSuccessDialog} />}
+
+      <div className="text-center mb-12">
+        <h1 className="text-4xl md:text-5xl font-bold mb-6 text-blue-900">
+          Browse Projects
+        </h1>
+        <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-8">
+          Find and contribute to meaningful causes that are changing lives
+        </p>
+        <div className="w-full h-6 bg-gradient-to-r from-blue-100 to-white rounded-full"></div>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Search"
+            className="pl-10 bg-gray-50 border-gray-200"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="flex gap-4 w-full md:w-auto">
+          <Select
+            defaultValue="last-updated"
+            onValueChange={(value) => setSortOption(value)}
+          >
+            <SelectTrigger className="w-full md:w-40">
+              <SelectValue placeholder="Last updated" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="last-updated">Last updated</SelectItem>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="oldest">Oldest</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            defaultValue="all"
+            onValueChange={(value) => setStatusFilter(value)}
+          >
+            <SelectTrigger className="w-full md:w-40">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="active">In Progress</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            <div
+              key={i}
+              className="bg-white shadow-md rounded-lg overflow-hidden animate-pulse"
+            >
+              <div className="w-full h-48 bg-gray-200"></div>
+              <div className="p-4">
+                <div className="h-2 bg-gray-200 rounded-full w-full mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded-full w-3/4 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded-full w-1/2"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredProjects.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="bg-blue-100 rounded-full p-4 inline-block mb-4">
+            <Heart className="h-10 w-10 text-blue-500" />
+          </div>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">
+            No projects found
+          </h3>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            Be the first to create a project and start making a difference
+            today.
+          </p>
+          <Button className="bg-blue-600 hover:bg-blue-700" asChild>
+            <Link href="/start-project">Start a Project</Link>
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {filteredProjects.map((project) => (
+            <ProjectCard key={project.id} {...project} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
