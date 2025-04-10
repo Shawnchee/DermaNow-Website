@@ -30,9 +30,9 @@ export default function NewsSection() {
   useEffect(() => {
     const fetchNews = async () => {
       const { data, error } = await supabase
-        .from("charity_news")
+        .from("charity_blog")
         .select("*")
-        .order("date", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching news:", error);
