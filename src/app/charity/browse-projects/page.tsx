@@ -346,9 +346,12 @@ export default function Page() {
       {showSuccess && <SuccessDialog onClose={closeSuccessDialog} />}
 
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Discover All Projects
+        <h1 className="text-4xl md:text-5xl font-bold mb-6 text-blue-900">
+          Browse Projects
         </h1>
+        <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-8">
+          Find and contribute to meaningful causes that are changing lives
+        </p>
         <div className="w-full h-6 bg-gradient-to-r from-blue-100 to-white rounded-full"></div>
       </div>
 
