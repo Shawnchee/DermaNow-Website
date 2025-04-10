@@ -26,6 +26,11 @@ export default function Header() {
     };
   }, []);
 
+  const disconnectWallet = () => {
+    localStorage.removeItem("walletAddress"); // Clear wallet address from localStorage
+    window.location.reload(); // Reload the page to reset the state
+  };
+
   return (
     <div ref={navRef}>
       <nav
@@ -59,12 +64,20 @@ export default function Header() {
 
             <div>
               {walletAddress ? (
-                <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg"
-                  disabled
-                >
-                  Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                </button>
+                <div className="flex items-center space-x-4">
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg"
+                    disabled
+                  >
+                    Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                  </button>
+                  <button
+                    onClick={disconnectWallet}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg cursor-pointer hover:bg-red-400"
+                  >
+                    Disconnect
+                  </button>
+                </div>
               ) : (
                 <button
                   onClick={connectWallet}

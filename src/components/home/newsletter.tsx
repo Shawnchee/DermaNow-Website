@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import supabase from "@/utils/supabase";
 import { motion, useAnimation } from "framer-motion";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Globe, Calendar } from "lucide-react";
@@ -27,22 +27,22 @@ export default function NewsSection() {
   const controls = useAnimation();
   const [isHovered, setIsHovered] = useState(false);
 
-  useEffect(() => {
-    const fetchNews = async () => {
-      const { data, error } = await supabase
-        .from("charity_news")
-        .select("*")
-        .order("date", { ascending: false });
+  // useEffect(() => {
+  //   const fetchNews = async () => {
+  //     const { data, error } = await supabase
+  //       .from("charity_blog")
+  //       .select("*")
+  //       .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching news:", error);
-      } else {
-        setNews(data || []);
-      }
-    };
+  //     if (error) {
+  //       console.error("Error fetching news:", error);
+  //     } else {
+  //       setNews(data || []);
+  //     }
+  //   };
 
-    fetchNews();
-  }, []);
+  //   fetchNews();
+  // }, []);
 
   useEffect(() => {
     if (carouselRef.current && news.length) {
