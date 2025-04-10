@@ -254,7 +254,7 @@ export default function HeroSection() {
               viewport={{ once: true }}
             >
               <Image
-                src="/placeholder.svg?height=500&width=600"
+                src="https://placehold.co/500x600/png"
                 alt="Malaysian community support"
                 width={600}
                 height={500}
