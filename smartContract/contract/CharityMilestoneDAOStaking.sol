@@ -126,12 +126,19 @@ contract CharityMilestoneDAOStaking {
 
     function unstake() external {
         StakeInfo storage stakeInfo = stakes[msg.sender];
-        require(stakeInfo.active, "No active stake");
+        console.log("Unstaking for:", msg.sender);
+        console.log("Stake active:", stakeInfo.active);
+        console.log("Staked amount:", stakeInfo.amount);
 
+        require(stakeInfo.active, "No active stake");
+        
         uint256 stakedAmount = stakeInfo.amount;
         uint256 duration = block.timestamp - stakeInfo.startTime;
+        console.log("Duration:", duration);
 
         uint256 reward = (stakedAmount * annualRate * duration) / (365 days * 100);
+
+        require(address(this).balance >= stakedAmount + reward, "Insufficient contract balance");
 
         stakeInfo.active = false;
         stakeInfo.amount = 0;
