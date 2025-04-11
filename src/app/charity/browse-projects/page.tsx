@@ -181,7 +181,7 @@ const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
                 View All Projects
               </Button>
               <Button className="flex-1 bg-blue-600 hover:bg-blue-700" asChild>
-                <Link href="/start-project">
+                <Link href="/charity/start-project">
                   Create Another <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -315,7 +315,7 @@ export default function Page() {
   const closeSuccessDialog = () => {
     setShowSuccess(false);
     // Remove the success parameter from the URL
-    router.replace("/browse-projects");
+    router.replace("/charity/browse-projects");
   };
 
   const filteredProjects = projects
