@@ -52,7 +52,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <div className="pt-16">
+    <div>
       {" "}
       {/* Background image */}
       <div className="absolute inset-0 z-0">
