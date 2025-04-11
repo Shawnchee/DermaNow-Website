@@ -534,7 +534,7 @@ export default function StakingPage() {
   }, [demoMode, stakeInfo.active, stakeInfo.startTime, stakeInfo.amount, annualRate])
 
   return (
-    <div className="min-h-screen pt-24 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen pt-16 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
         <motion.div
           className="text-center max-w-4xl mx-auto mb-12"
@@ -552,7 +552,7 @@ export default function StakingPage() {
           </motion.div>
 
           <motion.h1
-            className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900"
+            className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900 leading-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.7 }}
@@ -602,40 +602,6 @@ export default function StakingPage() {
             </motion.div>
           )}
         </motion.div>
-
-        {/* Demo Mode Toggle */}
-        {walletAddress && (
-          <div className="max-w-5xl mx-auto mb-8">
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Sparkles className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-800">Demo Mode</h3>
-                      <p className="text-sm text-gray-600">
-                        Accelerate time to see rewards accumulate faster (1 second = 1 year)
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="demo-mode"
-                      checked={demoMode}
-                      onCheckedChange={toggleDemoMode}
-                      className="data-[state=checked]:bg-blue-600"
-                    />
-                    <Label htmlFor="demo-mode" className="font-medium">
-                      {demoMode ? "Enabled" : "Disabled"}
-                    </Label>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Staking Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
