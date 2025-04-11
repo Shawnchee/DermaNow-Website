@@ -54,79 +54,87 @@ export default function HeroSection() {
   return (
     <div className="pt-16">
       {" "}
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-0 left-0 right-0 h-40 bg-blue-500 opacity-10 transform -skew-y-6" />
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-blue-500 opacity-10 transform skew-y-6" />
-        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px] opacity-30" />
+      {/* Background image */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/landing2.jpg"
+          alt="Background"
+          fill
+          className="object-cover opacity-80"
+          priority
+        />
       </div>
-      <div className="container mx-auto px-4 py-12 relative z-10">
+      <div className="container mx-auto px-4 pt-12 relative z-10">
         {/* Main content - Horizontal layout with staggered sections */}
         <div className="flex flex-col space-y-16 md:space-y-24">
           {/* Top section - Title and intro */}
           <motion.div
-            className="text-center max-w-4xl mx-auto"
+            className="bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-md border border-blue-100 max-w-4xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-block mb-4 px-4 py-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full text-white text-sm font-medium"
-            >
-              Malaysia's First Blockchain Charity Platform
-            </motion.div>
+            <div className="text-center">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="inline-block mb-4 px-4 py-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full text-white text-sm font-medium"
+              >
+                Malaysia's First Blockchain Charity Platform
+              </motion.div>
 
-            <motion.h1
-              className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.7 }}
-            >
-              The Future of Charity is Transparent
-              <br className="block" />
-              <span className="relative">
-                <span className="relative z-10">Malaysian Communities</span>
-                <span className="absolute bottom-2 left-0 w-full h-3 bg-blue-200 opacity-50 z-0"></span>
-              </span>
-            </motion.h1>
-
-            <motion.p
-              className="text-lg text-gray-600 max-w-2xl mx-auto mb-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.7 }}
-            >
-              With DermaNow, every donation is securely recorded on the
-              blockchain — giving you peace of mind and real-time impact
-              tracking.
-            </motion.p>
-
-            <motion.div
-              className="flex flex-col sm:flex-row gap-4 justify-center"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-            >
-              <Link href="/charity/browse-projects" passHref>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-6 rounded-lg text-lg h-auto group transition-all duration-300 hover:shadow-lg hover:shadow-blue-200">
-                  <span className="flex items-center gap-2">
-                    Explore Projects
-                    <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+              <motion.h1
+                className="leading-tight text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.7 }}
+              >
+                The Future of Charity is Transparent
+                <br className="block" />
+                <span className="relative">
+                  <span className="relative z-10">
+                    ------------------------
                   </span>
-                </Button>
-              </Link>
-              <Link href="/security/verify-organizations" passHref>
-                <Button
-                  variant="outline"
-                  className="border-blue-600 text-blue-700 hover:bg-blue-50 px-6 py-6 rounded-lg text-lg h-auto"
-                >
-                  Learn How It Works
-                </Button>
-              </Link>
-            </motion.div>
+                  <span className="absolute bottom-2 left-0 w-full h-3 bg-blue-200 opacity-90 z-0"></span>
+                </span>
+              </motion.h1>
+
+              <motion.p
+                className="text-lg text-gray-600 max-w-2xl mx-auto mb-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.7 }}
+              >
+                With DermaNow, every donation is securely recorded on the
+                blockchain — giving you peace of mind and real-time impact
+                tracking.
+              </motion.p>
+
+              <motion.div
+                className="flex flex-col sm:flex-row gap-4 justify-center"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
+              >
+                <Link href="/charity/browse-projects" passHref>
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-6 rounded-lg text-lg h-auto group transition-all duration-300 hover:shadow-lg hover:shadow-blue-200">
+                    <span className="flex items-center gap-2">
+                      Explore Projects
+                      <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                    </span>
+                  </Button>
+                </Link>
+                <Link href="/security/verify-organizations" passHref>
+                  <Button
+                    variant="outline"
+                    className="border-blue-600 text-blue-700 hover:bg-blue-50 px-6 py-6 rounded-lg text-lg h-auto"
+                  >
+                    Learn How It Works
+                  </Button>
+                </Link>
+              </motion.div>
+            </div>
           </motion.div>
 
           {/* Middle section - Features with icons */}
@@ -254,7 +262,7 @@ export default function HeroSection() {
               viewport={{ once: true }}
             >
               <Image
-                src="/images/hero.jpg"
+                src="/boxes.jpg"
                 alt="Malaysian community support"
                 width={600}
                 height={500}
