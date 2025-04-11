@@ -6,13 +6,14 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CheckCircle,
+  Clock,
   X,
   ArrowRight,
   Calendar,
   Users,
   Heart,
   Search,
+  AlertCircle,
   ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,7 @@ interface SearchResult {
   confidence: number;
 }
 
-// ProjectCard and SuccessDialog remain unchanged
+// ProjectCard remains unchanged
 const ProjectCard: React.FC<ProjectProps> = ({
   id,
   title,
@@ -121,6 +122,7 @@ const ProjectCard: React.FC<ProjectProps> = ({
   </div>
 );
 
+// Updated SuccessDialog to show pending approval state
 const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
   return (
     <AnimatePresence>
@@ -136,7 +138,8 @@ const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
           animate={{ scale: 1, y: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
         >
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 relative">
+          {/* Updated header with pending status */}
+          <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-6 relative">
             <button
               onClick={onClose}
               className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
@@ -145,49 +148,54 @@ const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
             </button>
             <div className="flex items-center">
               <div className="bg-white rounded-full p-3 mr-4">
-                <CheckCircle className="h-8 w-8 text-blue-500" />
+                <Clock className="h-8 w-8 text-amber-500" />
               </div>
               <div>
                 <h3 className="text-white text-xl font-bold">
-                  Project Listed!
+                  Project Submitted!
                 </h3>
-                <p className="text-blue-100 text-sm">
-                  Your project is now live
+                <p className="text-amber-100 text-sm">
+                  Pending approval from our team
                 </p>
               </div>
             </div>
           </div>
           <div className="p-6">
             <p className="text-gray-700 mb-4">
-              Congratulations! Your charity project has been successfully listed
-              on our platform. Donors can now discover and support your cause.
+              Thank you for submitting your charity project! Our team will
+              review your submission to ensure it meets our community
+              guidelines. This typically takes 24-48 hours.
             </p>
-            <div className="bg-blue-50 rounded-lg p-4 mb-6">
-              <h4 className="font-medium text-blue-800 mb-3">What's next?</h4>
+            <div className="bg-amber-50 rounded-lg p-4 mb-6">
+              <h4 className="font-medium text-amber-800 mb-3">What's next?</h4>
               <ul className="space-y-3">
                 <li className="flex items-start">
-                  <div className="bg-blue-100 rounded-full p-1 mr-3 mt-0.5">
-                    <Users className="h-4 w-4 text-blue-600" />
+                  <div className="bg-amber-100 rounded-full p-1 mr-3 mt-0.5">
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
                   </div>
-                  <span className="text-sm text-blue-700">
-                    Share your project with your network to gain initial support
+                  <span className="text-sm text-amber-700">
+                    You'll receive an email notification once your project is
+                    approved
                   </span>
                 </li>
-                <li className="flex items-start">
-                  <div className="bg-blue-100 rounded-full p-1 mr-3 mt-0.5">
-                    <Calendar className="h-4 w-4 text-blue-600" />
+                {/* <li className="flex items-start">
+                  <div className="bg-amber-100 rounded-full p-1 mr-3 mt-0.5">
+                    <Calendar className="h-4 w-4 text-amber-600" />
                   </div>
-                  <span className="text-sm text-blue-700">
-                    Update your project regularly with progress and milestones
+                  <span className="text-sm text-amber-700">
+                    You can check your project status in your dashboard
                   </span>
-                </li>
+                </li> */}
               </ul>
             </div>
             <div className="flex space-x-3">
               <Button variant="outline" className="flex-1" onClick={onClose}>
                 View All Projects
               </Button>
-              <Button className="flex-1 bg-blue-600 hover:bg-blue-700" asChild>
+              <Button
+                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                asChild
+              >
                 <Link href="/charity/start-project">
                   Create Another <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
