@@ -64,6 +64,8 @@ export default function CharityPage() {
   })
   const [votingThreshold, setVotingThreshold] = useState(0)
   const [activeMilestoneId, setActiveMilestoneId] = useState<number>(-1)
+  const [proofOfWorkModalOpen, setProofOfWorkModalOpen] = useState(false);
+  const [selectedProofOfWork, setSelectedProofOfWork] = useState<any>(null);
 
   // Modal states
   const [modalOpen, setModalOpen] = useState(false)
@@ -153,7 +155,16 @@ export default function CharityPage() {
               Number.parseFloat(formatEther(milestone.targetAmount))) *
             100,
           // Add project title - in a real app, this would come from the contract
-          projectTitle: `Project ${Math.floor(index / 3) + 1}`,
+          projectTitle: "Placeholder Project",
+          proofOfWork: {
+            photos: [
+              "https://images.pexels.com/photos/933624/pexels-photo-933624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+              "https://images.pexels.com/photos/933624/pexels-photo-933624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+            ],
+            videos: [
+              "https://videos.pexels.com/video-files/6740283/6740283-uhd_2560_1440_30fps.mp4",
+            ],
+          },
         }
       })
 
@@ -524,7 +535,7 @@ export default function CharityPage() {
                       variant="outline"
                       className="bg-black/30 text-white border-white/20 rounded-full px-3 py-1 text-xs font-medium"
                     >
-                      Goal: {targetAmount.toFixed(2)} ETH
+                      Goal: {targetAmount * ethToMyrRate} MYR ({targetAmount.toFixed(2)} ETH)
                     </Badge>
                   </div>
                   <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Community Support Initiative</h1>
@@ -548,10 +559,10 @@ export default function CharityPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono text-lg font-medium text-blue-700 dark:text-blue-400">
-                    {totalRaised.toFixed(4)} ETH
+                <div className="font-mono text-lg font-medium text-blue-700 dark:text-blue-400">
+                    {myrValues.totalRaised.toLocaleString()} MYR
                   </div>
-                  <div className="text-xs text-zinc-500">≈ {myrValues.totalRaised.toLocaleString()} MYR</div>
+                  <div className="text-xs text-zinc-500">≈ {totalRaised.toFixed(4)} ETH</div>
                 </div>
               </div>
               <Progress
@@ -600,6 +611,57 @@ export default function CharityPage() {
             </Card>
           </div>
         )}
+  <Dialog open={proofOfWorkModalOpen} onOpenChange={setProofOfWorkModalOpen}>
+  <DialogContent className="sm:max-w-lg">
+  <DialogHeader>
+  <DialogTitle>Proof of Work</DialogTitle>
+  <DialogDescription>
+    Below is the submitted media proof for this milestone.
+  </DialogDescription>
+</DialogHeader>
+
+<div className="space-y-4 mt-4">
+  {selectedProofOfWork?.photos?.length > 0 && (
+    <div>
+      <h4 className="text-sm font-medium">Photos</h4>
+      <div className="grid grid-cols-2 gap-4">
+        {selectedProofOfWork.photos.map((photo: string, index: number) => (
+          <img
+            key={index}
+            src={photo}
+            alt={`Proof of Work Photo ${index + 1}`}
+            className="rounded-lg shadow-md"
+          />
+        ))}
+      </div>
+    </div>
+  )}
+
+  {selectedProofOfWork?.videos?.length > 0 && (
+    <div>
+      <h4 className="text-sm font-medium">Videos</h4>
+      <div className="space-y-2">
+        {selectedProofOfWork.videos.map((video: string, index: number) => (
+          <video
+            key={index}
+            controls
+            src={video}
+            className="w-full rounded-lg shadow-md"
+          />
+        ))}
+      </div>
+    </div>
+  )}
+
+  {!selectedProofOfWork && (
+    <span className="text-sm text-gray-500">
+      No proof of work available for this milestone.
+    </span>
+  )}
+</div>
+
+  </DialogContent>
+</Dialog>
 
         {/* Milestones Section */}
         <div className="mb-16">
@@ -693,10 +755,19 @@ export default function CharityPage() {
                               Shariah Compliant
                             </Badge>
                           </div>
-                          <CardDescription>
-                            Service Provider: {milestone.serviceProvider.substring(0, 6)}...
-                            {milestone.serviceProvider.substring(38)}
-                          </CardDescription>
+                          <CardDescription className="space-y-2">
+                                                        <div>
+                                                          <span className="font-medium">Service Provider:</span> {milestone.serviceProviderName}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 font-mono">
+                                                          Address: {milestone.serviceProvider.substring(0, 6)}...
+                                                          {milestone.serviceProvider.substring(38)}
+                                                        </div>
+                                                        <Button variant="outline" size="sm" className="mt-2 text-xs cursor-pointer">
+                                                          <Users className="h-3 w-3 mr-1" />
+                                                          View Provider Profile
+                                                        </Button>
+                                                      </CardDescription>
                         </CardHeader>
                         <CardContent className={`flex-grow ${milestone.id > activeMilestoneId ? "opacity-70" : ""}`}>
                           <div className="mb-4">
@@ -711,14 +782,17 @@ export default function CharityPage() {
                               <div className="text-xs text-gray-500">Target</div>
                               <div className="font-semibold flex items-center">
                                 <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
-                                {milestone.targetAmount} ETH
+                                {(Number(milestone.targetAmount) * ethToMyrRate).toLocaleString()} MYR
                               </div>
+                              <div className="text-xs text-gray-500">≈ {milestone.targetAmount} ETH</div>
                             </div>
                             <div className="bg-blue-50 p-3 rounded-lg">
                               <div className="text-xs text-gray-500">Raised</div>
                               <div className="font-semibold flex items-center">
-                                <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
-                                {milestone.currentAmount} ETH
+                              <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
+                                {(Number(milestone.currentAmount) * ethToMyrRate).toLocaleString()} MYR
+                              </div>
+                              <div className="text-xs text-gray-500">≈ {milestone.currentAmount} ETH
                               </div>
                             </div>
                           </div>
@@ -729,7 +803,10 @@ export default function CharityPage() {
                               {milestone.voteCount} of {votingThreshold} vote(s)
                             </div>
                             {milestone.voteCount > 0 && !milestone.released && (
-                              <Progress value={(milestone.voteCount / votingThreshold) * 100} className="h-1 mt-2" />
+                              <Progress
+                              value={(Number(milestone.voteCount) / Number(votingThreshold)) * 100}
+                              className="h-1 mt-2"
+                            />
                             )}
                           </div>
                         </CardContent>
@@ -743,6 +820,17 @@ export default function CharityPage() {
                               >
                                 Donate to This Milestone
                               </Button>
+                              <Button
+                                      variant="outline"
+                                      className="w-full border-green-600 text-green-700 hover:bg-green-50 cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedProofOfWork(milestone.proofOfWork); // Set proof of work data
+                                        setProofOfWorkModalOpen(true); // Open modal
+                                      }}
+                                    >
+                                      <ExternalLink className="h-4 w-4 mr-2 " />
+                                      View Proof of Work
+                                    </Button>
 
                               {isCommittee && (
                                 <Button
@@ -771,11 +859,12 @@ export default function CharityPage() {
                             </div>
                           )}
                           {milestone.released && (
-                            <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Funds Released Successfully
-                            </div>
-                          )}
+
+                                    <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Funds Released Successfully
+                                    </div>
+                                )}
                         </CardFooter>
                       </Card>
                     </motion.div>
