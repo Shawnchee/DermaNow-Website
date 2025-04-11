@@ -3,7 +3,14 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
@@ -12,7 +19,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { motion } from "framer-motion";
@@ -35,10 +42,13 @@ import {
   Building,
   Lock,
   AlertTriangle,
-  BadgeCheck, BookOpen, Leaf, Scale, MoonStar
-} from "lucide-react"
+  BadgeCheck,
+  BookOpen,
+  Leaf,
+  Scale,
+  MoonStar,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
-
 
 // Contract address from deployment
 const CONTRACT_ADDRESS = "0x8765b67425A42dD7ba3e0f350542426Ed2551c02";
@@ -47,16 +57,18 @@ export default function CharityPage() {
   // Use the connectMetamask hook
   const { walletAddress, provider, signer, connectWallet } = connectMetamask();
   const [contract, setContract] = useState<ethers.Contract | null>(null);
-  const [account, setAccount] = useState<string>("")
-  const [isCommittee, setIsCommittee] = useState(false)
-  const [isOwner, setIsOwner] = useState(false)
-  const [milestones, setMilestones] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [donationAmount, setDonationAmount] = useState<{ [key: number]: string }>({})
-  const [totalRaised, setTotalRaised] = useState(0)
-  const [targetAmount, setTargetAmount] = useState(10) // Default to 10 ETH
-  const [transactions, setTransactions] = useState<any[]>([])
-  const [ethToMyrRate, setEthToMyrRate] = useState(12500) // Default rate: 1 ETH = 12,500 MYR
+  const [account, setAccount] = useState<string>("");
+  const [isCommittee, setIsCommittee] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [donationAmount, setDonationAmount] = useState<{
+    [key: number]: string;
+  }>({});
+  const [totalRaised, setTotalRaised] = useState(0);
+  const [targetAmount, setTargetAmount] = useState(10); // Default to 10 ETH
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [ethToMyrRate, setEthToMyrRate] = useState(12500); // Default rate: 1 ETH = 12,500 MYR
   const [myrValues, setMyrValues] = useState({
     totalRaised: 0,
     targetAmount: 0,
@@ -68,22 +80,26 @@ export default function CharityPage() {
   const [selectedProofOfWork, setSelectedProofOfWork] = useState<any>(null);
 
   // Modal states
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectedMilestone, setSelectedMilestone] = useState<any>(null)
-  const [modalDonationAmount, setModalDonationAmount] = useState("")
-  const [isProcessing, setIsProcessing] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
+  const [modalDonationAmount, setModalDonationAmount] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const [transactionResult, setTransactionResult] = useState<{
-    status: "success" | "error" | null
-    message: string
-    txHash?: string
-  }>({ status: null, message: "" })
+    status: "success" | "error" | null;
+    message: string;
+    txHash?: string;
+  }>({ status: null, message: "" });
 
   // Initialize contract when signer is available
   useEffect(() => {
     const initialize = async () => {
       if (signer && provider) {
         try {
-          const charityContract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
+          const charityContract = new ethers.Contract(
+            CONTRACT_ADDRESS,
+            contractABI,
+            signer
+          );
           setContract(charityContract);
           console.log("Contract initialized:", charityContract.address);
 
@@ -121,26 +137,26 @@ export default function CharityPage() {
   // Fetch all data from the contract
   const fetchContractData = async (contractInstance: ethers.Contract) => {
     try {
-      setLoading(true)
+      setLoading(true);
 
       // Fetch voting threshold
       try {
-        const threshold = await contractInstance.votingThreshold()
-        setVotingThreshold(threshold)
+        const threshold = await contractInstance.votingThreshold();
+        setVotingThreshold(threshold);
       } catch (error) {
-        console.error("Error fetching voting threshold:", error)
-        setVotingThreshold(3) // Default threshold if error
+        console.error("Error fetching voting threshold:", error);
+        setVotingThreshold(3); // Default threshold if error
       }
 
       // Fetch milestones
-      const milestoneCount = await contractInstance.milestoneCount()
-      const milestonePromises = []
+      const milestoneCount = await contractInstance.milestoneCount();
+      const milestonePromises = [];
 
       for (let i = 0; i < milestoneCount; i++) {
-        milestonePromises.push(contractInstance.getMilestone(i))
+        milestonePromises.push(contractInstance.getMilestone(i));
       }
 
-      const milestoneData = await Promise.all(milestonePromises)
+      const milestoneData = await Promise.all(milestonePromises);
       const formattedMilestones = milestoneData.map((milestone, index) => {
         return {
           id: index,
@@ -169,238 +185,255 @@ export default function CharityPage() {
       })
 
       // Sort milestones by ID to ensure sequential order
-      formattedMilestones.sort((a, b) => a.id - b.id)
-      setMilestones(formattedMilestones)
+      formattedMilestones.sort((a, b) => a.id - b.id);
+      setMilestones(formattedMilestones);
 
       // Determine the active milestone (first unreleased milestone)
-      const activeIndex = formattedMilestones.findIndex((m) => !m.released)
-      setActiveMilestoneId(activeIndex !== -1 ? formattedMilestones[activeIndex].id : -1)
+      const activeIndex = formattedMilestones.findIndex((m) => !m.released);
+      setActiveMilestoneId(
+        activeIndex !== -1 ? formattedMilestones[activeIndex].id : -1
+      );
 
       // Calculate total target and raised amounts
-      let totalTarget = 0
-      let totalRaised = 0
+      let totalTarget = 0;
+      let totalRaised = 0;
 
       formattedMilestones.forEach((milestone) => {
-        totalTarget += Number(milestone.targetAmount)
-        totalRaised += Number(milestone.currentAmount)
-      })
+        totalTarget += Number(milestone.targetAmount);
+        totalRaised += Number(milestone.currentAmount);
+      });
 
-      setTargetAmount(totalTarget)
-      setTotalRaised(totalRaised)
+      setTargetAmount(totalTarget);
+      setTotalRaised(totalRaised);
 
       // Fetch recent transactions
-      await fetchTransactionHistory(contractInstance)
+      await fetchTransactionHistory(contractInstance);
 
       // Update MYR values
-      updateMyrValues(totalRaised, totalTarget)
+      updateMyrValues(totalRaised, totalTarget);
 
-      setLoading(false)
+      setLoading(false);
     } catch (error) {
-      console.error("Error fetching contract data:", error)
+      console.error("Error fetching contract data:", error);
       toast("Error", {
         description: "Failed to load milestone data. Please try again.",
-      })
-      setLoading(false)
+      });
+      setLoading(false);
     }
-  }
+  };
 
   // Fetch transaction history
   const fetchTransactionHistory = async (contractInstance: ethers.Contract) => {
     try {
       // For this example, we'll use Etherscan API in a real implementation
       // Here we'll create some mock transactions based on milestone data
-      const mockTransactions = []
+      const mockTransactions = [];
 
       for (let i = 0; i < 5; i++) {
         mockTransactions.push({
-          hash: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
-          from: `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
+          hash: `0x${Math.random()
+            .toString(16)
+            .substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
+          from: `0x${Math.random()
+            .toString(16)
+            .substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`,
           value: (Math.random() * 2).toFixed(4),
-          timestamp: new Date(Date.now() - Math.random() * 10000000).toLocaleString(),
-        })
+          timestamp: new Date(
+            Date.now() - Math.random() * 10000000
+          ).toLocaleString(),
+        });
       }
 
-      setTransactions(mockTransactions)
+      setTransactions(mockTransactions);
     } catch (error) {
-      console.error("Error fetching transaction history:", error)
+      console.error("Error fetching transaction history:", error);
     }
-  }
+  };
 
   // Update MYR values
   const updateMyrValues = (raised: number, target: number) => {
-    const remainingAmount = Math.max(target - raised, 0)
+    const remainingAmount = Math.max(target - raised, 0);
 
     setMyrValues({
       totalRaised: raised * ethToMyrRate,
       targetAmount: target * ethToMyrRate,
       remainingAmount: remainingAmount * ethToMyrRate,
-    })
-  }
+    });
+  };
 
   // Donate to a milestone
   const donateToMilestone = async (milestoneId: number) => {
-    if (!contract || !signer) return
+    if (!contract || !signer) return;
 
     try {
-      const amount = donationAmount[milestoneId]
+      const amount = donationAmount[milestoneId];
       if (!amount || Number.parseFloat(amount) <= 0) {
-        toast("Invalid Amount",{
+        toast("Invalid Amount", {
           description: "Please enter a valid donation amount.",
-        })
-        return
+        });
+        return;
       }
 
-      setIsProcessing(true)
+      setIsProcessing(true);
 
       const tx = await contract.donateToMilestone(milestoneId, {
         value: parseEther(amount),
-      })
+      });
 
-      toast("Donation Processing",{
-        description: "Your donation is being processed. Please wait for confirmation.",
-      })
+      toast("Donation Processing", {
+        description:
+          "Your donation is being processed. Please wait for confirmation.",
+      });
 
-      const receipt = await tx.wait()
+      const receipt = await tx.wait();
 
       toast("Donation Successful", {
         description: `Successfully donated ${amount} ETH to milestone: ${milestones[milestoneId].description}`,
       });
 
       // Reset donation amount and refresh data
-      setDonationAmount({ ...donationAmount, [milestoneId]: "" })
-      await fetchContractData(contract)
+      setDonationAmount({ ...donationAmount, [milestoneId]: "" });
+      await fetchContractData(contract);
 
       setTransactionResult({
         status: "success",
         message: `Successfully donated ${amount} ETH to milestone: ${milestones[milestoneId].description}`,
         txHash: receipt.transactionHash,
-      })
+      });
     } catch (error) {
-      console.error("Donation error:", error)
+      console.error("Donation error:", error);
       toast("Donation Failed", {
         description: "Failed to process your donation. Please try again.",
       });
 
       setTransactionResult({
         status: "error",
-        message: (error as any).reason || "Transaction failed. Please try again.",
-      })
+        message:
+          (error as any).reason || "Transaction failed. Please try again.",
+      });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   // Vote to release funds for a milestone
   const voteToRelease = async (milestoneId: number) => {
-    if (!contract || !signer || !isCommittee) return
+    if (!contract || !signer || !isCommittee) return;
 
     try {
-      setIsProcessing(true)
+      setIsProcessing(true);
 
-      const tx = await contract.voteToRelease(milestoneId)
+      const tx = await contract.voteToRelease(milestoneId);
 
       toast("Vote Processing", {
-        description: "Your vote is being processed. Please wait for confirmation.",
+        description:
+          "Your vote is being processed. Please wait for confirmation.",
       });
-  
+
       const receipt = await tx.wait();
-  
+
       toast("Vote Successful", {
         description: `Successfully voted to release funds for milestone: ${milestones[milestoneId].description}`,
       });
 
-      await fetchContractData(contract)
+      await fetchContractData(contract);
 
       setTransactionResult({
         status: "success",
         message: `Successfully voted to release funds for milestone: ${milestones[milestoneId].description}`,
         txHash: receipt.transactionHash,
-      })
+      });
     } catch (error) {
-      console.error("Voting error:", error)
+      console.error("Voting error:", error);
       toast("Vote Failed", {
         description: "Failed to process your vote. Please try again.",
       });
 
       setTransactionResult({
         status: "error",
-        message: (error as any)?.reason || "Transaction failed. Please try again.",
-      })
+        message:
+          (error as any)?.reason || "Transaction failed. Please try again.",
+      });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   // Open donation modal
   const openDonationModal = (milestone: any) => {
-    setSelectedMilestone(milestone)
-    setModalDonationAmount("")
-    setTransactionResult({ status: null, message: "" })
-    setModalOpen(true)
-  }
+    setSelectedMilestone(milestone);
+    setModalDonationAmount("");
+    setTransactionResult({ status: null, message: "" });
+    setModalOpen(true);
+  };
 
   // Handle modal donation
   const handleModalDonation = async () => {
-    if (!selectedMilestone || !modalDonationAmount || Number(modalDonationAmount) <= 0) {
+    if (
+      !selectedMilestone ||
+      !modalDonationAmount ||
+      Number(modalDonationAmount) <= 0
+    ) {
       setTransactionResult({
         status: "error",
         message: "Please enter a valid donation amount.",
-      })
-      return
+      });
+      return;
     }
 
     if (!contract || !signer) {
       setTransactionResult({
         status: "error",
         message: "Wallet not connected. Please connect your wallet first.",
-      })
-      return
+      });
+      return;
     }
 
     try {
-      setIsProcessing(true)
+      setIsProcessing(true);
 
       const tx = await contract.donateToMilestone(selectedMilestone.id, {
         value: parseEther(modalDonationAmount),
-      })
+      });
 
-      const receipt = await tx.wait()
+      const receipt = await tx.wait();
 
       // Reset donation amount and refresh data
-      await fetchContractData(contract)
+      await fetchContractData(contract);
 
       setTransactionResult({
         status: "success",
         message: `Successfully donated ${modalDonationAmount} ETH to milestone: ${selectedMilestone.description}`,
         txHash: receipt.transactionHash,
-      })
+      });
     } catch (error) {
-      console.error("Donation error:", error)
+      console.error("Donation error:", error);
 
       setTransactionResult({
         status: "error",
-        message: (error as any)?.reason || "Transaction failed. Please try again.",
-      })
+        message:
+          (error as any)?.reason || "Transaction failed. Please try again.",
+      });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   // Connect on component mount if wallet is already connected
   useEffect(() => {
     if (window.ethereum) {
-      connectWallet()
+      connectWallet();
     }
-  }, [])
+  }, []);
 
   // Group milestones by project title
   const milestonesByProject = milestones.reduce((acc, milestone) => {
     if (!acc[milestone.projectTitle]) {
-      acc[milestone.projectTitle] = []
+      acc[milestone.projectTitle] = [];
     }
-    acc[milestone.projectTitle].push(milestone)
-    return acc
-  }, {})
+    acc[milestone.projectTitle].push(milestone);
+    return acc;
+  }, {});
 
   return (
     <div className="min-h-screen pt-24 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
@@ -412,8 +445,12 @@ export default function CharityPage() {
               <Building className="h-5 w-5 text-blue-100" />
             </div>
             <div>
-              <div className="text-xs text-blue-100 mb-0.5 font-medium">Organization</div>
-              <span className="font-semibold text-white">Charity Milestone DAO</span>
+              <div className="text-xs text-blue-100 mb-0.5 font-medium">
+                Organization
+              </div>
+              <span className="font-semibold text-white">
+                Charity Milestone DAO
+              </span>
             </div>
           </div>
 
@@ -437,8 +474,12 @@ export default function CharityPage() {
               <MoonStar className="h-5 w-5 text-green-100" />
             </div>
             <div>
-              <div className="text-xs text-green-100 mb-0.5 font-medium">Certification</div>
-              <span className="font-semibold text-white">Shariah Compliant</span>
+              <div className="text-xs text-green-100 mb-0.5 font-medium">
+                Certification
+              </div>
+              <span className="font-semibold text-white">
+                Shariah Compliant
+              </span>
             </div>
           </div>
 
@@ -483,10 +524,10 @@ export default function CharityPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.7 }}
           >
-            Support verified charity projects with transparent milestone tracking. Every donation is securely recorded
-            on the blockchain.
+            Support verified charity projects with transparent milestone
+            tracking. Every donation is securely recorded on the blockchain.
           </motion.p>
-{/* 
+          {/* 
           {!account && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -510,9 +551,15 @@ export default function CharityPage() {
                   Connected: {account.slice(0, 6)}...{account.slice(-4)}
                 </span>
                 {isCommittee && (
-                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Committee Member</span>
+                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                    Committee Member
+                  </span>
                 )}
-                {isOwner && <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">Owner</span>}
+                {isOwner && (
+                  <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">
+                    Owner
+                  </span>
+                )}
               </div>
             </motion.div>
           )}
@@ -523,14 +570,16 @@ export default function CharityPage() {
           <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 overflow-hidden">
             <div className="relative">
               <img
-                src="/placeholder.svg?height=300&width=1200"
+                src="/community.jpg"
                 alt="Campaign Banner"
                 className="h-[200px] w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <Badge className="bg-blue-600 rounded-full px-3 py-1 text-xs font-medium">Active Campaign</Badge>
+                    <Badge className="bg-blue-600 rounded-full px-3 py-1 text-xs font-medium">
+                      Active Campaign
+                    </Badge>
                     <Badge
                       variant="outline"
                       className="bg-black/30 text-white border-white/20 rounded-full px-3 py-1 text-xs font-medium"
@@ -538,9 +587,12 @@ export default function CharityPage() {
                       Goal: {targetAmount * ethToMyrRate} MYR ({targetAmount.toFixed(2)} ETH)
                     </Badge>
                   </div>
-                  <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Community Support Initiative</h1>
+                  <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
+                    Community Support Initiative
+                  </h1>
                   <p className="text-zinc-200 text-sm max-w-3xl">
-                    A transparent, milestone-based charity project to support community development initiatives.
+                    A transparent, milestone-based charity project to support
+                    community development initiatives.
                   </p>
                 </div>
               </div>
@@ -552,9 +604,15 @@ export default function CharityPage() {
                     <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <div className="font-medium text-zinc-900 dark:text-zinc-100">Raised so far</div>
+                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                      Raised so far
+                    </div>
                     <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                      {Math.min(Math.round((totalRaised / targetAmount) * 100), 100)}% of goal
+                      {Math.min(
+                        Math.round((totalRaised / targetAmount) * 100),
+                        100
+                      )}
+                      % of goal
                     </div>
                   </div>
                 </div>
@@ -566,7 +624,10 @@ export default function CharityPage() {
                 </div>
               </div>
               <Progress
-                value={Math.min(Math.round((totalRaised / targetAmount) * 100), 100)}
+                value={Math.min(
+                  Math.round((totalRaised / targetAmount) * 100),
+                  100
+                )}
                 className="h-2 mt-2 bg-zinc-100 dark:bg-zinc-800"
               />
             </div>
@@ -579,8 +640,10 @@ export default function CharityPage() {
             <AlertTriangle className="h-5 w-5 text-blue-600" />
             <AlertTitle>Sequential Milestone Funding</AlertTitle>
             <AlertDescription>
-              Milestones are funded sequentially. Only the active milestone can receive donations. Each milestone
-              requires {votingThreshold} committee votes to be released before the next milestone becomes active.
+              Milestones are funded sequentially. Only the active milestone can
+              receive donations. Each milestone requires {votingThreshold}{" "}
+              committee votes to be released before the next milestone becomes
+              active.
             </AlertDescription>
           </Alert>
         </div>
@@ -596,8 +659,13 @@ export default function CharityPage() {
                       <Vote className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-800">Committee Voting Panel</h3>
-                      <p className="text-sm text-gray-600">As a committee member, you can vote on milestone releases</p>
+                      <h3 className="font-medium text-gray-800">
+                        Committee Voting Panel
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        As a committee member, you can vote on milestone
+                        releases
+                      </p>
                     </div>
                   </div>
                   <Button
@@ -666,7 +734,9 @@ export default function CharityPage() {
         {/* Milestones Section */}
         <div className="mb-16">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-800">Active Charity Milestones</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Active Charity Milestones
+            </h2>
             {isOwner && (
               <Button className="bg-blue-600 hover:bg-blue-700">
                 <span className="flex items-center gap-2">
@@ -687,46 +757,52 @@ export default function CharityPage() {
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                   <Clock className="h-8 w-8 text-blue-600" />
                 </div>
-                <h3 className="text-xl font-medium text-gray-800 mb-2">No Milestones Yet</h3>
+                <h3 className="text-xl font-medium text-gray-800 mb-2">
+                  No Milestones Yet
+                </h3>
                 <p className="text-gray-600 text-center max-w-md">
-                  There are currently no active charity milestones. Check back later or contact the administrator.
+                  There are currently no active charity milestones. Check back
+                  later or contact the administrator.
                 </p>
               </CardContent>
             </Card>
           ) : (
-            
             // Display milestones grouped by project
-            Object.entries(milestonesByProject as Record<string, any[]>).map(([projectTitle, projectMilestones]) => (
-              <div key={projectTitle} className="mb-12">
-                <h3 className="text-xl font-semibold mb-4 text-gray-800">{projectTitle}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {(projectMilestones as any[]).map((milestone, index) => (
-                    <motion.div
-                      key={milestone.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5, delay: index * 0.1 }}
-                    >
-                      <Card
-                        className={`bg-white/90 backdrop-blur-sm border ${
-                          activeMilestoneId === milestone.id
-                            ? "border-green-300 ring-2 ring-green-300 ring-opacity-50"
-                            : milestone.released
+            Object.entries(milestonesByProject as Record<string, any[]>).map(
+              ([projectTitle, projectMilestones]) => (
+                <div key={projectTitle} className="mb-12">
+                  <h3 className="text-xl font-semibold mb-4 text-gray-800">
+                    {projectTitle}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {(projectMilestones as any[]).map((milestone, index) => (
+                      <motion.div
+                        key={milestone.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: index * 0.1 }}
+                      >
+                        <Card
+                          className={`bg-white/90 backdrop-blur-sm border ${
+                            activeMilestoneId === milestone.id
+                              ? "border-green-300 ring-2 ring-green-300 ring-opacity-50"
+                              : milestone.released
                               ? "border-gray-200"
                               : "border-blue-100"
-                        } overflow-hidden h-full flex flex-col relative`}
-                      >
-                        {/* Sequential indicator */}
-                        {activeMilestoneId === milestone.id && (
-                          <div className="absolute top-0 right-0 left-0 bg-green-500 text-white text-xs font-medium text-center py-1">
-                            ACTIVE MILESTONE
-                          </div>
-                        )}
-                        {activeMilestoneId !== -1 && milestone.id > activeMilestoneId && (
-                          <div className="absolute top-0 right-0 left-0 bg-gray-500 text-white text-xs font-medium text-center py-1">
-                            LOCKED
-                          </div>
-                        )}
+                          } overflow-hidden h-full flex flex-col relative`}
+                        >
+                          {/* Sequential indicator */}
+                          {activeMilestoneId === milestone.id && (
+                            <div className="absolute top-0 right-0 left-0 bg-green-500 text-white text-xs font-medium text-center py-1">
+                              ACTIVE MILESTONE
+                            </div>
+                          )}
+                          {activeMilestoneId !== -1 &&
+                            milestone.id > activeMilestoneId && (
+                              <div className="absolute top-0 right-0 left-0 bg-gray-500 text-white text-xs font-medium text-center py-1">
+                                LOCKED
+                              </div>
+                            )}
 
                         <CardHeader
                           className={`pb-2 ${activeMilestoneId !== -1 && activeMilestoneId === milestone.id ? "pt-8" : activeMilestoneId !== -1 && milestone.id > activeMilestoneId ? "pt-8 opacity-70" : ""}`}
@@ -878,8 +954,12 @@ export default function CharityPage() {
         {/* Transaction History */}
         <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 mb-12">
           <CardHeader>
-            <CardTitle className="text-xl font-medium">Recent Transactions</CardTitle>
-            <CardDescription>Latest donations to charity milestones</CardDescription>
+            <CardTitle className="text-xl font-medium">
+              Recent Transactions
+            </CardTitle>
+            <CardDescription>
+              Latest donations to charity milestones
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
@@ -915,7 +995,10 @@ export default function CharityPage() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {transactions.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                      <td
+                        colSpan={4}
+                        className="px-6 py-4 text-center text-sm text-gray-500"
+                      >
                         No transactions yet
                       </td>
                     </tr>
@@ -933,14 +1016,22 @@ export default function CharityPage() {
                             <ExternalLink className="ml-1 h-3 w-3" />
                           </a>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{tx.from}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                          {tx.from}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                          <div className="font-mono font-medium">{tx.value} ETH</div>
+                          <div className="font-mono font-medium">
+                            {tx.value} ETH
+                          </div>
                           <div className="text-xs text-gray-500">
-                            ≈ {(Number(tx.value) * ethToMyrRate).toLocaleString()} MYR
+                            ≈{" "}
+                            {(Number(tx.value) * ethToMyrRate).toLocaleString()}{" "}
+                            MYR
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{tx.timestamp}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                          {tx.timestamp}
+                        </td>
                       </tr>
                     ))
                   )}
@@ -958,7 +1049,10 @@ export default function CharityPage() {
                 <MoonStar className="h-6 w-6 text-green-600 mr-2" />
                 Shariah Compliance Information
               </CardTitle>
-              <CardDescription>Understanding how our charity projects adhere to Islamic principles</CardDescription>
+              <CardDescription>
+                Understanding how our charity projects adhere to Islamic
+                principles
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -970,8 +1064,8 @@ export default function CharityPage() {
                     <div>
                       <h3 className="font-medium text-green-800">Riba-Free</h3>
                       <p className="text-sm text-green-700">
-                        All projects are free from interest-based transactions (riba) and comply with Islamic finance
-                        principles.
+                        All projects are free from interest-based transactions
+                        (riba) and comply with Islamic finance principles.
                       </p>
                     </div>
                   </div>
@@ -983,9 +1077,12 @@ export default function CharityPage() {
                       <BadgeCheck className="h-5 w-5 text-green-600" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-green-800">Certified Projects</h3>
+                      <h3 className="font-medium text-green-800">
+                        Certified Projects
+                      </h3>
                       <p className="text-sm text-green-700">
-                        All charity milestones are reviewed and certified by qualified Shariah advisors.
+                        All charity milestones are reviewed and certified by
+                        qualified Shariah advisors.
                       </p>
                     </div>
                   </div>
@@ -993,14 +1090,17 @@ export default function CharityPage() {
               </div>
 
               <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-medium text-green-800 mb-2">Donation Types</h3>
+                <h3 className="font-medium text-green-800 mb-2">
+                  Donation Types
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-white p-3 rounded-md border border-green-100">
                     <h4 className="font-medium text-green-700 flex items-center">
                       <Leaf className="h-4 w-4 mr-1" /> Sadaqah
                     </h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Voluntary charitable giving that can be directed to any of our projects.
+                      Voluntary charitable giving that can be directed to any of
+                      our projects.
                     </p>
                   </div>
 
@@ -1009,7 +1109,8 @@ export default function CharityPage() {
                       <Leaf className="h-4 w-4 mr-1" /> Zakat
                     </h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Obligatory alms that can be directed to eligible projects marked with Zakat-eligible badge.
+                      Obligatory alms that can be directed to eligible projects
+                      marked with Zakat-eligible badge.
                     </p>
                   </div>
 
@@ -1018,7 +1119,8 @@ export default function CharityPage() {
                       <Leaf className="h-4 w-4 mr-1" /> Waqf
                     </h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Endowment funds that provide sustainable support for long-term community projects.
+                      Endowment funds that provide sustainable support for
+                      long-term community projects.
                     </p>
                   </div>
                 </div>
@@ -1028,9 +1130,11 @@ export default function CharityPage() {
                 <BookOpen className="h-5 w-5 text-green-600" />
                 <AlertTitle>Shariah Advisory Board</AlertTitle>
                 <AlertDescription>
-                  Our projects are regularly reviewed by a panel of qualified Shariah scholars to ensure compliance with
-                  Islamic principles. The board verifies that all funds are used in accordance with Shariah guidelines
-                  and that projects avoid prohibited activities.
+                  Our projects are regularly reviewed by a panel of qualified
+                  Shariah scholars to ensure compliance with Islamic principles.
+                  The board verifies that all funds are used in accordance with
+                  Shariah guidelines and that projects avoid prohibited
+                  activities.
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -1046,12 +1150,16 @@ export default function CharityPage() {
                 <Shield className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">Wallet Security Check</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Wallet Security Check
+                </h3>
                 <p className="text-gray-600 mb-4">
-                  Verify the security of service provider wallets before donating to ensure your funds go to legitimate
-                  recipients.
+                  Verify the security of service provider wallets before
+                  donating to ensure your funds go to legitimate recipients.
                 </p>
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white">Verify Wallet Security</Button>
+                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                  Verify Wallet Security
+                </Button>
               </div>
             </div>
           </div>
@@ -1063,11 +1171,16 @@ export default function CharityPage() {
                 <Users className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">Committee Members</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Committee Members
+                </h3>
                 <p className="text-gray-600 mb-4">
-                  Learn about our committee members who verify and approve milestone completions for fund releases.
+                  Learn about our committee members who verify and approve
+                  milestone completions for fund releases.
                 </p>
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white">View Committee</Button>
+                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                  View Committee
+                </Button>
               </div>
             </div>
           </div>
@@ -1080,7 +1193,8 @@ export default function CharityPage() {
           <DialogHeader>
             <DialogTitle>Make a Donation</DialogTitle>
             <DialogDescription>
-              {selectedMilestone && `Support milestone: ${selectedMilestone.description}`}
+              {selectedMilestone &&
+                `Support milestone: ${selectedMilestone.description}`}
             </DialogDescription>
           </DialogHeader>
 
@@ -1092,18 +1206,34 @@ export default function CharityPage() {
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">Target Amount</span>
                       <div className="text-right">
-                        <span className="font-mono text-sm">{selectedMilestone.targetAmount} ETH</span>
+                        <span className="font-mono text-sm">
+                          {selectedMilestone.targetAmount} ETH
+                        </span>
                         <div className="text-xs text-zinc-500">
-                          ≈ {(Number(selectedMilestone.targetAmount) * ethToMyrRate).toLocaleString()} MYR
+                          ≈{" "}
+                          {(
+                            Number(selectedMilestone.targetAmount) *
+                            ethToMyrRate
+                          ).toLocaleString()}{" "}
+                          MYR
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Current Amount</span>
+                      <span className="text-sm font-medium">
+                        Current Amount
+                      </span>
                       <div className="text-right">
-                        <span className="font-mono text-sm">{selectedMilestone.currentAmount} ETH</span>
+                        <span className="font-mono text-sm">
+                          {selectedMilestone.currentAmount} ETH
+                        </span>
                         <div className="text-xs text-zinc-500">
-                          ≈ {(Number(selectedMilestone.currentAmount) * ethToMyrRate).toLocaleString()} MYR
+                          ≈{" "}
+                          {(
+                            Number(selectedMilestone.currentAmount) *
+                            ethToMyrRate
+                          ).toLocaleString()}{" "}
+                          MYR
                         </div>
                       </div>
                     </div>
@@ -1111,15 +1241,17 @@ export default function CharityPage() {
                       <span className="text-sm font-medium">Needed</span>
                       <div className="text-right">
                         <span className="font-mono text-sm font-bold">
-                          {(Number(selectedMilestone.targetAmount) - Number(selectedMilestone.currentAmount)).toFixed(
-                            4,
-                          )}{" "}
+                          {(
+                            Number(selectedMilestone.targetAmount) -
+                            Number(selectedMilestone.currentAmount)
+                          ).toFixed(4)}{" "}
                           ETH
                         </span>
                         <div className="text-xs text-zinc-500">
                           ≈{" "}
                           {(
-                            (Number(selectedMilestone.targetAmount) - Number(selectedMilestone.currentAmount)) *
+                            (Number(selectedMilestone.targetAmount) -
+                              Number(selectedMilestone.currentAmount)) *
                             ethToMyrRate
                           ).toLocaleString()}{" "}
                           MYR
@@ -1148,7 +1280,11 @@ export default function CharityPage() {
                   />
                   {modalDonationAmount && (
                     <div className="text-sm text-zinc-500">
-                      ≈ {(Number(modalDonationAmount) * ethToMyrRate).toLocaleString()} MYR
+                      ≈{" "}
+                      {(
+                        Number(modalDonationAmount) * ethToMyrRate
+                      ).toLocaleString()}{" "}
+                      MYR
                     </div>
                   )}
                 </div>
@@ -1175,10 +1311,18 @@ export default function CharityPage() {
               </div>
 
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setModalOpen(false)}
+                >
                   Cancel
                 </Button>
-                <Button type="button" onClick={handleModalDonation} className="bg-blue-600 hover:bg-blue-700">
+                <Button
+                  type="button"
+                  onClick={handleModalDonation}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
                   Donate
                 </Button>
               </DialogFooter>
@@ -1188,9 +1332,12 @@ export default function CharityPage() {
           {isProcessing && (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
-              <p className="text-center font-medium">Processing your donation...</p>
+              <p className="text-center font-medium">
+                Processing your donation...
+              </p>
               <p className="text-center text-sm text-muted-foreground mt-2">
-                Please confirm the transaction in your wallet and wait for it to be processed.
+                Please confirm the transaction in your wallet and wait for it to
+                be processed.
               </p>
             </div>
           )}
@@ -1218,7 +1365,11 @@ export default function CharityPage() {
                 </AlertDescription>
               </Alert>
               <div className="mt-6 flex justify-end">
-                <Button type="button" onClick={() => setModalOpen(false)} className="bg-blue-600 hover:bg-blue-700">
+                <Button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
                   Close
                 </Button>
               </div>
@@ -1236,11 +1387,17 @@ export default function CharityPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setTransactionResult({ status: null, message: "" })}
+                  onClick={() =>
+                    setTransactionResult({ status: null, message: "" })
+                  }
                 >
                   Try Again
                 </Button>
-                <Button type="button" onClick={() => setModalOpen(false)} variant="destructive">
+                <Button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  variant="destructive"
+                >
                   Close
                 </Button>
               </div>
@@ -1249,5 +1406,5 @@ export default function CharityPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
