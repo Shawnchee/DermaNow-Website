@@ -29,12 +29,6 @@ import {
 import connectMetamask from "@/hooks/connectMetamask"
 import dynamic from "next/dynamic";
 
-const MoonPayWrapper = dynamic(() => import("@/lib/MoonPayWrapper"), { ssr: false });
-
-const MoonPayBuyWidget = dynamic(() => import("@moonpay/moonpay-react").then((mod) => mod.MoonPayBuyWidget), {
-    ssr: false,
-  });
-
 export default function OnrampPage() {
   const { walletAddress, connectWallet } = connectMetamask()
   const [amount, setAmount] = useState("")
@@ -48,7 +42,6 @@ export default function OnrampPage() {
   const [qrExpiry, setQrExpiry] = useState(300) // 5 minutes in seconds
   const [qrRefreshing, setQrRefreshing] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [showMoonPayWidget, setShowMoonPayWidget] = useState(false); 
   const [transactionRef, setTransactionRef] = useState<string>(""); // State for transaction ID
 
 
@@ -161,7 +154,6 @@ export default function OnrampPage() {
     setTransactionStatus(null)
     setQrExpiry(300)
   }
-  console.log("showMoonPayWidget", showMoonPayWidget)
   return (
     <div className="min-h-screen pt-16 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
@@ -593,26 +585,7 @@ export default function OnrampPage() {
                         </>
                       )}
                     </Button>
-                          
-          <div className="flex justify-center mb-6">
-            <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg cursor-pointer w-full"
-              onClick={() => setShowMoonPayWidget(true)}
-            >
-              Connect to MoonPay Onramp Service
-            </Button>
-          </div>
-          {showMoonPayWidget && (
-          <MoonPayWrapper>
-            <MoonPayBuyWidget
-              variant="overlay"
-              baseCurrencyCode="usd"
-              baseCurrencyAmount="100"
-              defaultCurrencyCode="eth"
-              visible
-            />
-          </MoonPayWrapper>
-        )}
+                      
                   </div>
                 </form>
               </CardContent>
