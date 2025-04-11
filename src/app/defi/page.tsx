@@ -46,7 +46,7 @@ import { formatEther, parseEther } from "ethers"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0xAA4Ae89A691b5D989E4c9edb12367a6351431303"
+const CONTRACT_ADDRESS = "0x8765b67425A42dD7ba3e0f350542426Ed2551c02"
 
 export default function StakingPage() {
   // Use the connectMetamask hook
