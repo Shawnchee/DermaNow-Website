@@ -48,7 +48,7 @@ export default function DonorTutorialSection() {
           title: "Choose a Project",
           description:
             "Browse our verified charity projects and select one that aligns with your values.",
-          image: "/placeholder.svg?height=250&width=400&text=Choose+Project",
+          image: "/images/donate-projects.png",
         },
         {
           title: "Connect Your Wallet",
