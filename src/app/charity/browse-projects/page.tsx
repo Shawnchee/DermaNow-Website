@@ -1,8 +1,7 @@
 "use client";
 
 import type React from "react";
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,6 +37,12 @@ interface ProjectProps {
   amount: number;
 }
 
+interface SearchResult {
+  id: number;
+  confidence: number;
+}
+
+// ProjectCard and SuccessDialog remain unchanged
 const ProjectCard: React.FC<ProjectProps> = ({
   id,
   title,
@@ -96,7 +101,6 @@ const ProjectCard: React.FC<ProjectProps> = ({
                 : "In Progress"
               : "Funding"}
           </span>
-          {/* <span>{funding_percentage == 100 ? "In Progress" : "Funding"}</span> */}
           <span>
             {in_progress ? `${progress_percentage}%` : `${funding_percentage}%`}
           </span>
@@ -123,7 +127,6 @@ const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
           animate={{ scale: 1, y: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
         >
-          {/* Header with gradient */}
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 relative">
             <button
               onClick={onClose}
@@ -131,7 +134,6 @@ const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
             >
               <X className="h-5 w-5" />
             </button>
-
             <div className="flex items-center">
               <div className="bg-white rounded-full p-3 mr-4">
                 <CheckCircle className="h-8 w-8 text-blue-500" />
@@ -146,14 +148,11 @@ const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
               </div>
             </div>
           </div>
-
-          {/* Content */}
           <div className="p-6">
             <p className="text-gray-700 mb-4">
               Congratulations! Your charity project has been successfully listed
               on our platform. Donors can now discover and support your cause.
             </p>
-
             <div className="bg-blue-50 rounded-lg p-4 mb-6">
               <h4 className="font-medium text-blue-800 mb-3">What's next?</h4>
               <ul className="space-y-3">
@@ -175,7 +174,6 @@ const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
                 </li>
               </ul>
             </div>
-
             <div className="flex space-x-3">
               <Button variant="outline" className="flex-1" onClick={onClose}>
                 View All Projects
@@ -197,27 +195,24 @@ export default function Page() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [projects, setProjects] = useState<ProjectProps[]>([]);
+  const [filteredProjects, setFilteredProjects] = useState<ProjectProps[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showSuccess, setShowSuccess] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortOption, setSortOption] = useState<string>("last-updated");
 
+  // Fetch projects (initial load)
   useEffect(() => {
-    // Check if success parameter is present
     const success = searchParams.get("success");
     if (success === "true") {
       setShowSuccess(true);
     }
 
-    // Simulate fetching projects
     const fetchProjects = async () => {
       setLoading(true);
-      // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Mock data based on the screenshot
-      setProjects([
+      const mockProjects: ProjectProps[] = [
         {
           id: 1,
           title: "Access to Clean Water in Rural Areas",
@@ -305,40 +300,85 @@ export default function Page() {
           supporters: 1000,
           amount: 92320,
         },
-      ]);
+      ];
+      setProjects(mockProjects);
+      setFilteredProjects(mockProjects);
       setLoading(false);
     };
 
     fetchProjects();
   }, [searchParams]);
 
+  // Debounced search function
+  const performSearch = useCallback(
+    async (query: string) => {
+      if (!query.trim()) {
+        setFilteredProjects(projects);
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:8000/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query }),
+        });
+        if (!response.ok) throw new Error("Search failed");
+        const results: SearchResult[] = await response.json();
+
+        // Create a map for quick lookup
+        const projectMap = new Map(projects.map((p) => [p.id, p]));
+        // Order projects based on search results
+        const sortedProjects = results
+          .map((result) => projectMap.get(result.id))
+          .filter((p): p is ProjectProps => p !== undefined);
+
+        // If no projects match, set to empty array
+        setFilteredProjects(sortedProjects.length ? sortedProjects : []);
+      } catch (error) {
+        console.error("Search error:", error);
+        setFilteredProjects(projects);
+      }
+    },
+    [projects]
+  );
+
+  // Handle search query changes
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      performSearch(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, performSearch]);
+
   const closeSuccessDialog = () => {
     setShowSuccess(false);
-    // Remove the success parameter from the URL
     router.replace("/charity/browse-projects");
   };
 
-  const filteredProjects = projects
-    .filter((project) =>
-      project.title.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  // Apply status filter and sort option
+  const displayedProjects = filteredProjects
     .filter((project) => {
       if (statusFilter === "completed") {
-        return project.funding_complete;
+        return project.funding_complete && !project.in_progress;
       }
       if (statusFilter === "active") {
         return project.in_progress;
       }
-      return true; // Show all projects if "all" is selected
+      return true;
     })
     .sort((a, b) => {
-      if (sortOption === "last-updated" || sortOption === "newest") {
-        return b.id - a.id; // Sort by highest `id` first
+      // Only apply sorting if no search query is active
+      if (!searchQuery.trim()) {
+        if (sortOption === "last-updated" || sortOption === "newest") {
+          return b.id - a.id;
+        }
+        if (sortOption === "oldest") {
+          return a.id - b.id;
+        }
       }
-      if (sortOption === "oldest") {
-        return a.id - b.id; // Sort by lowest `id` first
-      }
-      return 0; // Default case (no sorting);
+      return 0; // Preserve search result order
     });
 
   return (
@@ -414,7 +454,7 @@ export default function Page() {
             </div>
           ))}
         </div>
-      ) : filteredProjects.length === 0 ? (
+      ) : displayedProjects.length === 0 ? (
         <div className="text-center py-16">
           <div className="bg-blue-100 rounded-full p-4 inline-block mb-4">
             <Heart className="h-10 w-10 text-blue-500" />
@@ -432,8 +472,10 @@ export default function Page() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredProjects.map((project) => (
-            <ProjectCard key={project.id} {...project} />
+          {displayedProjects.map((project) => (
+            <Link href={`/charity/projects/${project.id}`} key={project.id}>
+              <ProjectCard {...project} />
+            </Link>
           ))}
         </div>
       )}
