@@ -35,14 +35,18 @@ import {
   HeartHandshake,
   BarChart3,
   Sparkles,
+  Leaf,
+  ChurchIcon as Mosque,
+  Scale,
 } from "lucide-react"
 import { toast } from "sonner"
 import connectMetamask from "@/hooks/connectMetamask"
 import { contractABI } from "@/lib/contract-abi"
 import { formatEther, parseEther } from "ethers"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0xAA4Ae89A691b5D989E4c9edb12367a6351431303"
+const CONTRACT_ADDRESS = "0x8765b67425A42dD7ba3e0f350542426Ed2551c02"
 
 export default function StakingPage() {
   // Use the connectMetamask hook
@@ -80,10 +84,23 @@ export default function StakingPage() {
   const [milestones, setMilestones] = useState<any[]>([])
   const [selectedMilestone, setSelectedMilestone] = useState<number | null>(null)
   const [donationAmount, setDonationAmount] = useState("")
+  const [showMilestoneSelector, setShowMilestoneSelector] = useState(false)
+
+  // Islamic finance features
+  const [zakatPercentage, setZakatPercentage] = useState(2.5) // Default zakat percentage
+  const [autoZakat, setAutoZakat] = useState(false)
+  const [waqfPercentage, setWaqfPercentage] = useState(0)
+  const [sadaqahAmount, setSadaqahAmount] = useState("")
+  const [zakatDue, setZakatDue] = useState("125000")
+  const [zakatHistory, setZakatHistory] = useState<{ date: string; amount: string }[]>([])
+  const [selectedBeneficiary, setSelectedBeneficiary] = useState<string>("");
+const [sadaqahHistory, setSadaqahHistory] = useState<
+  { date: string; beneficiary: string; amount: string }[]
+>([]);
 
   // Modal states
   const [modalOpen, setModalOpen] = useState(false)
-  const [modalAction, setModalAction] = useState<"stake" | "unstake" | "donate">("stake")
+  const [modalAction, setModalAction] = useState<"stake" | "unstake" | "donate" | "zakat" | "waqf" | "sadaqah">("stake")
   const [modalAmount, setModalAmount] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [transactionResult, setTransactionResult] = useState<{
@@ -104,6 +121,50 @@ export default function StakingPage() {
       amount: string
     }[]
   >([])
+
+  const handleSadaqahDonation = async () => {
+    if (!contract || !signer) {
+      toast("Wallet Required", {
+        description: "Please connect your wallet first.",
+      });
+      return;
+    }
+  
+    try {
+      setIsProcessing(true);
+  
+      // Simulate a transaction for the Sadaqah donation
+      const tx = await contract.donateToSadaqah(selectedBeneficiary, {
+        value: parseEther(sadaqahAmount),
+      });
+      await tx.wait();
+  
+      // Update donation history
+      setSadaqahHistory([
+        ...sadaqahHistory,
+        {
+          date: new Date().toISOString(),
+          beneficiary: selectedBeneficiary,
+          amount: sadaqahAmount,
+        },
+      ]);
+  
+      toast("Donation Successful", {
+        description: `You have donated ${sadaqahAmount} ETH to ${selectedBeneficiary}.`,
+      });
+  
+      // Reset form
+      setSadaqahAmount("");
+      setSelectedBeneficiary("");
+    } catch (error) {
+      console.error("Sadaqah donation error:", error);
+      toast("Error", {
+        description: "Failed to process the donation. Please try again.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   // Initialize contract when signer is available
   useEffect(() => {
@@ -277,7 +338,7 @@ export default function StakingPage() {
   }
 
   // Open modal for staking, unstaking, or donating
-  const openModal = (action: "stake" | "unstake" | "donate") => {
+  const openModal = (action: "stake" | "unstake" | "donate" | "zakat" | "waqf" | "sadaqah") => {
     if (!walletAddress) {
       toast("Wallet Required", {
         description: "Please connect your wallet first.",
@@ -534,7 +595,7 @@ export default function StakingPage() {
   }, [demoMode, stakeInfo.active, stakeInfo.startTime, stakeInfo.amount, annualRate])
 
   return (
-    <div className="min-h-screen pt-24 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen pt-16 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
         <motion.div
           className="text-center max-w-4xl mx-auto mb-12"
@@ -548,16 +609,16 @@ export default function StakingPage() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="inline-block mb-4 px-4 py-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full text-white text-sm font-medium"
           >
-            Earn While Supporting Charity
+            Shariah-Compliant DeFi
           </motion.div>
 
           <motion.h1
-            className="text-4xl md:text-5xl font-bold mb-6 text-blue-900"
+            className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900 leading-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.7 }}
           >
-            Charity Staking Platform
+            Islamic Finance Staking Platform
           </motion.h1>
 
           <motion.p
@@ -566,8 +627,7 @@ export default function StakingPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.7 }}
           >
-            Stake your ETH to earn {annualRate}% annual rewards while supporting our charity platform. Your staked funds
-            help provide liquidity for charity projects.
+            Stake your ETH in our Shariah-compliant pool to earn 2-5% annual halal rewards while supporting our charity platform.
           </motion.p>
 
           {walletAddress ? (
@@ -603,42 +663,39 @@ export default function StakingPage() {
           )}
         </motion.div>
 
-        {/* Demo Mode Toggle */}
-        {walletAddress && (
-          <div className="max-w-5xl mx-auto mb-8">
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Sparkles className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-800">Demo Mode</h3>
-                      <p className="text-sm text-gray-600">
-                        Accelerate time to see rewards accumulate faster (1 second = 1 year)
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="demo-mode"
-                      checked={demoMode}
-                      onCheckedChange={toggleDemoMode}
-                      className="data-[state=checked]:bg-blue-600"
-                    />
-                    <Label htmlFor="demo-mode" className="font-medium">
-                      {demoMode ? "Enabled" : "Disabled"}
-                    </Label>
+         {/* Shariah Compliance Banner */}
+         <div className="max-w-5xl mx-auto mb-8">
+          <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <Mosque className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-800 mb-1">Shariah-Compliant Staking</h3>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Our staking protocol follows Islamic finance principles, avoiding interest (riba), uncertainty
+                    (gharar), and gambling (maysir). Instead, we use profit-sharing (mudarabah) and ethical investment
+                    (halal) mechanisms.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Riba-Free</span>
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      Halal Investments
+                    </span>
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      Zakat Integration
+                    </span>
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Ethical Rewards</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Staking Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 mx-auto">
           <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -682,7 +739,7 @@ export default function StakingPage() {
                   <TrendingUp className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Total Rewards</p>
+                  <p className="text-sm text-gray-500">Total Halal Rewards</p>
                   <div className="flex items-baseline gap-1">
                     <p className="text-2xl font-bold">{totalRewardsDistributed}</p>
                     <p className="text-sm text-gray-500">ETH</p>
@@ -699,10 +756,14 @@ export default function StakingPage() {
         {/* Staking Dashboard */}
         <div className="max-w-5xl mx-auto mb-12">
           <Tabs defaultValue="staking" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsList className="grid w-full grid-cols-4 mb-8">
               <TabsTrigger value="staking" className="text-sm">
                 <Coins className="h-4 w-4 mr-2" />
                 Staking Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="islamic" className="text-sm">
+                <Mosque className="h-4 w-4 mr-2" />
+                Islamic Finance
               </TabsTrigger>
               <TabsTrigger value="rewards" className="text-sm">
                 <Gift className="h-4 w-4 mr-2" />
@@ -720,9 +781,9 @@ export default function StakingPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Coins className="h-6 w-6 text-blue-600 mr-2" />
-                    Your Staking Dashboard
+                    Your Shariah-Compliant Staking
                   </CardTitle>
-                  <CardDescription>Manage your staked ETH and rewards</CardDescription>
+                  <CardDescription>Manage your halal ETH staking and rewards</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -736,7 +797,7 @@ export default function StakingPage() {
                       </div>
                       <h3 className="text-xl font-medium text-gray-800 mb-2">Wallet Not Connected</h3>
                       <p className="text-gray-600 text-center max-w-md mb-6">
-                        Connect your wallet to view your staking information and start earning rewards.
+                       Connect your wallet to view your staking information and start earning halal rewards.
                       </p>
                       <Button className="bg-blue-600 hover:bg-blue-700" onClick={connectWallet}>
                         Connect Wallet
@@ -766,7 +827,7 @@ export default function StakingPage() {
                       </div>
 
                       <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Current Rewards</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Current Halal Rewards</h4>
                         <div className="flex items-center">
                           <Coins className="h-6 w-6 text-blue-600 mr-2" />
                           <span className="text-2xl font-bold text-blue-700">{stakeInfo.estimatedReward} ETH</span>
@@ -775,7 +836,7 @@ export default function StakingPage() {
                           ≈ {myrValues.estimatedReward.toLocaleString()} MYR
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
-                          Rewards are calculated based on {annualRate}% APR and your staking duration
+                        Rewards are calculated based on 2-5% APR using Shariah-compliant profit-sharing
                           {demoMode && " (accelerated in demo mode)"}
                         </p>
                       </div>
@@ -792,7 +853,7 @@ export default function StakingPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => openModal("unstake")}>
                           <ArrowRight className="h-4 w-4 mr-2" />
-                          Unstake ETH + Claim Rewards
+                          Unstake ETH + Claim Halal Rewards
                         </Button>
                         <Button
                           className="w-full bg-green-600 hover:bg-green-700"
@@ -807,13 +868,13 @@ export default function StakingPage() {
                   ) : (
                     <div className="space-y-6">
                       <div className="bg-blue-50 p-4 rounded-lg">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Annual Reward Rate</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Annual HalalReward Rate</h4>
                         <div className="flex items-center">
                           <TrendingUp className="h-6 w-6 text-blue-600 mr-2" />
-                          <span className="text-2xl font-bold text-blue-700">{annualRate}%</span>
+                          <span className="text-2xl font-bold text-blue-700">2-5%</span>
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
-                          Stake your ETH to earn {annualRate}% annual rewards
+                          Stake your ETH to earn 2-5% annual Shariah-compliant rewards
                           {demoMode && " (accelerated in demo mode)"}
                         </p>
                       </div>
@@ -841,7 +902,7 @@ export default function StakingPage() {
                         <div className="bg-blue-50 p-4 rounded-lg space-y-2">
                           <h4 className="font-medium flex items-center gap-1 text-blue-800">
                             <Info className="h-4 w-4" />
-                            Estimated Annual Rewards
+                            Estimated Halal Annual Rewards
                           </h4>
                           <div className="grid grid-cols-3 gap-2 text-sm">
                             <div>
@@ -870,7 +931,7 @@ export default function StakingPage() {
                         disabled={!stakeAmount || Number(stakeAmount) <= 0}
                       >
                         <Coins className="h-4 w-4 mr-2" />
-                        Stake ETH
+                        Stake ETH in Shariah Pool
                       </Button>
                     </div>
                   )}
@@ -878,10 +939,288 @@ export default function StakingPage() {
                 <CardFooter>
                   {stakeInfo.active && (
                     <div className="w-full text-center text-sm text-gray-500">
-                      Rewards are continuously calculated and will be paid out when you unstake
+                      Rewards are continuously calculated using Shariah-compliant profit-sharing (Mudarabah)
                     </div>
                   )}
                 </CardFooter>
+              </Card>
+            </TabsContent>
+
+            {/* Islamic Finance Tab */}
+            <TabsContent value="islamic">
+              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Mosque className="h-6 w-6 text-blue-600 mr-2" />
+                    Islamic Finance Features
+                  </CardTitle>
+                  <CardDescription>Manage Zakat, Waqf, and Sadaqah contributions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <div className="flex justify-center items-center h-64">
+                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+                    </div>
+                  ) : !walletAddress ? (
+                    <div className="flex flex-col items-center justify-center py-12">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                        <Mosque className="h-8 w-8 text-blue-600" />
+                      </div>
+                      <h3 className="text-xl font-medium text-gray-800 mb-2">Wallet Not Connected</h3>
+                      <p className="text-gray-600 text-center max-w-md mb-6">
+                        Connect your wallet to access Islamic finance features.
+                      </p>
+                      <Button className="bg-blue-600 hover:bg-blue-700" onClick={connectWallet}>
+                        Connect Wallet
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Zakat Section */}
+                      <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg">
+                        <div className="flex items-start gap-4">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <Scale className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-800 mb-1">Zakat Management</h4>
+                            <p className="text-sm text-gray-600 mb-3">
+                              Zakat is an obligatory charity in Islam (2.5% of wealth held for one lunar year)
+                            </p>
+
+                            {Number(zakatDue) > 0 ? (
+                              <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm font-medium">Zakat Due</span>
+                                  <span className="font-mono font-medium">{zakatDue} ETH</span>
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Based on your staked amount and rewards held for over a year
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
+                                <div className="text-sm">No Zakat due yet</div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Zakat becomes obligatory after holding wealth for one lunar year
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="flex items-center space-x-2 mb-3">
+
+                            </div>
+
+                            <Button
+                              className="w-full bg-blue-600 hover:bg-blue-700"
+                              onClick={() => openModal("zakat")}
+                              disabled={Number(zakatDue) <= 0}
+                            >
+                              Pay Zakat
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Waqf Section */}
+                      <div className="bg-white p-6 rounded-lg border border-blue-200">
+                        <div className="flex items-start gap-4">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <Leaf className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-800 mb-1">Waqf (Endowment)</h4>
+                            <p className="text-sm text-gray-600 mb-3">
+                              Contribute to a permanent endowment fund that supports ongoing charitable causes
+                            </p>
+
+                            <div className="space-y-2 mb-3">
+                              <Label htmlFor="waqf-percentage" className="text-sm">
+                                Percentage of rewards to allocate to Waqf
+                              </Label>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  id="waqf-percentage"
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={waqfPercentage}
+                                  onChange={(e) => setWaqfPercentage(Number(e.target.value))}
+                                  className="w-20"
+                                />
+                                <span>%</span>
+                              </div>
+                              {waqfPercentage > 0 && stakeInfo.active && (
+                                <div className="text-xs text-gray-500">
+                                  {((Number(stakeInfo.estimatedReward) * waqfPercentage) / 100).toFixed(6)} ETH will be
+                                  allocated to Waqf
+                                </div>
+                              )}
+                            </div>
+
+                            <Button
+                              className="w-full bg-blue-600 hover:bg-blue-700"
+                              onClick={() => openModal("waqf")}
+                              disabled={!stakeInfo.active || Number(stakeInfo.estimatedReward) <= 0}
+                            >
+                              Contribute to Waqf
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                     {/* Sadaqah Section */}
+<div className="bg-white p-6 rounded-lg border border-blue-200">
+  <div className="flex items-start gap-4">
+    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+      <HeartHandshake className="h-5 w-5 text-blue-600" />
+    </div>
+    <div className="flex-1">
+      <h4 className="font-medium text-gray-800 mb-1">Sadaqah (Voluntary Charity)</h4>
+      <p className="text-sm text-gray-600 mb-3">
+        Make voluntary charitable donations to support those in need. Select a cause to donate to and track your contributions.
+      </p>
+
+      {/* Beneficiary Selection */}
+      <div className="space-y-2 mb-3">
+        <Label htmlFor="beneficiary-select" className="text-sm">
+          Select a Beneficiary
+        </Label>
+        <select
+          id="beneficiary-select"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          value={selectedBeneficiary}
+          onChange={(e) => setSelectedBeneficiary(e.target.value)}
+        >
+          <option value="" disabled>
+            Select a beneficiary
+          </option>
+          <option value="orphans">Orphans Support Fund</option>
+          <option value="education">Education for Underprivileged Children</option>
+          <option value="disaster-relief">Disaster Relief Fund</option>
+        </select>
+      </div>
+
+      {/* Donation Amount */}
+      <div className="space-y-2 mb-3">
+        <Label htmlFor="sadaqah-amount" className="text-sm">
+          Amount to donate as Sadaqah (ETH)
+        </Label>
+        <Input
+          id="sadaqah-amount"
+          type="number"
+          min="0"
+          step="0.001"
+          placeholder="0.00"
+          value={sadaqahAmount}
+          onChange={(e) => setSadaqahAmount(e.target.value)}
+        />
+        {sadaqahAmount && Number(sadaqahAmount) > 0 && (
+          <div className="text-xs text-gray-500">
+            ≈ {(Number(sadaqahAmount) * ethToMyrRate).toLocaleString()} MYR
+          </div>
+        )}
+      </div>
+
+      {/* Donate Button */}
+      <Button
+        className="w-full bg-blue-600 hover:bg-blue-700"
+        onClick={handleSadaqahDonation}
+        disabled={!sadaqahAmount || Number(sadaqahAmount) <= 0 || !selectedBeneficiary}
+      >
+        Give Sadaqah
+      </Button>
+
+      {/* Donation History */}
+      {sadaqahHistory.length > 0 && (
+        <div className="mt-6">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Sadaqah Donation History</h4>
+          <div className="rounded-md border">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Date
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Beneficiary
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    Amount
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {sadaqahHistory.map((donation, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(donation.date).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {donation.beneficiary}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
+                      {donation.amount} ETH
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
+                      {/* Zakat History */}
+                      {zakatHistory.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 mb-3">Zakat Payment History</h4>
+                          <div className="rounded-md border">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th
+                                    scope="col"
+                                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                  >
+                                    Date
+                                  </th>
+                                  <th
+                                    scope="col"
+                                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                  >
+                                    Amount
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {zakatHistory.map((zakat, index) => (
+                                  <tr key={index}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{zakat.date}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
+                                      {zakat.amount} ETH
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
               </Card>
             </TabsContent>
 
@@ -893,7 +1232,7 @@ export default function StakingPage() {
                     <Gift className="h-6 w-6 text-blue-600 mr-2" />
                     Rewards & Donations
                   </CardTitle>
-                  <CardDescription>Track your rewards and donate to charity milestones</CardDescription>
+                  <CardDescription>Track your halal rewards and donate to charity milestones</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -917,7 +1256,7 @@ export default function StakingPage() {
                     <div className="space-y-6">
                       {/* Current Rewards */}
                       <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Available Rewards</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">Available Halal Rewards</h4>
                         <div className="flex items-center">
                           <Coins className="h-6 w-6 text-blue-600 mr-2" />
                           <span className="text-2xl font-bold text-blue-700">
@@ -929,11 +1268,11 @@ export default function StakingPage() {
                         </div>
                         {stakeInfo.active ? (
                           <p className="text-xs text-gray-500 mt-2">
-                            You can donate your rewards to charity milestones without unstaking
+                            You can donate your rewards to charity milestones as Sadaqah
                           </p>
                         ) : (
                           <p className="text-xs text-gray-500 mt-2">
-                            Stake ETH to start earning rewards that you can donate
+                            Stake ETH to start earning Shariah-compliant rewards that you can donate
                           </p>
                         )}
                       </div>
@@ -982,8 +1321,8 @@ export default function StakingPage() {
                         )}
                       </div>
 
-                      {/* Available Charity Milestones */}
-                      <div>
+{/* Available Charity Milestones - Enhanced UI */}
+<div>
                         <h4 className="text-sm font-medium text-gray-700 mb-3">Available Charity Milestones</h4>
                         {milestones.length === 0 ? (
                           <div className="bg-gray-50 p-6 rounded-lg text-center">
@@ -993,57 +1332,150 @@ export default function StakingPage() {
                             </p>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-1 gap-4">
-                            {milestones
-                              .filter((m) => !m.released)
-                              .map((milestone) => (
-                                <div
-                                  key={milestone.id}
-                                  className="border rounded-lg p-4 bg-white hover:bg-blue-50 transition-colors cursor-pointer"
-                                  onClick={() => {
-                                    if (stakeInfo.active && Number(stakeInfo.estimatedReward) > 0) {
-                                      setSelectedMilestone(milestone.id)
-                                      setDonationAmount(stakeInfo.estimatedReward)
-                                      openModal("donate")
-                                    }
-                                  }}
+                          <div>
+                            <div className="mb-4">
+                              <Button
+                                className="w-full bg-blue-600 hover:bg-blue-700"
+                                onClick={() => {
+                                  if (stakeInfo.active && Number(stakeInfo.estimatedReward) > 0) {
+                                    setDonationAmount(stakeInfo.estimatedReward)
+                                    setShowMilestoneSelector(true)
+                                  }
+                                }}
+                                disabled={!stakeInfo.active || Number(stakeInfo.estimatedReward) <= 0}
+                              >
+                                <HeartHandshake className="h-4 w-4 mr-2" />
+                                Donate Rewards to Charity
+                              </Button>
+                            </div>
+
+                            {showMilestoneSelector && (
+                              <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                                <h5 className="font-medium text-blue-800 mb-3">Select a Charity Milestone</h5>
+                                <RadioGroup
+                                  value={selectedMilestone !== null ? selectedMilestone.toString() : ""}
+                                  onValueChange={(value) => setSelectedMilestone(Number(value))}
+                                  className="space-y-3"
                                 >
-                                  <div className="flex justify-between items-start mb-2">
-                                    <h5 className="font-medium">{milestone.description}</h5>
-                                    <div className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                      {milestone.released ? "Completed" : "Active"}
+                                  {milestones
+                                    .filter((m) => !m.released)
+                                    .map((milestone) => (
+                                      <div
+                                        key={milestone.id}
+                                        className="flex items-start space-x-2 bg-white p-3 rounded-md border border-blue-100"
+                                      >
+                                        <RadioGroupItem
+                                          value={milestone.id.toString()}
+                                          id={`milestone-${milestone.id}`}
+                                          className="mt-1"
+                                        />
+                                        <div className="flex-1">
+                                          <Label
+                                            htmlFor={`milestone-${milestone.id}`}
+                                            className="font-medium block mb-1"
+                                          >
+                                            {milestone.description}
+                                          </Label>
+                                          <div className="mb-2">
+                                            <div className="flex justify-between text-xs mb-1">
+                                              <span>Progress: {milestone.progress.toFixed(0)}%</span>
+                                              <span>
+                                                {milestone.currentAmount} / {milestone.targetAmount} ETH
+                                              </span>
+                                            </div>
+                                            <Progress value={milestone.progress} className="h-2" />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                </RadioGroup>
+
+                                <div className="mt-4 space-y-2">
+                                  <Label htmlFor="donation-amount" className="text-sm font-medium">
+                                    Donation Amount (ETH)
+                                  </Label>
+                                  <Input
+                                    id="donation-amount"
+                                    type="number"
+                                    step="0.000001"
+                                    min="0.000001"
+                                    max={stakeInfo.estimatedReward}
+                                    value={donationAmount}
+                                    onChange={(e) => setDonationAmount(e.target.value)}
+                                    className="font-mono"
+                                  />
+                                  {donationAmount && (
+                                    <div className="text-xs text-gray-500">
+                                      ≈ {(Number(donationAmount) * ethToMyrRate).toLocaleString()} MYR
                                     </div>
-                                  </div>
-                                  <div className="mb-2">
-                                    <div className="flex justify-between text-sm mb-1">
-                                      <span>Progress</span>
-                                      <span>{milestone.progress.toFixed(0)}%</span>
-                                    </div>
-                                    <Progress value={milestone.progress} className="h-2" />
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div>
-                                      <span className="text-gray-500">Target:</span>{" "}
-                                      <span className="font-medium">{milestone.targetAmount} ETH</span>
-                                    </div>
-                                    <div>
-                                      <span className="text-gray-500">Raised:</span>{" "}
-                                      <span className="font-medium">{milestone.currentAmount} ETH</span>
-                                    </div>
-                                  </div>
+                                  )}
                                 </div>
-                              ))}
+
+                                <div className="flex gap-2 mt-4">
+                                  <Button
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => setShowMilestoneSelector(false)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    onClick={() => openModal("donate")}
+                                    disabled={
+                                      selectedMilestone === null || !donationAmount || Number(donationAmount) <= 0
+                                    }
+                                  >
+                                    Confirm Donation
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="grid grid-cols-1 gap-4">
+                              {milestones
+                                .filter((m) => !m.released)
+                                .map((milestone) => (
+                                  <div
+                                    key={milestone.id}
+                                    className="border rounded-lg p-4 bg-white hover:bg-blue-50 transition-colors cursor-pointer"
+                                    onClick={() => {
+                                      if (stakeInfo.active && Number(stakeInfo.estimatedReward) > 0) {
+                                        setSelectedMilestone(milestone.id)
+                                        setDonationAmount(stakeInfo.estimatedReward)
+                                        setShowMilestoneSelector(true)
+                                      }
+                                    }}
+                                  >
+                                    <div className="flex justify-between items-start mb-2">
+                                      <h5 className="font-medium">{milestone.description}</h5>
+                                      <div className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                        {milestone.released ? "Completed" : "Active"}
+                                      </div>
+                                    </div>
+                                    <div className="mb-2">
+                                      <div className="flex justify-between text-sm mb-1">
+                                        <span>Progress</span>
+                                        <span>{milestone.progress.toFixed(0)}%</span>
+                                      </div>
+                                      <Progress value={milestone.progress} className="h-2" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-sm">
+                                      <div>
+                                        <span className="text-gray-500">Target:</span>{" "}
+                                        <span className="font-medium">{milestone.targetAmount} ETH</span>
+                                      </div>
+                                      <div>
+                                        <span className="text-gray-500">Raised:</span>{" "}
+                                        <span className="font-medium">{milestone.currentAmount} ETH</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
                           </div>
                         )}
                       </div>
-
-                      {/* Donate Button */}
-                      {stakeInfo.active && Number(stakeInfo.estimatedReward) > 0 && (
-                        <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => openModal("donate")}>
-                          <HeartHandshake className="h-4 w-4 mr-2" />
-                          Donate Rewards to Charity
-                        </Button>
-                      )}
                     </div>
                   )}
                 </CardContent>
@@ -1058,7 +1490,7 @@ export default function StakingPage() {
                     <BarChart3 className="h-6 w-6 text-blue-600 mr-2" />
                     Staking Analytics
                   </CardTitle>
-                  <CardDescription>Track your staking performance and rewards</CardDescription>
+                  <CardDescription>Track your Shariah-compliant staking performance</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -1083,10 +1515,10 @@ export default function StakingPage() {
                       {/* Staking Summary */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-blue-50 p-4 rounded-lg">
-                          <div className="text-xs text-gray-500">Current APR</div>
+                          <div className="text-xs text-gray-500">Current Halal APR</div>
                           <div className="font-semibold flex items-center text-lg">
                             <TrendingUp className="h-4 w-4 text-blue-600 mr-1" />
-                            {annualRate}%
+                            2-5%
                           </div>
                         </div>
                         <div className="bg-blue-50 p-4 rounded-lg">
@@ -1211,7 +1643,7 @@ export default function StakingPage() {
 
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Annual Rate</span>
-                <span className="text-xs">{annualRate}%</span>
+                <span className="text-xs">2-5%</span>
               </div>
 
               <div className="flex items-center justify-between">
@@ -1252,7 +1684,7 @@ export default function StakingPage() {
             </DialogTitle>
             <DialogDescription>
               {modalAction === "stake"
-                ? `Stake your ETH to earn ${annualRate}% annual rewards`
+                ? `Stake your ETH to earn $2-5% annual rewards`
                 : modalAction === "unstake"
                   ? "Unstake your ETH and claim your rewards"
                   : "Donate your staking rewards to charity"}
