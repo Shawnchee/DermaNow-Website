@@ -26,8 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 export default function HalalChecker() {
-  const description =
-    "Helping hands is a charitable organisation to help build a school for students from the east coast who lost their schools and homes to the flood";
+  const description = "to teach math to children";
   const [response, setResponse] = useState<{
     isHalal: boolean;
     reasons: string[];

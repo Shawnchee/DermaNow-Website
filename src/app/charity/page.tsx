@@ -3,7 +3,14 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -36,7 +43,11 @@ export default function CharityPage() {
     const initialize = async () => {
       if (signer && provider) {
         try {
-          const charityContract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
+          const charityContract = new ethers.Contract(
+            CONTRACT_ADDRESS,
+            contractABI,
+            signer
+          );
           setContract(charityContract);
           console.log("Contract initialized:", charityContract.address);
 
@@ -93,9 +104,11 @@ export default function CharityPage() {
           targetAmount: formatEther(milestone.targetAmount),
           currentAmount: formatEther(milestone.currentAmount),
           released: milestone.released,
-          voteCount: typeof milestone.voteCount === "object" && "toNumber" in milestone.voteCount
-          ? milestone.voteCount.toNumber()
-          : milestone.voteCount, // Handle both BigNumber and plain number
+          voteCount:
+            typeof milestone.voteCount === "object" &&
+            "toNumber" in milestone.voteCount
+              ? milestone.voteCount.toNumber()
+              : milestone.voteCount, // Handle both BigNumber and plain number
           progress:
             (Number.parseFloat(formatEther(milestone.currentAmount)) /
               Number.parseFloat(formatEther(milestone.targetAmount))) *
@@ -175,8 +188,8 @@ export default function CharityPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.7 }}
           >
-            Support verified charity projects with transparent milestone tracking. Every donation is securely recorded
-            on the blockchain.
+            Support verified charity projects with transparent milestone
+            tracking. Every donation is securely recorded on the blockchain.
           </motion.p>
 
           {!walletAddress && (
@@ -185,7 +198,10 @@ export default function CharityPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.5 }}
             >
-              <Button onClick={connectWallet} className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                onClick={connectWallet}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
                 Connect Wallet
               </Button>
             </motion.div>
@@ -201,7 +217,8 @@ export default function CharityPage() {
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 bg-green-500 rounded-full"></div>
                 <span className="text-gray-800 font-medium">
-                  Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                  Connected: {walletAddress.slice(0, 6)}...
+                  {walletAddress.slice(-4)}
                 </span>
               </div>
             </motion.div>
@@ -211,7 +228,9 @@ export default function CharityPage() {
         {/* Milestones Section */}
         <div className="mb-16">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-800">Active Charity Milestones</h2>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Active Charity Milestones
+            </h2>
           </div>
 
           {loading ? (
@@ -221,50 +240,62 @@ export default function CharityPage() {
           ) : milestones.length === 0 ? (
             <Card className="bg-white/80 backdrop-blur-sm border border-blue-100">
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <h3 className="text-xl font-medium text-gray-800 mb-2">No Milestones Yet</h3>
+                <h3 className="text-xl font-medium text-gray-800 mb-2">
+                  No Milestones Yet
+                </h3>
                 <p className="text-gray-600 text-center max-w-md">
-                  There are currently no active charity milestones. Check back later or contact the administrator.
+                  There are currently no active charity milestones. Check back
+                  later or contact the administrator.
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {milestones.map((milestone) => (
-    <Card key={milestone.id} className="bg-white/90 backdrop-blur-sm border border-blue-100">
-      <CardHeader>
-        <CardTitle>{milestone.description}</CardTitle>
-        <CardDescription>
-          Service Provider: {milestone.serviceProvider.slice(0, 6)}...
-          {milestone.serviceProvider.slice(-4)}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4 space-y-1">
-          <p className="text-sm text-gray-600">
-            <strong>Target Amount:</strong> {milestone.targetAmount} ETH
-          </p>
-          <p className="text-sm text-gray-600">
-            <strong>Current Amount:</strong> {milestone.currentAmount} ETH
-          </p>
-          <p className="text-sm text-gray-600">
-            <strong>Votes:</strong> {milestone.voteCount}/3
-          </p>
-          <p
-            className={`text-sm font-medium ${
-              milestone.voteCount >= 3 ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            <strong>Status:</strong> {milestone.voteCount >= 3 ? "Approved" : "Not Approved"}
-          </p>
-        </div>
-        <Progress value={milestone.progress} className="h-2" />
-        <p className="text-xs text-gray-500 mt-2">
-          {milestone.progress.toFixed(2)}% funded
-        </p>
-      </CardContent>
-    </Card>
-  ))}
-        </div>
+              {milestones.map((milestone) => (
+                <Card
+                  key={milestone.id}
+                  className="bg-white/90 backdrop-blur-sm border border-blue-100"
+                >
+                  <CardHeader>
+                    <CardTitle>{milestone.description}</CardTitle>
+                    <CardDescription>
+                      Service Provider: {milestone.serviceProvider.slice(0, 6)}
+                      ...
+                      {milestone.serviceProvider.slice(-4)}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4 space-y-1">
+                      <p className="text-sm text-gray-600">
+                        <strong>Target Amount:</strong> {milestone.targetAmount}{" "}
+                        ETH
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <strong>Current Amount:</strong>{" "}
+                        {milestone.currentAmount} ETH
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <strong>Votes:</strong> {milestone.voteCount}/3
+                      </p>
+                      <p
+                        className={`text-sm font-medium ${
+                          milestone.voteCount >= 3
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        <strong>Status:</strong>{" "}
+                        {milestone.voteCount >= 3 ? "Approved" : "Not Approved"}
+                      </p>
+                    </div>
+                    <Progress value={milestone.progress} className="h-2" />
+                    <p className="text-xs text-gray-500 mt-2">
+                      {milestone.progress.toFixed(2)}% funded
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </div>
       </div>
