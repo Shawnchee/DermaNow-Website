@@ -211,13 +211,13 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
       setLoading(true)
 
       // Get annual rate from contract
-      try {
-        const rate = await contractInstance.annualRate()
-        setAnnualRate(Number(rate))
-      } catch (error) {
-        console.error("Error fetching annual rate:", error)
-        // Keep default rate if there's an error
-      }
+      // try {
+      //   const rate = await contractInstance.annualRate()
+      //   setAnnualRate(Number(rate))
+      // } catch (error) {
+      //   console.error("Error fetching annual rate:", error)
+      //   // Keep default rate if there's an error
+      // }
 
       // Fetch stake info if wallet is connected
       if (walletAddress) {
@@ -705,10 +705,10 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                 <div>
                   <p className="text-sm text-gray-500">Total Staked</p>
                   <div className="flex items-baseline gap-1">
-                    <p className="text-2xl font-bold">{totalStaked}</p>
-                    <p className="text-sm text-gray-500">ETH</p>
+                    <p className="text-2xl font-bold">{(Number(totalStaked) * ethToMyrRate).toLocaleString()}</p>
+                    <p className="text-sm text-gray-500">MYR</p>
                   </div>
-                  <p className="text-xs text-gray-500">≈ {(Number(totalStaked) * ethToMyrRate).toLocaleString()} MYR</p>
+                  <p className="text-xs text-gray-500">≈  {totalStaked} ETH</p>
                 </div>
               </div>
             </CardContent>
@@ -741,11 +741,11 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                 <div>
                   <p className="text-sm text-gray-500">Total Halal Rewards</p>
                   <div className="flex items-baseline gap-1">
-                    <p className="text-2xl font-bold">{totalRewardsDistributed}</p>
-                    <p className="text-sm text-gray-500">ETH</p>
+                    <p className="text-2xl font-bold">{(Number(totalRewardsDistributed) * ethToMyrRate).toLocaleString()}</p>
+                    <p className="text-sm text-gray-500">MYR</p>
                   </div>
                   <p className="text-xs text-gray-500">
-                    ≈ {(Number(totalRewardsDistributed) * ethToMyrRate).toLocaleString()} MYR
+                    ≈ {totalRewardsDistributed} ETH
                   </p>
                 </div>
               </div>
@@ -810,9 +810,9 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                           <div className="text-xs text-gray-500">Staked Amount</div>
                           <div className="font-semibold flex items-center text-lg">
                             <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
-                            {stakeInfo.amount} ETH
+                            {myrValues.stakedAmount.toLocaleString()} MYR
                           </div>
-                          <div className="text-xs text-gray-500">≈ {myrValues.stakedAmount.toLocaleString()} MYR</div>
+                          <div className="text-xs text-gray-500">≈ {stakeInfo.amount} ETH</div>
                         </div>
                         <div className="bg-blue-50 p-4 rounded-lg">
                           <div className="text-xs text-gray-500">Staking Duration</div>
@@ -845,10 +845,12 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                         <div className="text-xs text-gray-500">Total Value (Stake + Rewards)</div>
                         <div className="font-semibold flex items-center text-lg">
                           <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
-                          {(Number(stakeInfo.amount) + Number(stakeInfo.estimatedReward)).toFixed(6)} ETH
+                          {myrValues.totalValue.toLocaleString()} MYR
                         </div>
-                        <div className="text-xs text-gray-500">≈ {myrValues.totalValue.toLocaleString()} MYR</div>
-                      </div>
+                        <div className="text-xs text-gray-500">
+                          ≈ {(Number(stakeInfo.amount) + Number(stakeInfo.estimatedReward)).toFixed(6)} ETH
+                        </div>                      
+                        </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => openModal("unstake")}>
@@ -899,31 +901,42 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                       </div>
 
                       {stakeAmount && Number(stakeAmount) > 0 && (
-                        <div className="bg-blue-50 p-4 rounded-lg space-y-2">
-                          <h4 className="font-medium flex items-center gap-1 text-blue-800">
-                            <Info className="h-4 w-4" />
-                            Estimated Halal Annual Rewards
-                          </h4>
-                          <div className="grid grid-cols-3 gap-2 text-sm">
-                            <div>
-                              <p className="text-gray-500">Daily</p>
-                              <p className="font-medium">
-                                {((Number(stakeAmount) * annualRate) / 365 / 100).toFixed(6)} ETH
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-gray-500">Monthly</p>
-                              <p className="font-medium">
-                                {((Number(stakeAmount) * annualRate) / 12 / 100).toFixed(4)} ETH
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-gray-500">Annual</p>
-                              <p className="font-medium">{((Number(stakeAmount) * annualRate) / 100).toFixed(4)} ETH</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+  <div className="bg-blue-50 p-4 rounded-lg space-y-2">
+    <h4 className="font-medium flex items-center gap-1 text-blue-800">
+      <Info className="h-4 w-4" />
+      Estimated Halal Annual Rewards
+    </h4>
+    <div className="grid grid-cols-3 gap-2 text-sm">
+      <div>
+        <p className="text-gray-500">Daily</p>
+        <p className="font-medium">
+          {(Number(stakeAmount) * annualRate * ethToMyrRate / 365 / 100).toLocaleString()} MYR
+        </p>
+        <p className="text-xs text-gray-500">
+          ≈ {((Number(stakeAmount) * annualRate) / 365 / 100).toFixed(6)} ETH
+        </p>
+      </div>
+      <div>
+        <p className="text-gray-500">Monthly</p>
+        <p className="font-medium">
+          {(Number(stakeAmount) * annualRate * ethToMyrRate / 12 / 100).toLocaleString()} MYR
+        </p>
+        <p className="text-xs text-gray-500">
+          ≈ {((Number(stakeAmount) * annualRate) / 12 / 100).toFixed(4)} ETH
+        </p>
+      </div>
+      <div>
+        <p className="text-gray-500">Annual</p>
+        <p className="font-medium">
+          {(Number(stakeAmount) * annualRate * ethToMyrRate / 100).toLocaleString()} MYR
+        </p>
+        <p className="text-xs text-gray-500">
+          ≈ {((Number(stakeAmount) * annualRate) / 100).toFixed(4)} ETH
+        </p>
+      </div>
+    </div>
+  </div>
+)}
 
                       <Button
                         className="w-full bg-blue-600 hover:bg-blue-700"
@@ -989,23 +1002,28 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                             </p>
 
                             {Number(zakatDue) > 0 ? (
-                              <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
-                                <div className="flex justify-between items-center">
-                                  <span className="text-sm font-medium">Zakat Due</span>
-                                  <span className="font-mono font-medium">{zakatDue} ETH</span>
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Based on your staked amount and rewards held for over a year
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
-                                <div className="text-sm">No Zakat due yet</div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                  Zakat becomes obligatory after holding wealth for one lunar year
-                                </div>
-                              </div>
-                            )}
+  <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
+    <div className="flex justify-between items-center">
+      <span className="text-sm font-medium">Zakat Due</span>
+      <div className="text-right">
+        <span className="font-mono font-medium">
+          {(Number(zakatDue) * ethToMyrRate).toLocaleString()} MYR
+        </span>
+        <div className="text-xs text-gray-500">≈ {zakatDue} ETH</div>
+      </div>
+    </div>
+    <div className="text-xs text-gray-500 mt-1">
+      Based on your staked amount and rewards held for over a year
+    </div>
+  </div>
+) : (
+  <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
+    <div className="text-sm">No Zakat due yet</div>
+    <div className="text-xs text-gray-500 mt-1">
+      Zakat becomes obligatory after holding wealth for one lunar year
+    </div>
+  </div>
+)}
 
                             <div className="flex items-center space-x-2 mb-3">
 
@@ -1260,11 +1278,10 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                         <div className="flex items-center">
                           <Coins className="h-6 w-6 text-blue-600 mr-2" />
                           <span className="text-2xl font-bold text-blue-700">
-                            {stakeInfo.active ? stakeInfo.estimatedReward : "0.000000"} ETH
-                          </span>
+                          {stakeInfo.active ? myrValues.estimatedReward.toLocaleString() : "0.000000"}                          </span>
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          ≈ {stakeInfo.active ? myrValues.estimatedReward.toLocaleString() : "0"} MYR
+                          ≈ {stakeInfo.active ? stakeInfo.estimatedReward : "0"} ETH
                         </div>
                         {stakeInfo.active ? (
                           <p className="text-xs text-gray-500 mt-2">
@@ -1463,11 +1480,11 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                                     <div className="grid grid-cols-2 gap-2 text-sm">
                                       <div>
                                         <span className="text-gray-500">Target:</span>{" "}
-                                        <span className="font-medium">{milestone.targetAmount} ETH</span>
+                                        <span className="font-medium">{(Number(milestone.targetAmount) * ethToMyrRate).toLocaleString()} MYR ({milestone.targetAmount} ETH)</span>
                                       </div>
                                       <div>
                                         <span className="text-gray-500">Raised:</span>{" "}
-                                        <span className="font-medium">{milestone.currentAmount} ETH</span>
+                                        <span className="font-medium">{(Number(milestone.currentAmount) * ethToMyrRate).toLocaleString()} MYR ({milestone.currentAmount} ETH)</span>
                                       </div>
                                     </div>
                                   </div>
