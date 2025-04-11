@@ -13,6 +13,7 @@ import {
   Users,
   Heart,
   Search,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
 
 interface ProjectProps {
   id: number;
@@ -35,6 +43,7 @@ interface ProjectProps {
   progress_percentage?: number;
   supporters: number;
   amount: number;
+  category?: string[];
 }
 
 interface SearchResult {
@@ -201,6 +210,17 @@ export default function Page() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortOption, setSortOption] = useState<string>("last-updated");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // Define available categories
+  const categories = [
+    "Water & Sanitation",
+    "Community Development",
+    "Disaster Relief",
+    "Food & Nutrition",
+    "Education",
+    "Children & Youth",
+  ];
 
   // Fetch projects (initial load)
   useEffect(() => {
@@ -223,6 +243,7 @@ export default function Page() {
           funding_percentage: 44.5,
           supporters: 600,
           amount: 22250,
+          category: ["Water & Sanitation", "Community Development"],
         },
         {
           id: 2,
@@ -235,6 +256,7 @@ export default function Page() {
           funding_complete: true,
           supporters: 1000,
           amount: 167080,
+          category: ["Disaster Relief"],
         },
         {
           id: 3,
@@ -246,6 +268,7 @@ export default function Page() {
           funding_percentage: 45.48,
           supporters: 5000,
           amount: 454900,
+          category: ["Disaster Relief", "Community Development"],
         },
         {
           id: 4,
@@ -258,6 +281,7 @@ export default function Page() {
           funding_complete: true,
           supporters: 1000,
           amount: 239090,
+          category: ["Food & Nutrition", "Education", "Children & Youth"],
         },
         {
           id: 5,
@@ -271,6 +295,7 @@ export default function Page() {
           progress_percentage: 56.7,
           supporters: 492,
           amount: 88020,
+          category: ["Food & Nutrition", "Education"],
         },
         {
           id: 6,
@@ -283,6 +308,7 @@ export default function Page() {
           funding_complete: true,
           supporters: 1000,
           amount: 123540,
+          category: ["Food & Nutrition", "Education"],
         },
         {
           id: 7,
@@ -295,6 +321,7 @@ export default function Page() {
           funding_complete: true,
           supporters: 1000,
           amount: 81080,
+          category: ["Food & Nutrition", "Education", "Children & Youth"],
         },
         {
           id: 8,
@@ -307,6 +334,7 @@ export default function Page() {
           funding_complete: true,
           supporters: 1000,
           amount: 92320,
+          category: ["Food & Nutrition", "Education"],
         },
       ];
       setProjects(mockProjects);
@@ -365,9 +393,19 @@ export default function Page() {
     router.replace("/charity/browse-projects");
   };
 
-  // Apply status filter and sort option
+  // Handle category selection
+  const handleCategoryToggle = (category: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
+
+  // Apply filters and sort
   const displayedProjects = filteredProjects
     .filter((project) => {
+      // Status filter
       if (statusFilter === "completed") {
         return project.funding_complete && !project.in_progress;
       }
@@ -375,6 +413,14 @@ export default function Page() {
         return project.in_progress;
       }
       return true;
+    })
+    .filter((project) => {
+      // Category filter
+      if (selectedCategories.length === 0) return true;
+      return (
+        project.category &&
+        selectedCategories.every((cat) => project.category?.includes(cat))
+      );
     })
     .sort((a, b) => {
       // Only apply sorting if no search query is active
@@ -393,7 +439,7 @@ export default function Page() {
     <div className="container mx-auto py-8 px-4">
       {showSuccess && <SuccessDialog onClose={closeSuccessDialog} />}
 
-      <div className="text-center mb-12">
+      <div className="text-center mb-6">
         <h1 className="text-4xl md:text-5xl font-bold mb-6 text-blue-900">
           Browse Projects
         </h1>
@@ -401,48 +447,112 @@ export default function Page() {
           Find and contribute to meaningful causes that are changing lives
         </p>
         <div className="w-full h-6 bg-gradient-to-r from-blue-100 to-white rounded-full"></div>
+
+        <div className="mt-6">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-7 w-7" />
+            <Input
+              type="text"
+              placeholder="Describe what you're looking for..."
+              className="pl-14 bg-gray-50 border-gray-200 w-full py-7 placeholder:text-lg md:text-lg"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <div className="relative w-full md:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            type="text"
-            placeholder="Search"
-            className="pl-10 bg-gray-50 border-gray-200"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+      <div className="flex justify-end mb-4">
+        <div className="flex gap-4">
+          {/* Sort Option Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-40 justify-between font-medium"
+              >
+                <span>{sortOption === "all" ? "All" : "Sort by"}</span>
+                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-40 p-0">
+              <Command>
+                <CommandGroup>
+                  <CommandItem onSelect={() => setSortOption("last-updated")}>
+                    Last Updated
+                  </CommandItem>
+                  <CommandItem onSelect={() => setSortOption("newest")}>
+                    Newest
+                  </CommandItem>
+                  <CommandItem onSelect={() => setSortOption("oldest")}>
+                    Oldest
+                  </CommandItem>
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
 
-        <div className="flex gap-4 w-full md:w-auto">
-          <Select
-            defaultValue="last-updated"
-            onValueChange={(value) => setSortOption(value)}
-          >
-            <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="Last updated" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="last-updated">Last updated</SelectItem>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="oldest">Oldest</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Status Filter Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-40 justify-between font-medium"
+              >
+                <span>{statusFilter === "all" ? "All" : statusFilter}</span>
+                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-40 p-0">
+              <Command>
+                <CommandGroup>
+                  <CommandItem onSelect={() => setStatusFilter("all")}>
+                    All
+                  </CommandItem>
+                  <CommandItem onSelect={() => setStatusFilter("active")}>
+                    In Progress
+                  </CommandItem>
+                  <CommandItem onSelect={() => setStatusFilter("completed")}>
+                    Completed
+                  </CommandItem>
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
 
-          <Select
-            defaultValue="all"
-            onValueChange={(value) => setStatusFilter(value)}
-          >
-            <SelectTrigger className="w-full md:w-40">
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="active">In Progress</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Multi-select Category Filter Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-40 justify-between font-medium"
+              >
+                {selectedCategories.length > 0
+                  ? `${selectedCategories.length} selected`
+                  : "Category"}
+                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-60 p-0">
+              <Command>
+                <CommandGroup>
+                  {categories.map((category) => (
+                    <CommandItem
+                      key={category}
+                      onSelect={() => handleCategoryToggle(category)}
+                      className="flex items-center space-x-2"
+                    >
+                      <Checkbox
+                        checked={selectedCategories.includes(category)}
+                        onCheckedChange={() => handleCategoryToggle(category)}
+                      />
+                      <span>{category}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
