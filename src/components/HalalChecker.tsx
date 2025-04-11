@@ -218,9 +218,6 @@ ${description}`;
                   className={`h-2 ${
                     response.isHalal ? "bg-gray-100" : "bg-gray-100"
                   }`}
-                  indicatorClassName={
-                    response.isHalal ? "bg-blue-500" : "bg-red-500"
-                  }
                 />
               </div>
 
