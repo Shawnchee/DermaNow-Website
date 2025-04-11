@@ -218,7 +218,8 @@ export default function Page() {
           title: "Access to Clean Water in Rural Areas",
           description:
             "Providing clean and safe drinking water to underserved communities.",
-          image: "https://picsum.photos/200/300?random=7",
+          image:
+            "https://images.pexels.com/photos/28101466/pexels-photo-28101466/free-photo-of-photo-of-children-drinking-water.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
           funding_percentage: 44.5,
           supporters: 600,
           amount: 22250,
@@ -228,7 +229,8 @@ export default function Page() {
           title: "Emergency Relief for Natural Disasters",
           description:
             "Delivering immediate aid to victims of natural disasters worldwide.",
-          image: "https://picsum.photos/200/300?random=6",
+          image:
+            "https://images.pexels.com/photos/14000696/pexels-photo-14000696.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
           funding_percentage: 100,
           funding_complete: true,
           supporters: 1000,
@@ -239,7 +241,8 @@ export default function Page() {
           title: "Rebuilding Lives After Earthquakes",
           description:
             "Supporting earthquake survivors with shelter and essential supplies.",
-          image: "https://picsum.photos/200/300?random=5",
+          image:
+            "https://images.pexels.com/photos/15861730/pexels-photo-15861730/free-photo-of-tents-in-a-refugee-camp.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
           funding_percentage: 45.48,
           supporters: 5000,
           amount: 454900,
@@ -249,7 +252,8 @@ export default function Page() {
           title: "School Meals for Underprivileged Children",
           description:
             "Providing nutritious meals to children to support their education.",
-          image: "https://picsum.photos/200/300?random=4",
+          image:
+            "https://images.pexels.com/photos/6995201/pexels-photo-6995201.jpeg",
           funding_percentage: 100,
           funding_complete: true,
           supporters: 1000,
@@ -260,7 +264,8 @@ export default function Page() {
           title: "Empowering Education Through Nutrition",
           description:
             "Ensuring children have access to meals to focus on their studies.",
-          image: "https://picsum.photos/200/300?random=3",
+          image:
+            "https://images.pexels.com/photos/764681/pexels-photo-764681.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
           funding_percentage: 100,
           in_progress: true,
           progress_percentage: 56.7,
@@ -272,7 +277,8 @@ export default function Page() {
           title: "Building a Brighter Future for Students",
           description:
             "Providing meals to help students achieve their educational goals.",
-          image: "https://picsum.photos/200/300",
+          image:
+            "https://images.pexels.com/photos/3401403/pexels-photo-3401403.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
           funding_percentage: 100,
           funding_complete: true,
           supporters: 1000,
@@ -283,7 +289,8 @@ export default function Page() {
           title: "Supporting Education Through Meal Programs",
           description:
             "Helping children stay in school by providing daily meals.",
-          image: "https://picsum.photos/200/300?random=2",
+          image:
+            "https://images.pexels.com/photos/8617558/pexels-photo-8617558.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
           funding_percentage: 100,
           funding_complete: true,
           supporters: 1000,
@@ -294,7 +301,8 @@ export default function Page() {
           title: "Nutrition for Academic Success",
           description:
             "Providing meals to ensure children can focus on learning.",
-          image: "https://picsum.photos/200/300?random=1",
+          image:
+            "https://images.pexels.com/photos/6590920/pexels-photo-6590920.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
           funding_percentage: 100,
           funding_complete: true,
           supporters: 1000,
