@@ -42,3 +42,10 @@ next-env.d.ts
 
 /python/models
 .venv
+# Ignore Python cache directories globally
+
+**/__pycache__/
+python/**/__pycache__/
+python/__pycache__/
+python/api/__pycache__/
+python/search/__pycache__/
