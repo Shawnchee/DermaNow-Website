@@ -1,11 +1,12 @@
-// Just for reading purpose, real contract deployed in another script file
-
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
 contract CharityMilestoneDAOStaking {
-    // ========== STRUCTS ==========
+    address public owner;
+    uint256 public rewardRatePerSecond = 3; // 3% reward per second for demo purposes
+    uint256 public votingThreshold = 3; // Number of votes required to release funds
+    uint256 public milestoneCount = 0;
+
     struct Milestone {
         string description;
         address payable serviceProvider;
@@ -13,6 +14,7 @@ contract CharityMilestoneDAOStaking {
         uint256 currentAmount;
         bool released;
         uint256 voteCount;
+        mapping(address => bool) votes;
     }
 
     struct StakeInfo {
@@ -21,130 +23,82 @@ contract CharityMilestoneDAOStaking {
         bool active;
     }
 
-    // ========== STATE VARIABLES ==========
-
-    address public owner;
-    uint256 public milestoneCount;
-    uint256 public votingThreshold = 1; // Can be adjusted
-    uint256 public annualRate = 3; // 3% simulated yield
-
-    Milestone[] public milestones;
-    mapping(uint256 => mapping(address => bool)) public hasVoted;
+    mapping(uint256 => Milestone) public milestones;
     mapping(address => bool) public committee;
     mapping(address => StakeInfo) public stakes;
 
-    // ========== EVENTS ==========
-
     event MilestoneCreated(uint256 milestoneId, string description, uint256 targetAmount);
     event DonationReceived(uint256 milestoneId, address donor, uint256 amount);
-    event MilestoneReleased(uint256 milestoneId, address to);
     event Voted(uint256 milestoneId, address voter);
+    event MilestoneReleased(uint256 milestoneId, address to);
     event Staked(address staker, uint256 amount);
     event Unstaked(address staker, uint256 amount, uint256 reward);
 
-    // ========== MODIFIERS ==========
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not owner");
-        _;
-    }
-
-    modifier onlyCommittee() {
-        require(committee[msg.sender], "Not a committee member");
-        _;
-    }
-
-    // ========== CONSTRUCTOR ==========
-
     constructor(address[] memory committeeMembers) {
         owner = msg.sender;
+        
+        // Initialize committee members
         for (uint i = 0; i < committeeMembers.length; i++) {
             committee[committeeMembers[i]] = true;
         }
     }
 
-    // ========== MILESTONE FUNCTIONS ==========
-
-    function createMilestone(string memory description, address payable serviceProvider, uint256 targetAmount) external onlyOwner {
-        milestones.push(Milestone({
-            description: description,
-            serviceProvider: serviceProvider,
-            targetAmount: targetAmount,
-            currentAmount: 0,
-            released: false,
-            voteCount: 0
-        }));
-
+    // Create a new milestone
+    function createMilestone(string memory description, address payable serviceProvider, uint256 targetAmount) public {
+        require(committee[msg.sender], "Only committee members can create milestones");
+        
+        Milestone storage newMilestone = milestones[milestoneCount];
+        newMilestone.description = description;
+        newMilestone.serviceProvider = serviceProvider;
+        newMilestone.targetAmount = targetAmount;
+        newMilestone.currentAmount = 0;
+        newMilestone.released = false;
+        newMilestone.voteCount = 0;
+        
         emit MilestoneCreated(milestoneCount, description, targetAmount);
         milestoneCount++;
     }
 
-    function donateToMilestone(uint256 milestoneId) external payable {
-        require(milestoneId < milestoneCount, "Invalid milestone");
-        Milestone storage m = milestones[milestoneId];
-        require(!m.released, "Already released");
-
-        require(msg.value > 0, "No ETH sent");
-        m.currentAmount += msg.value;
-
+    // Donate to a milestone
+    function donateToMilestone(uint256 milestoneId) public payable {
+        require(milestoneId < milestoneCount, "Milestone does not exist");
+        require(!milestones[milestoneId].released, "Milestone already released");
+        require(msg.value > 0, "Donation amount must be greater than 0");
+        
+        milestones[milestoneId].currentAmount += msg.value;
+        
         emit DonationReceived(milestoneId, msg.sender, msg.value);
     }
 
-    function voteToRelease(uint256 milestoneId) external onlyCommittee {
-        require(milestoneId < milestoneCount, "Invalid milestone");
-        Milestone storage m = milestones[milestoneId];
-
-        require(!m.released, "Already released");
-        require(!hasVoted[milestoneId][msg.sender], "Already voted");
-
-        hasVoted[milestoneId][msg.sender] = true;
-        m.voteCount++;
-
+    // Vote to release funds for a milestone
+    function voteToRelease(uint256 milestoneId) public {
+        require(committee[msg.sender], "Only committee members can vote");
+        require(milestoneId < milestoneCount, "Milestone does not exist");
+        require(!milestones[milestoneId].released, "Milestone already released");
+        require(!milestones[milestoneId].votes[msg.sender], "Already voted");
+        
+        milestones[milestoneId].votes[msg.sender] = true;
+        milestones[milestoneId].voteCount++;
+        
         emit Voted(milestoneId, msg.sender);
-
-        if (m.voteCount >= votingThreshold && m.currentAmount >= m.targetAmount) {
-            m.released = true;
-            m.serviceProvider.transfer(m.currentAmount);
-            emit MilestoneReleased(milestoneId, m.serviceProvider);
+        
+        // If voting threshold is reached, release the funds
+        if (milestones[milestoneId].voteCount >= votingThreshold) {
+            milestones[milestoneId].released = true;
+            milestones[milestoneId].serviceProvider.transfer(milestones[milestoneId].currentAmount);
+            
+            emit MilestoneReleased(milestoneId, milestones[milestoneId].serviceProvider);
         }
     }
 
-    // ========== STAKING FUNCTIONS ==========
-
-    function stake() external payable {
-        require(msg.value > 0, "No ETH sent");
-
-        StakeInfo storage stakeInfo = stakes[msg.sender];
-        require(!stakeInfo.active, "Already staking");
-
-        stakeInfo.amount = msg.value;
-        stakeInfo.startTime = block.timestamp;
-        stakeInfo.active = true;
-
-        emit Staked(msg.sender, msg.value);
+    // Check if an address has voted for a milestone
+    function hasVoted(uint256 milestoneId, address voter) public view returns (bool) {
+        require(milestoneId < milestoneCount, "Milestone does not exist");
+        return milestones[milestoneId].votes[voter];
     }
 
-    function unstake() external {
-        StakeInfo storage stakeInfo = stakes[msg.sender];
-        require(stakeInfo.active, "No active stake");
-
-        uint256 stakedAmount = stakeInfo.amount;
-        uint256 duration = block.timestamp - stakeInfo.startTime;
-
-        uint256 reward = (stakedAmount * annualRate * duration) / (365 days * 100);
-
-        stakeInfo.active = false;
-        stakeInfo.amount = 0;
-        stakeInfo.startTime = 0;
-
-        payable(msg.sender).transfer(stakedAmount + reward);
-
-        emit Unstaked(msg.sender, stakedAmount, reward);
-    }
-
-    // ========== UTILITY VIEWS ==========
-
-    function getMilestone(uint256 id) external view returns (
+    // Get milestone details
+    function getMilestone(uint256 id) public view returns (
         string memory description,
         address serviceProvider,
         uint256 targetAmount,
@@ -152,16 +106,112 @@ contract CharityMilestoneDAOStaking {
         bool released,
         uint256 voteCount
     ) {
-        Milestone storage m = milestones[id];
+        require(id < milestoneCount, "Milestone does not exist");
+        Milestone storage milestone = milestones[id];
+        
         return (
-            m.description,
-            m.serviceProvider,
-            m.targetAmount,
-            m.currentAmount,
-            m.released,
-            m.voteCount
+            milestone.description,
+            milestone.serviceProvider,
+            milestone.targetAmount,
+            milestone.currentAmount,
+            milestone.released,
+            milestone.voteCount
         );
     }
 
+    // Stake ETH
+    function stake() public payable {
+        require(msg.value > 0, "Stake amount must be greater than 0");
+        
+        // If already staking, add to existing stake
+        if (stakes[msg.sender].active) {
+            // Calculate rewards before adding new stake
+            uint256 currentTime = block.timestamp;
+            uint256 stakeDuration = currentTime - stakes[msg.sender].startTime;
+            
+            // MODIFIED: Calculate reward at 3% per second for demo purposes
+            uint256 reward = (stakes[msg.sender].amount * rewardRatePerSecond * stakeDuration) / 100;
+            
+            // Update stake with new amount and reset start time
+            stakes[msg.sender].amount += msg.value + reward;
+            stakes[msg.sender].startTime = currentTime;
+        } else {
+            // New stake
+            stakes[msg.sender] = StakeInfo({
+                amount: msg.value,
+                startTime: block.timestamp,
+                active: true
+            });
+        }
+        
+        emit Staked(msg.sender, msg.value);
+    }
+
+    // Unstake ETH and receive rewards
+    function unstake() public {
+        require(stakes[msg.sender].active, "No active stake found");
+        
+        uint256 amount = stakes[msg.sender].amount;
+        uint256 currentTime = block.timestamp;
+        uint256 stakeDuration = currentTime - stakes[msg.sender].startTime;
+        
+        // MODIFIED: Calculate reward at 3% per second for demo purposes
+        uint256 reward = (amount * rewardRatePerSecond * stakeDuration) / 100;
+        
+        // Reset stake
+        stakes[msg.sender].active = false;
+        stakes[msg.sender].amount = 0;
+        
+        // Transfer staked amount + reward
+        uint256 totalAmount = amount + reward;
+        
+        // Make sure contract has enough balance
+        require(address(this).balance >= totalAmount, "Contract has insufficient balance");
+        
+        // Transfer funds
+        payable(msg.sender).transfer(totalAmount);
+        
+        emit Unstaked(msg.sender, amount, reward);
+    }
+
+    // Calculate current rewards without unstaking (view function)
+    function calculateCurrentRewards(address staker) public view returns (uint256) {
+        if (!stakes[staker].active) {
+            return 0;
+        }
+        
+        uint256 amount = stakes[staker].amount;
+        uint256 currentTime = block.timestamp;
+        uint256 stakeDuration = currentTime - stakes[staker].startTime;
+        
+        // MODIFIED: Calculate reward at 3% per second for demo purposes
+        return (amount * rewardRatePerSecond * stakeDuration) / 100;
+    }
+
+    // Donate rewards to a milestone without unstaking
+    function donateRewardsToMilestone(uint256 milestoneId) public {
+        require(stakes[msg.sender].active, "No active stake found");
+        require(milestoneId < milestoneCount, "Milestone does not exist");
+        require(!milestones[milestoneId].released, "Milestone already released");
+        
+        uint256 currentTime = block.timestamp;
+        uint256 stakeDuration = currentTime - stakes[msg.sender].startTime;
+        
+        // MODIFIED: Calculate reward at 3% per second for demo purposes
+        uint256 reward = (stakes[msg.sender].amount * rewardRatePerSecond * stakeDuration) / 100;
+        
+        require(reward > 0, "No rewards available to donate");
+        require(address(this).balance >= reward, "Contract has insufficient balance for reward");
+        
+        // Reset staking time but keep the principal amount
+        stakes[msg.sender].startTime = currentTime;
+        
+        // Add reward to milestone
+        milestones[milestoneId].currentAmount += reward;
+        
+        emit DonationReceived(milestoneId, msg.sender, reward);
+    }
+
+    // Fallback function to receive ETH
     receive() external payable {}
 }

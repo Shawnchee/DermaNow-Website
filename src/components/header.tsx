@@ -1,9 +1,10 @@
-"use client";
+"use client"
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import connectMetamask from "@/hooks/connectMetamask";
+import { ChevronDown } from "lucide-react";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,18 +18,14 @@ export default function Header() {
       setScrolled(window.scrollY > 10);
     };
 
-    // Set initial scroll state
     handleScroll();
     window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const disconnectWallet = () => {
-    localStorage.removeItem("walletAddress"); // Clear wallet address from localStorage
-    window.location.reload(); // Reload the page to reset the state
+    localStorage.removeItem("walletAddress");
+    window.location.reload();
   };
 
   return (
@@ -39,9 +36,6 @@ export default function Header() {
           scrolled ? "bg-white shadow-lg" : "bg-transparent"
         )}
       >
-        {/* Top accent bar */}
-
-        {/* Main navbar content */}
         <div className="max-w-7xl mx-auto py-3">
           <div className="flex items-center justify-between px-4 py-3 md:py-0 md:px-6">
             {/* Logo */}
@@ -52,36 +46,92 @@ export default function Header() {
                   <div className="text-blue-600 font-bold text-xl">D</div>
                 </div>
               </div>
-              <span
-                className={cn(
-                  "font-bold text-xl",
-                  scrolled ? "text-blue-700" : "text-white"
-                )}
-              >
+              <span className={cn("font-bold text-xl", scrolled ? "text-blue-700" : "text-white")}>
                 DermaNow
               </span>
             </Link>
 
-            <div>
+{/* Navigation Links */}
+<div className="hidden md:flex items-center space-x-8">
+  {/* Explore */}
+  <div className="group relative">
+    <span className="cursor-pointer text-sm font-medium text-white hover:text-blue-200 flex items-center gap-1">
+      Explore
+      <ChevronDown className="h-4 w-4 text-white group-hover:text-blue-200" />
+    </span>
+    <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition duration-200 z-50">
+      <Link href="/why-us" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+        Why Us
+      </Link>
+      <Link href="/shariah" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+        Shariah
+      </Link>
+    </div>
+  </div>
+
+  {/* Charity */}
+  <div className="group relative">
+    <span className="cursor-pointer text-sm font-medium text-white hover:text-blue-200 flex items-center gap-1">
+      Charity
+      <ChevronDown className="h-4 w-4 text-white group-hover:text-blue-200" />
+    </span>
+    <div className="absolute left-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition duration-200 z-50">
+      <Link href="/browse-projects" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+        Browse Projects
+      </Link>
+      <Link href="/start-project" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+        Start a Project
+      </Link>
+      <Link href="/service-providers" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+        Select Service Providers
+      </Link>
+    </div>
+  </div>
+
+  {/* Funding */}
+  <div className="group relative">
+    <span className="cursor-pointer text-sm font-medium text-white hover:text-blue-200 flex items-center gap-1">
+      Funding
+      <ChevronDown className="h-4 w-4 text-white group-hover:text-blue-200" />
+    </span>
+    <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition duration-200 z-50">
+      <Link href="/onramp" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+        Deposit
+      </Link>
+      <Link href="/defi" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+        Shariah-Compliant Staking
+      </Link>
+    </div>
+  </div>
+
+  {/* Profile */}
+  <Link href="/profile" className="text-sm font-medium text-white hover:text-blue-200">
+    Profile
+  </Link>
+</div>
+
+
+            {/* Wallet Section */}
+            <div className="flex items-center space-x-4">
               {walletAddress ? (
-                <div className="flex items-center space-x-4">
+                <>
                   <button
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg"
                     disabled
                   >
-                    Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                    {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
                   </button>
                   <button
                     onClick={disconnectWallet}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg cursor-pointer hover:bg-red-400"
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-400"
                   >
                     Disconnect
                   </button>
-                </div>
+                </>
               ) : (
                 <button
                   onClick={connectWallet}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-400"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-400"
                 >
                   Connect Wallet
                 </button>
@@ -90,13 +140,11 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Background overlay for transparent navbar */}
         {!scrolled && (
           <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-700 to-blue-600"></div>
         )}
       </nav>
 
-      {/* Spacer for fixed navbar */}
       <div className="h-[65px] md:h-[65px]"></div>
     </div>
   );
