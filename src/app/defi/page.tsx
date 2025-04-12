@@ -38,12 +38,17 @@ import {
   Leaf,
   ChurchIcon as Mosque,
   Scale,
+  Hospital,
+  School,
+  Building,
 } from "lucide-react"
 import { toast } from "sonner"
 import connectMetamask from "@/hooks/connectMetamask"
 import { contractABI } from "@/lib/contract-abi"
 import { formatEther, parseEther } from "ethers"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import ShariahCompliantProtocols from "@/components/defi-shariah-protocols";
+
 
 // Contract address from deployment
 const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb"
@@ -702,7 +707,7 @@ export default function StakingPage() {
 
         {/* Staking Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 mx-auto">
-          <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 py-4">
+          <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
             <CardContent className="pt-2">
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
@@ -760,7 +765,7 @@ export default function StakingPage() {
         </div>
 
         {/* Staking Dashboard */}
-        <div className="max-w-5xl mx-auto mb-12">
+        <div className="max-w-8xl mx-auto mb-12">
           <Tabs defaultValue="staking" className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-8">
               <TabsTrigger value="staking" className="text-sm">
@@ -1171,60 +1176,120 @@ export default function StakingPage() {
                       </div>
 
                       {/* Waqf Section */}
-                      <div className="bg-white p-6 rounded-lg border border-blue-200">
-                        <div className="flex items-start gap-4">
-                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                            <Leaf className="h-5 w-5 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-medium text-gray-800 mb-1">Waqf (Endowment)</h4>
-                              <div className="cursor-pointer group relative">
-                                <Info className="h-4 w-4 text-blue-500" />
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-64 p-2 bg-white border border-gray-200 rounded shadow-lg text-xs text-gray-600 hidden group-hover:block z-10">
-                                  Waqf is a permanent endowment in Islamic finance. It's more of a legacy endowment and
-                                  needs proper handling to ensure compliance with Islamic principles.
-                                </div>
-                              </div>
-                            </div>
-                            <p className="text-sm text-gray-600 mb-3">
-                              Contribute to a permanent endowment fund that supports ongoing charitable causes
-                            </p>
+<div className="bg-white p-6 rounded-lg border border-blue-200">
+  <div className="flex items-start gap-4">
+    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+      <Leaf className="h-5 w-5 text-blue-600" />
+    </div>
+    <div className="flex-1">
+      <div className="flex items-center gap-2">
+        <h4 className="font-medium text-gray-800 mb-1">Waqf (Endowment)</h4>
+        <div className="cursor-pointer group relative">
+          <Info className="h-4 w-4 text-blue-500" />
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-64 p-2 bg-white border border-gray-200 rounded shadow-lg text-xs text-gray-600 hidden group-hover:block z-10">
+            Waqf is a permanent endowment in Islamic finance. It's more of a legacy endowment and needs proper handling to ensure compliance with Islamic principles.
+          </div>
+        </div>
+      </div>
+      <p className="text-sm text-gray-600 mb-3">
+        Contribute to a permanent endowment fund that supports ongoing charitable causes.
+      </p>
 
-                            <div className="space-y-2 mb-3">
-                              <Label htmlFor="waqf-percentage" className="text-sm">
-                                Percentage of rewards to allocate to Waqf
-                              </Label>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  id="waqf-percentage"
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  value={waqfPercentage}
-                                  onChange={(e) => setWaqfPercentage(Number(e.target.value))}
-                                  className="w-20"
-                                />
-                                <span>%</span>
-                              </div>
-                              {waqfPercentage > 0 && stakeInfo.active && (
-                                <div className="text-xs text-gray-500">
-                                  {((Number(stakeInfo.estimatedReward) * waqfPercentage) / 100).toFixed(6)} ETH will be
-                                  allocated to Waqf
-                                </div>
-                              )}
-                            </div>
+      <div className="space-y-2 mb-3">
+        <Label htmlFor="waqf-percentage" className="text-sm">
+          Percentage of rewards to allocate to Waqf
+        </Label>
+        <div className="flex items-center gap-2">
+          <Input
+            id="waqf-percentage"
+            type="number"
+            min="0"
+            max="100"
+            value={waqfPercentage}
+            onChange={(e) => setWaqfPercentage(Number(e.target.value))}
+            className="w-20"
+          />
+          <span>%</span>
+        </div>
+        {waqfPercentage > 0 && stakeInfo.active && (
+          <div className="text-xs text-gray-500">
+            {((Number(stakeInfo.estimatedReward) * waqfPercentage) / 100).toFixed(6)} ETH will be allocated to Waqf
+          </div>
+        )}
+      </div>
 
-                            <Button
-                              className="w-full bg-blue-600 hover:bg-blue-700"
-                              onClick={() => openModal("waqf")}
-                              disabled={!stakeInfo.active || Number(stakeInfo.estimatedReward) <= 0}
-                            >
-                              Contribute to Waqf
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+      <Button
+        className="w-full bg-blue-600 hover:bg-blue-700"
+        onClick={() => openModal("waqf")}
+        disabled={!stakeInfo.active || Number(stakeInfo.estimatedReward) <= 0}
+      >
+        Contribute to Waqf
+      </Button>
+    </div>
+  </div>
+
+  {/* Waqf Projects Section */}
+  <div className="mt-6">
+    <h4 className="text-lg font-medium text-gray-800 mb-4">Examples of Waqf Projects</h4>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+        <CardHeader className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <Building className="h-6 w-6 text-blue-600" />
+          </div>
+          <CardTitle className="text-lg font-semibold text-blue-900">Community Mosque Construction</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription className="text-sm text-gray-600">
+            Build a mosque in underserved areas to provide a place of worship and community gathering.
+          </CardDescription>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+        <CardHeader className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <School className="h-6 w-6 text-blue-600" />
+          </div>
+          <CardTitle className="text-lg font-semibold text-blue-900">Education Endowment Fund</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription className="text-sm text-gray-600">
+            Support the construction of schools and provide scholarships for underprivileged children.
+          </CardDescription>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+        <CardHeader className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <Hospital className="h-6 w-6 text-blue-600" />
+          </div>
+          <CardTitle className="text-lg font-semibold text-blue-900">Healthcare Facilities</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription className="text-sm text-gray-600">
+            Fund the development of clinics and hospitals to improve access to healthcare in rural areas.
+          </CardDescription>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+        <CardHeader className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <Leaf className="h-6 w-6 text-blue-600" />
+          </div>
+          <CardTitle className="text-lg font-semibold text-blue-900">Clean Water Projects</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription className="text-sm text-gray-600">
+            Install water wells and purification systems to provide clean drinking water to communities in need.
+          </CardDescription>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</div>
 
                       {/* Zakat History */}
                       {zakatHistory.length > 0 && (
@@ -1669,8 +1734,11 @@ export default function StakingPage() {
           </Tabs>
         </div>
 
+        <ShariahCompliantProtocols />
+
+
         {/* Contract Information */}
-        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 max-w-5xl mx-auto mt-12">
+        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 max-w-8xl mx-auto mt-12">
           <CardHeader>
             <CardTitle className="text-xl font-medium py-8">Contract Information</CardTitle>
             <CardDescription>Verify this staking contract on the blockchain</CardDescription>
