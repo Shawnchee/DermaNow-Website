@@ -4,3 +4,6 @@ sentence-transformers
 faiss-cpu
 pydantic
 numpy
+openai
+python-dotenv
+joblib
