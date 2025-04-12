@@ -684,7 +684,7 @@ export default function StakingPage() {
                     (gharar), and gambling (maysir). Instead, we use profit-sharing (mudarabah) and ethical investment
                     (halal) mechanisms.
                   </p>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2 mb-2">
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Riba-Free</span>
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                       Halal Investments
@@ -702,8 +702,8 @@ export default function StakingPage() {
 
         {/* Staking Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 mx-auto">
-          <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
-            <CardContent className="pt-6">
+          <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 py-4">
+            <CardContent className="pt-2">
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
                   <Coins className="h-6 w-6 text-blue-600" />
@@ -783,7 +783,7 @@ export default function StakingPage() {
 
             {/* Staking Dashboard Tab */}
             <TabsContent value="staking">
-              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 py-8">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Coins className="h-6 w-6 text-blue-600 mr-2" />
@@ -967,7 +967,7 @@ export default function StakingPage() {
 
            {/* Islamic Finance Tab */}
            <TabsContent value="islamic">
-              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 py-8">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Mosque className="h-6 w-6 text-blue-600 mr-2" />
@@ -1270,7 +1270,7 @@ export default function StakingPage() {
 
             {/* Rewards & Donations Tab */}
             <TabsContent value="rewards">
-              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 py-8">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Gift className="h-6 w-6 text-blue-600 mr-2" />
@@ -1527,7 +1527,7 @@ export default function StakingPage() {
 
             {/* Analytics Tab */}
             <TabsContent value="analytics">
-              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 py-8">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <BarChart3 className="h-6 w-6 text-blue-600 mr-2" />
@@ -1672,7 +1672,7 @@ export default function StakingPage() {
         {/* Contract Information */}
         <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 max-w-5xl mx-auto mt-12">
           <CardHeader>
-            <CardTitle className="text-xl font-medium">Contract Information</CardTitle>
+            <CardTitle className="text-xl font-medium py-8">Contract Information</CardTitle>
             <CardDescription>Verify this staking contract on the blockchain</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1708,7 +1708,7 @@ export default function StakingPage() {
           <CardFooter>
             <Button
               variant="outline"
-              className="w-full cursor-pointer"
+              className="w-full cursor-pointer mb-8 mt-4"
               onClick={() => window.open(`https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}`, "_blank")}
             >
               View on Etherscan

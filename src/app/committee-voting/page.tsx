@@ -288,7 +288,7 @@ export default function CommitteeVotingPage() {
 
   // Group all milestones under a single "Placeholder Project" title
   const milestonesByProject = {
-    "Placeholder Project": fundedMilestones,
+    "Education for Kids in Rural Areas": fundedMilestones,
   }
 
   return (
@@ -395,7 +395,7 @@ export default function CommitteeVotingPage() {
         {/* Voting Instructions */}
         {isCommittee && (
           <div className="mb-12">
-            <Card className="bg-blue-50 border-blue-200">
+            <Card className="bg-blue-50 border-blue-200 py-4">
               <CardHeader>
                 <CardTitle className="text-xl font-medium flex items-center">
                   <Vote className="h-6 w-6 text-blue-600 mr-2" />
