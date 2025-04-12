@@ -719,10 +719,7 @@ const ServiceProvidersPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProviders.map((provider) => (
-            <Card
-              key={provider.id}
-              className="overflow-hidden hover:shadow-md transition-shadow"
-            >
+             <Card key={provider.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
               <CardHeader className="pb-2">
                 <div className="flex items-start gap-4">
                   <div className="h-12 w-12 rounded-md overflow-hidden bg-blue-100 flex-shrink-0">
@@ -754,7 +751,7 @@ const ServiceProvidersPage = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pb-2">
+              <CardContent className="pb-2 flex-grow">
                 <p className="text-sm text-gray-600 line-clamp-3 mb-3">
                   {provider.description}
                 </p>
@@ -778,7 +775,7 @@ const ServiceProvidersPage = () => {
                   <div>{renderSocialLinks(provider.social_media)}</div>
                 </div>
               </CardContent>
-              <CardFooter className="pt-2">
+              <CardFooter className="pt-2 mt-auto">
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button
