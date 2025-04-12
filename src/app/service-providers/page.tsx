@@ -110,38 +110,35 @@ const ServiceProvidersPage = () => {
           {
             id: "1",
             name: "BuildRight Construction",
-            logo: "/placeholder.svg?height=80&width=80&text=BR",
+            logo: "/images/service-providers/buildright.png",
             service_type: "Construction",
             description:
-              "BuildRight Construction specializes in sustainable building practices for schools, community centers, and healthcare facilities in developing regions.",
-            location: "Nairobi, Kenya",
+              "BuildRight Construction specializes in sustainable building practices for schools, community centers, and healthcare facilities in developing states.",
+            location: "Penang, Malaysia",
             wallet_address: "0x1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t",
             rating: 4.8,
             verified: true,
             portfolio: [
               {
                 id: "p1",
-                title: "Community Center in Kibera",
+                title: "Community Center in Penang",
                 description:
                   "Built a 5,000 sq ft community center with sustainable materials",
-                image:
-                  "/placeholder.svg?height=300&width=400&text=Community+Center",
+                image: "/images/service-providers/communitycenter.jpg",
               },
               {
                 id: "p2",
-                title: "School Renovation in Mathare",
+                title: "School Renovation in George Town",
                 description:
                   "Complete renovation of a primary school serving 500 students",
-                image:
-                  "/placeholder.svg?height=300&width=400&text=School+Renovation",
+                image: "/images/service-providers/school-renovation.jpg",
               },
               {
                 id: "p3",
-                title: "Healthcare Clinic in Turkana",
+                title: "Healthcare Clinic in Butterworth",
                 description:
                   "Construction of a healthcare clinic with solar power",
-                image:
-                  "/placeholder.svg?height=300&width=400&text=Healthcare+Clinic",
+                image: "/images/service-providers/healthcare-clinic.jpeg",
               },
             ],
             social_media: {
@@ -156,18 +153,18 @@ const ServiceProvidersPage = () => {
           {
             id: "2",
             name: "EduTech Solutions",
-            logo: "/placeholder.svg?height=80&width=80&text=ET",
+            logo: "/images/service-providers/edutech-solutions.png",
             service_type: "Education",
             description:
               "EduTech Solutions provides educational technology and training programs for schools in underserved communities.",
-            location: "Accra, Ghana",
+            location: "Kuala Lumpur, Malaysia",
             wallet_address: "0x2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u",
             rating: 4.7,
             verified: true,
             portfolio: [
               {
                 id: "p4",
-                title: "Digital Classroom Initiative",
+                title: "Digital Classroom Initiative in Kuala Lumpur",
                 description:
                   "Equipped 15 schools with computer labs and internet connectivity",
                 image:
@@ -175,7 +172,7 @@ const ServiceProvidersPage = () => {
               },
               {
                 id: "p5",
-                title: "Teacher Training Program",
+                title: "Teacher Training Program in Petaling Jaya",
                 description:
                   "Trained 200+ teachers on digital literacy and modern teaching methods",
                 image:
@@ -194,18 +191,18 @@ const ServiceProvidersPage = () => {
           {
             id: "3",
             name: "MediCare Services",
-            logo: "/placeholder.svg?height=80&width=80&text=MS",
+            logo: "/images/service-providers/medicare-services.png",
             service_type: "Healthcare",
             description:
               "MediCare Services specializes in setting up medical facilities and providing healthcare services in rural areas.",
-            location: "Mumbai, India",
+            location: "Johor Bahru, Malaysia",
             wallet_address: "0x3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v",
             rating: 4.9,
             verified: true,
             portfolio: [
               {
                 id: "p6",
-                title: "Mobile Health Clinics",
+                title: "Mobile Health Clinics in Johor Bahru",
                 description:
                   "Deployed 10 mobile health clinics serving remote villages",
                 image:
@@ -213,7 +210,7 @@ const ServiceProvidersPage = () => {
               },
               {
                 id: "p7",
-                title: "Maternal Care Centers",
+                title: "Maternal Care Centers in Muar",
                 description:
                   "Established 5 maternal care centers reducing mortality rates by 30%",
                 image:
@@ -221,7 +218,7 @@ const ServiceProvidersPage = () => {
               },
               {
                 id: "p8",
-                title: "Vaccination Campaigns",
+                title: "Vaccination Campaigns in Batu Pahat",
                 description:
                   "Conducted vaccination campaigns reaching over 50,000 children",
                 image: "/placeholder.svg?height=300&width=400&text=Vaccination",
@@ -239,18 +236,18 @@ const ServiceProvidersPage = () => {
           {
             id: "4",
             name: "GreenEarth Initiative",
-            logo: "/placeholder.svg?height=80&width=80&text=GE",
+            logo: "/images/service-providers/greenearth-initiative.png",
             service_type: "Environment",
             description:
               "GreenEarth Initiative works on environmental conservation, reforestation, and sustainable agriculture projects.",
-            location: "Bogotá, Colombia",
+            location: "Kuching, Malaysia",
             wallet_address: "0x4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w",
             rating: 4.6,
             verified: true,
             portfolio: [
               {
                 id: "p9",
-                title: "Amazon Reforestation",
+                title: "Amazon Reforestation in Kuching",
                 description:
                   "Planted 100,000 trees in deforested areas of the Amazon",
                 image:
@@ -258,7 +255,7 @@ const ServiceProvidersPage = () => {
               },
               {
                 id: "p10",
-                title: "Clean Water Systems",
+                title: "Clean Water Systems in Sibu",
                 description:
                   "Installed clean water systems in 25 rural communities",
                 image: "/placeholder.svg?height=300&width=400&text=Clean+Water",
@@ -276,25 +273,25 @@ const ServiceProvidersPage = () => {
           {
             id: "5",
             name: "TechForAll",
-            logo: "/placeholder.svg?height=80&width=80&text=TFA",
+            logo: "/images/service-providers/techforall.png",
             service_type: "Technology",
             description:
               "TechForAll bridges the digital divide by providing technology infrastructure and training to underserved communities.",
-            location: "San Francisco, USA",
+            location: "Ipoh, Malaysia",
             wallet_address: "0x5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x",
             rating: 4.7,
             verified: true,
             portfolio: [
               {
                 id: "p11",
-                title: "Rural Internet Access",
+                title: "Rural Internet Access in Ipoh",
                 description: "Provided internet access to 50 rural communities",
                 image:
                   "/placeholder.svg?height=300&width=400&text=Rural+Internet",
               },
               {
                 id: "p12",
-                title: "Coding Bootcamps",
+                title: "Coding Bootcamps in Taiping",
                 description:
                   "Trained 1,000+ youth in coding and digital skills",
                 image:
@@ -313,25 +310,25 @@ const ServiceProvidersPage = () => {
           {
             id: "6",
             name: "FoodBank Network",
-            logo: "/placeholder.svg?height=80&width=80&text=FB",
+            logo: "/images/service-providers/foodbank-network.png",
             service_type: "Food & Nutrition",
             description:
               "FoodBank Network works to eliminate hunger by distributing food to those in need and implementing sustainable food programs.",
-            location: "Cape Town, South Africa",
+            location: "George Town, Malaysia",
             wallet_address: "0x6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y",
             rating: 4.8,
             verified: true,
             portfolio: [
               {
                 id: "p13",
-                title: "Community Gardens",
+                title: "Community Gardens in George Town",
                 description: "Established 30 community gardens in urban areas",
                 image:
                   "/placeholder.svg?height=300&width=400&text=Community+Gardens",
               },
               {
                 id: "p14",
-                title: "School Meal Programs",
+                title: "School Meal Programs in Bayan Lepas",
                 description:
                   "Implemented meal programs in 100 schools serving 50,000 children",
                 image:
@@ -339,7 +336,7 @@ const ServiceProvidersPage = () => {
               },
               {
                 id: "p15",
-                title: "Food Distribution Centers",
+                title: "Food Distribution Centers in Butterworth",
                 description:
                   "Built 5 food distribution centers serving 200,000 people annually",
                 image:
@@ -358,25 +355,25 @@ const ServiceProvidersPage = () => {
           {
             id: "7",
             name: "ShelterPlus",
-            logo: "/placeholder.svg?height=80&width=80&text=SP",
+            logo: "/images/service-providers/shelter-plus.png",
             service_type: "Housing",
             description:
               "ShelterPlus provides affordable housing solutions and shelter for displaced communities and disaster victims.",
-            location: "Manila, Philippines",
+            location: "Shah Alam, Malaysia",
             wallet_address: "0x7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z",
             rating: 4.5,
             verified: true,
             portfolio: [
               {
                 id: "p16",
-                title: "Disaster Relief Housing",
+                title: "Disaster Relief Housing in Shah Alam",
                 description: "Built 500 temporary homes after Typhoon Haiyan",
                 image:
                   "/placeholder.svg?height=300&width=400&text=Disaster+Relief",
               },
               {
                 id: "p17",
-                title: "Affordable Housing Complex",
+                title: "Affordable Housing Complex in Klang",
                 description: "Developed housing for 200 low-income families",
                 image:
                   "/placeholder.svg?height=300&width=400&text=Affordable+Housing",
@@ -394,18 +391,18 @@ const ServiceProvidersPage = () => {
           {
             id: "8",
             name: "CleanWater Projects",
-            logo: "/placeholder.svg?height=80&width=80&text=CW",
+            logo: "/images/service-providers/cleanwater-projects.png",
             service_type: "Water & Sanitation",
             description:
               "CleanWater Projects specializes in providing clean water solutions and sanitation infrastructure to communities in need.",
-            location: "Kampala, Uganda",
+            location: "Kota Kinabalu, Malaysia",
             wallet_address: "0x8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a",
             rating: 4.9,
             verified: true,
             portfolio: [
               {
                 id: "p18",
-                title: "Well Drilling Program",
+                title: "Well Drilling Program in Kota Kinabalu",
                 description:
                   "Drilled 200 wells providing clean water to 100,000 people",
                 image:
@@ -413,13 +410,13 @@ const ServiceProvidersPage = () => {
               },
               {
                 id: "p19",
-                title: "Sanitation Facilities",
+                title: "Sanitation Facilities in Sandakan",
                 description: "Built sanitation facilities in 50 schools",
                 image: "/placeholder.svg?height=300&width=400&text=Sanitation",
               },
               {
                 id: "p20",
-                title: "Water Purification Systems",
+                title: "Water Purification Systems in Tawau",
                 description: "Installed purification systems in 30 communities",
                 image:
                   "/placeholder.svg?height=300&width=400&text=Purification",
@@ -722,10 +719,7 @@ const ServiceProvidersPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProviders.map((provider) => (
-            <Card
-              key={provider.id}
-              className="overflow-hidden hover:shadow-md transition-shadow"
-            >
+             <Card key={provider.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col">
               <CardHeader className="pb-2">
                 <div className="flex items-start gap-4">
                   <div className="h-12 w-12 rounded-md overflow-hidden bg-blue-100 flex-shrink-0">
@@ -757,7 +751,7 @@ const ServiceProvidersPage = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pb-2">
+              <CardContent className="pb-2 flex-grow">
                 <p className="text-sm text-gray-600 line-clamp-3 mb-3">
                   {provider.description}
                 </p>
@@ -781,7 +775,7 @@ const ServiceProvidersPage = () => {
                   <div>{renderSocialLinks(provider.social_media)}</div>
                 </div>
               </CardContent>
-              <CardFooter className="pt-2">
+              <CardFooter className="pt-2 mt-auto">
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button
