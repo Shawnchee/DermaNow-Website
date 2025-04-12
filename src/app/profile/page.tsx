@@ -370,10 +370,11 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-          <Link href="/deposit"></Link>
+          <Link href="/onramp">
             <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleDepositFunds}>
               <ArrowUpRight className="mr-2 h-4 w-4" /> Deposit Funds
             </Button>
+          </Link>
           </div>
         </CardContent>
       </Card>
