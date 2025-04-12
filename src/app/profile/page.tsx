@@ -398,13 +398,13 @@ export default function ProfilePage() {
         </TabsList>
 
         <TabsContent value="wallet">
-          <Card>
+          <Card className="py-8">
             <CardHeader>
               <CardTitle>Token Balance</CardTitle>
               <CardDescription>Your available Sepolia ETH for donations</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-4 mt-2">
                 <div className="flex justify-between items-center p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="text-2xl">🔷</div>
@@ -421,14 +421,14 @@ export default function ProfilePage() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-center">
+            <CardFooter className="flex justify-center mt-4">
               <Button variant="outline" onClick={refreshBalance} className="w-full">
                 Refresh Balance
               </Button>
             </CardFooter>
           </Card>
 
-          <Card className="mt-6">
+          <Card className="mt-6 py-8">
             <CardHeader>
               <CardTitle>Impact Projects</CardTitle>
               <CardDescription>Projects you're currently supporting</CardDescription>
@@ -454,16 +454,16 @@ export default function ProfilePage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full mt-4">
                 Explore More Projects
               </Button>
             </CardFooter>
           </Card>
 
-          <Card className="mt-6">
+          <Card className="mt-6 py-8">
             <CardHeader>
               <CardTitle>NFT Impact Certificates</CardTitle>
-              <CardDescription>Proof of your contributions on the blockchain</CardDescription>
+              <CardDescription className="mb-4">Proof of your contributions on the blockchain</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

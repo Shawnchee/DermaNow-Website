@@ -41,6 +41,13 @@ yarn-error.log*
 next-env.d.ts
 
 /python/models
-.venv/
+.venv
 venv/
-_pycache/
+# Ignore Python cache directories globally
+
+**/__pycache__/
+python/**/__pycache__/
+python/__pycache__/
+python/api/__pycache__/
+python/search/__pycache__/
+

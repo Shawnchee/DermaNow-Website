@@ -177,14 +177,14 @@ export default function CharityPage() {
               Number.parseFloat(formatEther(milestone.targetAmount))) *
             100,
           // Add project title - in a real app, this would come from the contract
-          projectTitle: "Placeholder Project",
+          projectTitle: "Education for Kids in Rural Areas",
           proofOfWork: {
             photos: [
-              "https://images.pexels.com/photos/933624/pexels-photo-933624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-              "https://images.pexels.com/photos/933624/pexels-photo-933624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+              "https://images.pexels.com/photos/5802822/pexels-photo-5802822.jpeg?auto=compress&cs=tinysrgb&w=600",
+              "https://images.pexels.com/photos/27269603/pexels-photo-27269603/free-photo-of-a-small-drone-laying-on-the-ground.jpeg?auto=compress&cs=tinysrgb&w=600",
             ],
             videos: [
-              "https://videos.pexels.com/video-files/6740283/6740283-uhd_2560_1440_30fps.mp4",
+              "https://videos.pexels.com/video-files/20731378/20731378-sd_640_360_30fps.mp4",
             ],
           },
         };
@@ -527,78 +527,6 @@ export default function CharityPage() {
           myrValues={myrValues}
         />
 
-        {/* Detailed Project Description Section */}
-        <div className="mb-12">
-          <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 overflow-hidden">
-            <div className="relative">
-              <img
-                src="/community.jpg"
-                alt="Campaign Banner"
-                className="h-[200px] w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <Badge className="bg-blue-600 rounded-full px-3 py-1 text-xs font-medium">
-                      Active Campaign
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="bg-black/30 text-white border-white/20 rounded-full px-3 py-1 text-xs font-medium"
-                    >
-                      Goal: {targetAmount * ethToMyrRate} MYR (
-                      {targetAmount.toFixed(2)} ETH)
-                    </Badge>
-                  </div>
-                  <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-                    Community Support Initiative
-                  </h1>
-                  <p className="text-zinc-200 text-sm max-w-3xl">
-                    A transparent, milestone-based charity project to support
-                    community development initiatives.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-5 border-t border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center dark:bg-blue-900/30">
-                    <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Raised so far
-                    </div>
-                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                      {Math.min(
-                        Math.round((totalRaised / targetAmount) * 100),
-                        100
-                      )}
-                      % of goal
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-mono text-lg font-medium text-blue-700 dark:text-blue-400">
-                    {myrValues.totalRaised.toLocaleString()} MYR
-                  </div>
-                  <div className="text-xs text-zinc-500">
-                    ≈ {totalRaised.toFixed(4)} ETH
-                  </div>
-                </div>
-              </div>
-              <Progress
-                value={Math.min(
-                  Math.round((totalRaised / targetAmount) * 100),
-                  100
-                )}
-                className="h-2 mt-2 bg-zinc-100 dark:bg-zinc-800"
-              />
-            </div>
-          </Card>
-        </div>
-
         {/* Sequential Milestone Information */}
         <div className="mb-8">
           <Alert className="bg-blue-50 border-blue-200">
@@ -760,7 +688,7 @@ export default function CharityPage() {
                               : milestone.released
                               ? "border-gray-200"
                               : "border-blue-100"
-                          } overflow-hidden h-full flex flex-col relative`}
+                          } overflow-hidden h-full flex flex-col relative p-2`}
                         >
                           {/* Sequential indicator */}
                           {activeMilestoneId === milestone.id && (
@@ -824,7 +752,8 @@ export default function CharityPage() {
                                 <span className="font-medium">
                                   Service Provider:
                                 </span>{" "}
-                                {milestone.serviceProviderName}
+                                {/* {milestone.serviceProviderName} */}
+
                               </div>
                               <div className="text-xs text-gray-500 font-mono">
                                 Address:{" "}
@@ -988,7 +917,7 @@ export default function CharityPage() {
         </div>
 
         {/* Transaction History */}
-        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 mb-12">
+        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 mb-12 py-8">
           <CardHeader>
             <CardTitle className="text-xl font-medium">
               Recent Transactions
@@ -1115,28 +1044,7 @@ export default function CharityPage() {
         <HalalChecker description={eventDescription} />
 
         {/* Security and Verification Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          {/* Wallet Security Check */}
-          <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
-            <div className="flex items-start">
-              <div className="bg-blue-50 p-3 rounded-full mr-4">
-                <Shield className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-2">
-                  Wallet Security Check
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Verify the security of service provider wallets before
-                  donating to ensure your funds go to legitimate recipients.
-                </p>
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                  Verify Wallet Security
-                </Button>
-              </div>
-            </div>
-          </div>
-
+        <div className="mb-12">
           {/* Committee Verification */}
           <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
             <div className="flex items-start">
@@ -1158,6 +1066,7 @@ export default function CharityPage() {
             </div>
           </div>
         </div>
+
         {/* Organization Banner */}
         <div className="container mx-auto px-6 pt-5">
           <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-blue-400 dark:border-blue-700 bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm">

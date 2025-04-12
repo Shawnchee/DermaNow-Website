@@ -85,7 +85,7 @@ ${description}`;
     <div className="w-full px-4 py-8">
       <Card className="mb-8 overflow-hidden">
         <CardHeader className="relative">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 py-4">
             <MoonStar className="h-6 w-6 text-blue-600" />
             <CardTitle className="text-lg font-semibold">
               Donation Halal Status
@@ -99,7 +99,7 @@ ${description}`;
           <Button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 mb-4 mt-2"
           >
             {isLoading ? (
               <>
