@@ -1,5 +1,16 @@
 # DermaNow 🌟
 
+**Team Members:**  
+👨‍💻 Shawn Chee — *Web3 Engineer*  
+🧑‍💻 Yu Han — *Full-stack Developer*  
+📊 Eugene See — *Business Analyst / QA*  
+🤖 Jin Khye — *AI/ML Engineer*  
+🧑‍💻 Melvin Lee — *Full-stack Developer*
+
+**Presentation Slide:**  
+🎞️ [View our Google Drive Link](https://drive.google.com/file/d/1q7-12SLgM7Yr1O8Ul4RD0flB8xMEly2u/view?usp=sharing)
+
+
 ## Blockchain-Powered Shariah-Compliant Charity Platform
 
 [![Follow on Twitter](https://img.shields.io/twitter/follow/dermanow?style=social)](https://twitter.com/dermanow)
