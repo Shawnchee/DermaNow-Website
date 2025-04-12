@@ -752,7 +752,8 @@ export default function CharityPage() {
                                 <span className="font-medium">
                                   Service Provider:
                                 </span>{" "}
-                                {milestone.serviceProviderName}
+                                {/* {milestone.serviceProviderName} */}
+
                               </div>
                               <div className="text-xs text-gray-500 font-mono">
                                 Address:{" "}
@@ -916,7 +917,7 @@ export default function CharityPage() {
         </div>
 
         {/* Transaction History */}
-        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 mb-12">
+        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 mb-12 py-8">
           <CardHeader>
             <CardTitle className="text-xl font-medium">
               Recent Transactions

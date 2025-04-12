@@ -422,7 +422,7 @@ export default function OnrampPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-blue-200">
+            <Card className="border-blue-200 py-8">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <DollarSign className="h-6 w-6 text-green-600 mr-2" />
