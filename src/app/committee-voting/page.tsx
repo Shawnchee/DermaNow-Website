@@ -39,7 +39,7 @@ import { contractABI } from "@/lib/contract-abi"
 import { formatEther } from "ethers"
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0x8765b67425A42dD7ba3e0f350542426Ed2551c02"
+const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb"
 
 export default function CommitteeVotingPage() {
   // Use the connectMetamask hook
