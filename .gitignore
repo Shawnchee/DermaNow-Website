@@ -43,3 +43,4 @@ next-env.d.ts
 /python/models
 .venv/
 venv/
+_pycache/
