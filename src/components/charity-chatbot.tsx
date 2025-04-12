@@ -434,8 +434,8 @@ export function CharityChat() {
             className={cn(
               "fixed z-50",
               isExpanded
-                ? "top-30 right-6 bottom-24 md:left-auto md:w-125"
-                : "bottom-24 right-6 w-100 top-125"
+                ? "top-20 right-6 bottom-24 md:left-auto md:w-125"
+                : "bottom-24 right-6 w-100 top-40"
             )}
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -555,7 +555,7 @@ export function CharityChat() {
                 {/* Chat messages */}
                 <div
                   ref={chatContainerRef}
-                  className="flex-1 overflow-y-auto p-4 bg-white"
+                  className="flex-1 overflow-y-auto p-4 pb-0 bg-white"
                   style={{
                     height: isExpanded ? "calc(100vh - 220px)" : "450px",
                   }}

@@ -75,7 +75,7 @@ You are DermaBot, helping users learn about and donate to Shariah-compliant char
    - Do not call search_charities unless donation intent is clear.
 
 3. **Donation Queries**:
-   - If the user wants to donate (e.g., "I want to donate to kids"), identify a specific query (e.g., "kids") and call search_charities with it.
+   - If the user wants to donate (e.g., "I want to donate to kids"), extract the sentence and call search_charities with it.
    - The query must be a meaningful sentence derived from the user’s input.
    - If the query matches a project, present the top charity in a natural, engaging paragraph which contains:
      - Project title.
@@ -98,8 +98,7 @@ You are DermaBot, helping users learn about and donate to Shariah-compliant char
    - Vary responses to feel natural, avoiding repetitive phrases.
 
 6. **Error Handling**:
-   - If intent is unclear, respond: "Could you clarify what you’re looking for? I’m here to help!"
-   - If donation intent is detected but no specific cause is mentioned, use a default query like 'charity' for search_charities.
+   - If donation intent is detected but no specific cause is mentioned, use a default query like 'education/medical/food' for search_charities to give some suggestions.
    - Always prioritize trust and integrity; avoid speculation.
 """,
             }
@@ -190,11 +189,7 @@ You are DermaBot, helping users learn about and donate to Shariah-compliant char
                     )
 
                     # If no results or low relevance, try a general search
-                    if (
-                        not charities
-                        or len(charities) == 0
-                        or charities[0].get("confidence", 1.0) < 0.7
-                    ):
+                    if not charities or len(charities) == 0:
                         general_charities = search_charities("charity")
                         if general_charities:
                             filtered_general = [
