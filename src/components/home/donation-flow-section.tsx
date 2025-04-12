@@ -91,63 +91,63 @@ const FlowStep: React.FC<FlowStepProps> = ({
 );
 
 export default function DonationFlowSection() {
-  const [activeTab, setActiveTab] = useState<"individuals" | "ngos">(
-    "individuals"
+  const [activeTab, setActiveTab] = useState<"donors" | "charities">(
+    "donors"
   );
 
-  const flowData: Record<"individuals" | "ngos", FlowItem[]> = {
-    individuals: [
+  const flowData: Record<"donors" | "charities", FlowItem[]> = {
+    donors: [
       {
         id: 1,
         icon: DollarSign,
-        text: "The donor converts fiat currency into ETH.",
+        text: "Convert your MYR to ETH securely through your preferred crypto platform.",
       },
       {
         id: 2,
         icon: Wallet,
-        text: "ETH is deposited into the donor's smart wallet.",
+        text: "Top up your smart wallet with ETH — ready for donations.",
       },
       {
         id: 3,
         icon: HeartHandshake,
-        text: "The donor selects a donation project to support.",
+        text: "Explore verified charity projects on DermaNow and choose one to support.",
       },
       {
         id: 4,
         icon: Send,
-        text: "The donor initiates the donation by sending ETH to the project's smart contract.",
+        text: "Send your donation directly to the project’s smart contract with one click.",
       },
       {
         id: 5,
         icon: Network,
-        text: "The smart contract automatically distributes funds to the wallet addresses of verified executing organizations.",
+        text: "Track your donation on the blockchain as funds reach real organizations transparently.",
       },
     ],
-    ngos: [
+    charities: [
       {
         id: 1,
         icon: FilePlus2,
-        text: "NGOs set up a donation project by defining the goal, timeline, and structure.",
+        text: "Create a project: set your goal, timeline, and key milestones.",
       },
       {
         id: 2,
         icon: Users,
-        text: "Specify milestone proportions and assign wallet addresses to responsible organizations.",
+        text: "Assign a service provider to manage your project and ensure transparency.",
       },
       {
         id: 3,
         icon: Code,
-        text: "The smart contract is deployed with all conditions encoded, including fund distribution rules.",
+        text: "Deploy a smart contract to manage donations and track progress.",
       },
       {
         id: 4,
         icon: Zap,
-        text: "Once milestones are achieved or the project reaches maturity, the contract is triggered.",
+        text: "Reach key milestones and automatically unlock donation funds via smart triggers.",
       },
       {
         id: 5,
         icon: Banknote,
-        text: "Funds are automatically distributed to each party based on the agreed proportions including their share of marketing funds",
+        text: "Each party receives their share of funds based on predefined terms, including allocations for marketing activities.",
       },
     ],
   };
@@ -189,18 +189,18 @@ export default function DonationFlowSection() {
             transition={{ duration: 0.5, delay: 0.3 }}
           >
             <TabButton
-              active={activeTab === "individuals"}
-              onClick={() => setActiveTab("individuals")}
+              active={activeTab === "donors"}
+              onClick={() => setActiveTab("donors")}
               icon={<User className="w-5 h-5" />}
             >
-              For Individuals
+              For Donors
             </TabButton>
             <TabButton
-              active={activeTab === "ngos"}
-              onClick={() => setActiveTab("ngos")}
+              active={activeTab === "charities"}
+              onClick={() => setActiveTab("charities")}
               icon={<Users className="w-5 h-5" />}
             >
-              For NGOs
+              For Charities
             </TabButton>
           </motion.div>
         </div>
