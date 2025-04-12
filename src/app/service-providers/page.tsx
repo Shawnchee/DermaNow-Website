@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import { Suspense } from "react";
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -80,7 +81,7 @@ interface SocialMedia {
   facebook?: string;
 }
 
-const ServiceProvidersPage = () => {
+const ServiceProvidersContent = () => {
   const searchParams = useSearchParams();
   const [serviceProviders, setServiceProviders] = useState<ServiceProvider[]>(
     []
@@ -553,6 +554,7 @@ const ServiceProvidersPage = () => {
   };
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <div className="container mx-auto py-8 px-4">
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-bold mb-6 text-blue-900">
@@ -844,7 +846,7 @@ const ServiceProvidersPage = () => {
                                     key={item.id}
                                     className="overflow-hidden"
                                   >
-                                    <div className="h-48 w-full overflow-hidden">
+                                    <div className="h-24 w-full overflow-hidden">
                                       <img
                                         src={item.image || "/placeholder.svg"}
                                         alt={item.title}
@@ -1049,7 +1051,17 @@ const ServiceProvidersPage = () => {
         </div>
       )}
     </div>
+    </Suspense>
+  );
+};
+
+const ServiceProvidersPage = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ServiceProvidersContent />
+    </Suspense>
   );
 };
 
 export default ServiceProvidersPage;
+

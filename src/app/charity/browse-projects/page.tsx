@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -81,7 +81,7 @@ const ProjectCard: React.FC<ProjectProps> = ({
         </div>
         <div className="flex items-center space-x-2">
           <Heart className="h-4 w-4" />
-          <span className="text-sm">${amount.toLocaleString()}</span>
+          <span className="text-sm">{amount.toLocaleString()} MYR</span>
         </div>
       </div>
     </div>
@@ -208,7 +208,7 @@ const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
   );
 };
 
-export default function Page() {
+const PageContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [projects, setProjects] = useState<ProjectProps[]>([]);
@@ -293,16 +293,16 @@ export default function Page() {
         },
         {
           id: 5,
-          title: "Empowering Education Through Nutrition",
+          title: "Education for Kids in Rural Areas",
           description:
-            "Ensuring children have access to meals to focus on their studies.",
+            "A comprehensive initiative to build and equip modern schools for underserved students in remote Malaysian villages.",
           image:
-            "https://images.pexels.com/photos/764681/pexels-photo-764681.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+            "/classroom.jpg",
           funding_percentage: 100,
           in_progress: true,
-          progress_percentage: 56.7,
+          progress_percentage: 19.0,
           supporters: 492,
-          amount: 88020,
+          amount: 625,
           category: ["Food & Nutrition", "Education"],
         },
         {
@@ -608,3 +608,13 @@ export default function Page() {
     </div>
   );
 }
+
+const ProjectPage = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PageContent />
+    </Suspense>
+  );
+};
+
+export default ProjectPage;
