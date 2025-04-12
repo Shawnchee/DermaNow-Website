@@ -247,7 +247,7 @@ export default function Page() {
           description:
             "Providing clean and safe drinking water to underserved communities.",
           image:
-            "https://images.pexels.com/photos/28101466/pexels-photo-28101466/free-photo-of-photo-of-children-drinking-water.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+            "/images/clean-water.jpeg",
           funding_percentage: 44.5,
           supporters: 600,
           amount: 22250,
@@ -324,7 +324,7 @@ export default function Page() {
           description:
             "Helping children stay in school by providing daily meals.",
           image:
-            "https://images.pexels.com/photos/8617558/pexels-photo-8617558.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
+            "/images/education-through-meals.jpg",
           funding_percentage: 100,
           funding_complete: true,
           supporters: 1000,
