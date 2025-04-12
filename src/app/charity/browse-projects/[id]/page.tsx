@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ethers } from "ethers";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,10 +45,11 @@ import {
   BadgeCheck,
   BookOpen,
   Leaf,
-  Scale,
   MoonStar,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import HalalChecker from "@/components/HalalChecker";
+import CampaignProgressCard from "@/components/campaign-process-card";
 
 // Contract address from deployment
 const CONTRACT_ADDRESS = "0x8765b67425A42dD7ba3e0f350542426Ed2551c02";
@@ -89,6 +90,11 @@ export default function CharityPage() {
     message: string;
     txHash?: string;
   }>({ status: null, message: "" });
+
+  const milestonesRef = useRef<HTMLDivElement>(null);
+
+  const eventDescription =
+    "This initiative aims to address the critical educational gap in rural Malaysian villages by establishing modern, well-equipped schools that provide quality education to underserved children. The project takes a holistic approach to education, focusing not only on building physical infrastructure but also on providing learning materials, training qualified teachers, and engaging the local community.";
 
   // Initialize contract when signer is available
   useEffect(() => {
@@ -419,6 +425,10 @@ export default function CharityPage() {
     }
   };
 
+  const scrollToMilestones = () => {
+    milestonesRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   // Connect on component mount if wallet is already connected
   useEffect(() => {
     if (window.ethereum) {
@@ -437,62 +447,6 @@ export default function CharityPage() {
 
   return (
     <div className="min-h-screen pt-24 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
-      {/* Organization Banner */}
-      <div className="container mx-auto px-6 pt-5">
-        <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-blue-400 dark:border-blue-700 bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm">
-          <div className="flex items-center">
-            <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-              <Building className="h-5 w-5 text-blue-100" />
-            </div>
-            <div>
-              <div className="text-xs text-blue-100 mb-0.5 font-medium">
-                Organization
-              </div>
-              <span className="font-semibold text-white">
-                Charity Milestone DAO
-              </span>
-            </div>
-          </div>
-
-          <a
-            href="https://github.com/charity-milestone-dao"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
-          >
-            <span className="text-blue-500">View GitHub</span>
-            <ExternalLink className="h-3 w-3 ml-1.5 text-blue-500" />
-          </a>
-        </div>
-      </div>
-
-      {/* Shariah compliance badge */}
-      <div className="container mx-auto px-6 pt-2">
-        <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
-          <div className="flex items-center">
-            <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-              <MoonStar className="h-5 w-5 text-green-100" />
-            </div>
-            <div>
-              <div className="text-xs text-green-100 mb-0.5 font-medium">
-                Certification
-              </div>
-              <span className="font-semibold text-white">
-                Shariah Compliant
-              </span>
-            </div>
-          </div>
-
-          <a
-            href="#shariah-info"
-            className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
-          >
-            <span className="text-blue-500">Learn More</span>
-            <BookOpen className="h-3 w-3 ml-1.5 text-blue-500" />
-          </a>
-        </div>
-      </div>
-
       <div className="container mx-auto px-4 py-12">
         <motion.div
           className="text-center max-w-4xl mx-auto mb-12"
@@ -566,6 +520,14 @@ export default function CharityPage() {
         </motion.div>
 
         {/* Campaign Progress Card */}
+        <CampaignProgressCard
+          totalRaised={totalRaised}
+          targetAmount={targetAmount}
+          ethToMyrRate={ethToMyrRate}
+          myrValues={myrValues}
+        />
+
+        {/* Detailed Project Description Section */}
         <div className="mb-12">
           <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 overflow-hidden">
             <div className="relative">
@@ -741,7 +703,7 @@ export default function CharityPage() {
         </Dialog>
 
         {/* Milestones Section */}
-        <div className="mb-16">
+        <div className="mb-16" ref={milestonesRef}>
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold text-gray-800">
               Active Charity Milestones
@@ -1115,105 +1077,42 @@ export default function CharityPage() {
           </CardContent>
         </Card>
 
-        {/* Shariah Compliance Information */}
-        <div id="shariah-info" className="mb-12">
-          <Card className="bg-white/90 backdrop-blur-sm border border-green-100">
-            <CardHeader>
-              <CardTitle className="text-xl font-medium flex items-center">
-                <MoonStar className="h-6 w-6 text-green-600 mr-2" />
-                Shariah Compliance Information
-              </CardTitle>
-              <CardDescription>
-                Understanding how our charity projects adhere to Islamic
-                principles
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex items-start mb-2">
-                    <div className="bg-green-100 p-2 rounded-full mr-3">
-                      <Scale className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-green-800">Riba-Free</h3>
-                      <p className="text-sm text-green-700">
-                        All projects are free from interest-based transactions
-                        (riba) and comply with Islamic finance principles.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+        <div className="bg-blue-50 border-green-900 p-4 rounded-lg">
+          <h3 className="font-medium text-blue-800 mb-2">Donation Types</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white p-3 rounded-md border border-blue-100">
+              <h4 className="font-medium text-blue-700 flex items-center">
+                <Leaf className="h-4 w-4 mr-1 text-blue-700" /> Sadaqah
+              </h4>
+              <p className="text-sm text-gray-600 mt-1">
+                Voluntary charitable giving that can be directed to any of our
+                projects.
+              </p>
+            </div>
 
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex items-start mb-2">
-                    <div className="bg-green-100 p-2 rounded-full mr-3">
-                      <BadgeCheck className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-green-800">
-                        Certified Projects
-                      </h3>
-                      <p className="text-sm text-green-700">
-                        All charity milestones are reviewed and certified by
-                        qualified Shariah advisors.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="bg-white p-3 rounded-md border border-green-100">
+              <h4 className="font-medium text-blue-700 flex items-center">
+                <Leaf className="h-4 w-4 mr-1 text-blue-700" /> Zakat
+              </h4>
+              <p className="text-sm text-gray-600 mt-1">
+                Obligatory alms that can be directed to eligible projects marked
+                with Zakat-eligible badge.
+              </p>
+            </div>
 
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-medium text-green-800 mb-2">
-                  Donation Types
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white p-3 rounded-md border border-green-100">
-                    <h4 className="font-medium text-green-700 flex items-center">
-                      <Leaf className="h-4 w-4 mr-1" /> Sadaqah
-                    </h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Voluntary charitable giving that can be directed to any of
-                      our projects.
-                    </p>
-                  </div>
-
-                  <div className="bg-white p-3 rounded-md border border-green-100">
-                    <h4 className="font-medium text-green-700 flex items-center">
-                      <Leaf className="h-4 w-4 mr-1" /> Zakat
-                    </h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Obligatory alms that can be directed to eligible projects
-                      marked with Zakat-eligible badge.
-                    </p>
-                  </div>
-
-                  <div className="bg-white p-3 rounded-md border border-green-100">
-                    <h4 className="font-medium text-green-700 flex items-center">
-                      <Leaf className="h-4 w-4 mr-1" /> Waqf
-                    </h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Endowment funds that provide sustainable support for
-                      long-term community projects.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <Alert className="bg-green-50 border-green-200">
-                <BookOpen className="h-5 w-5 text-green-600" />
-                <AlertTitle>Shariah Advisory Board</AlertTitle>
-                <AlertDescription>
-                  Our projects are regularly reviewed by a panel of qualified
-                  Shariah scholars to ensure compliance with Islamic principles.
-                  The board verifies that all funds are used in accordance with
-                  Shariah guidelines and that projects avoid prohibited
-                  activities.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
+            <div className="bg-white p-3 rounded-md border border-green-100">
+              <h4 className="font-medium text-blue-700 flex items-center">
+                <Leaf className="h-4 w-4 mr-1 text-blue-700" /> Waqf
+              </h4>
+              <p className="text-sm text-gray-600 mt-1">
+                Endowment funds that provide sustainable support for long-term
+                community projects.
+              </p>
+            </div>
+          </div>
         </div>
+
+        <HalalChecker description={eventDescription} />
 
         {/* Security and Verification Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
@@ -1257,6 +1156,61 @@ export default function CharityPage() {
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+        {/* Organization Banner */}
+        <div className="container mx-auto px-6 pt-5">
+          <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-blue-400 dark:border-blue-700 bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm">
+            <div className="flex items-center">
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
+                <Building className="h-5 w-5 text-blue-100" />
+              </div>
+              <div>
+                <div className="text-xs text-blue-100 mb-0.5 font-medium">
+                  Organization
+                </div>
+                <span className="font-semibold text-white">
+                  Charity Milestone DAO
+                </span>
+              </div>
+            </div>
+
+            <a
+              href="https://github.com/charity-milestone-dao"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
+            >
+              <span className="text-blue-500">View GitHub</span>
+              <ExternalLink className="h-3 w-3 ml-1.5 text-blue-500" />
+            </a>
+          </div>
+        </div>
+
+        {/* Shariah compliance badge */}
+        <div className="container mx-auto px-6 pt-2">
+          <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
+            <div className="flex items-center">
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
+                <MoonStar className="h-5 w-5 text-green-100" />
+              </div>
+              <div>
+                <div className="text-xs text-green-100 mb-0.5 font-medium">
+                  Certification
+                </div>
+                <span className="font-semibold text-white">
+                  Shariah Compliant
+                </span>
+              </div>
+            </div>
+
+            <a
+              href="#shariah-info"
+              className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
+            >
+              <span className="text-blue-500">Learn More</span>
+              <BookOpen className="h-3 w-3 ml-1.5 text-blue-500" />
+            </a>
           </div>
         </div>
       </div>

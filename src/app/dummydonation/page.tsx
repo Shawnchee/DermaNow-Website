@@ -7,7 +7,7 @@ import HalalChecker from "@/components/HalalChecker";
 export default function DummyDonationPage() {
   return (
     <main className="min-h-screen p-6">
-      <HalalChecker />
+      {/* <HalalChecker /> */}
     </main>
   );
 }
