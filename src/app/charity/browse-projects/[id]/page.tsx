@@ -1263,28 +1263,7 @@ export default function CharityPage() {
         <HalalChecker description={eventDescription} />
 
         {/* Security and Verification Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          {/* Wallet Security Check */}
-          <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
-            <div className="flex items-start">
-              <div className="bg-blue-50 p-3 rounded-full mr-4">
-                <Shield className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-2">
-                  Wallet Security Check
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Verify the security of service provider wallets before
-                  donating to ensure your funds go to legitimate recipients.
-                </p>
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                  Verify Wallet Security
-                </Button>
-              </div>
-            </div>
-          </div>
-
+        <div className="mb-12">
           {/* Committee Verification */}
           <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
             <div className="flex items-start">
@@ -1306,6 +1285,7 @@ export default function CharityPage() {
             </div>
           </div>
         </div>
+
         {/* Organization Banner */}
         <div className="container mx-auto px-6 pt-5">
           <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-blue-400 dark:border-blue-700 bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm">
