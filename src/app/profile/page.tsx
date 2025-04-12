@@ -5,7 +5,10 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import {
-  User, History, Bell, Heart, Edit, ChevronRight, Wallet, ExternalLink, Copy, ArrowUpRight, Save, Camera, X, Award, Sparkles, Gem, ChevronUp,} from "lucide-react"
+  User, History, Bell, Heart, Edit, ChevronRight, Wallet, ExternalLink, Copy, ArrowUpRight, Save, Camera, X, Award, Sparkles, Gem, ChevronUp,
+  Droplet,
+  LibraryBig,
+  Apple,} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -339,7 +342,7 @@ export default function ProfilePage() {
             </div>
 
             <Link href="/donation-levels">
-              <Button className="bg-green-600 hover:bg-green-700 flex items-center gap-1">
+              <Button className="bg-green-600 hover:bg-green-700 flex items-center gap-1 cursor-pointer">
                 <ChevronUp className="h-4 w-4" /> Level Up
               </Button>
             </Link>
@@ -364,7 +367,7 @@ export default function ProfilePage() {
                       onClick={() => copyToClipboard(walletAddress)}
                       className="text-blue-500 hover:text-blue-700"
                     >
-                      <Copy className="h-4 w-4" />
+                      <Copy className="h-4 w-4 cursor-pointer" />
                     </button>
                   )}
                 </div>
@@ -465,22 +468,22 @@ export default function ProfilePage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="border rounded-lg p-4 flex flex-col items-center text-center">
-                  <div className="w-full aspect-square bg-gradient-to-br from-blue-100 to-emerald-100 rounded-lg mb-3 flex items-center justify-center">
-                    <Heart className="h-12 w-12 text-emerald-500" />
+                  <div className="w-full aspect-square bg-gradient-to-br from-blue-100 to-emerald-100 rounded-lg mb-3 flex items-center justify-center hover:scale-105 transition-transform duration-200">
+                    <Droplet className="h-20 w-20 text-emerald-500" />
                   </div>
                   <h3 className="font-medium">Clean Water Supporter</h3>
                   <p className="text-sm text-muted-foreground">Issued Apr 2023</p>
                 </div>
                 <div className="border rounded-lg p-4 flex flex-col items-center text-center">
-                  <div className="w-full aspect-square bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 flex items-center justify-center">
-                    <Heart className="h-12 w-12 text-purple-500" />
+                  <div className="w-full aspect-square bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 flex items-center justify-center hover:scale-105 transition-transform duration-200">
+                    <LibraryBig className="h-20 w-20 text-purple-500" />
                   </div>
                   <h3 className="font-medium">Education Advocate</h3>
                   <p className="text-sm text-muted-foreground">Issued Mar 2023</p>
                 </div>
                 <div className="border rounded-lg p-4 flex flex-col items-center text-center">
-                  <div className="w-full aspect-square bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg mb-3 flex items-center justify-center">
-                    <Heart className="h-12 w-12 text-amber-500" />
+                  <div className="w-full aspect-square bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg mb-3 flex items-center justify-center hover:scale-105 transition-transform duration-200">
+                    <Apple className="h-20 w-20 text-amber-500" />
                   </div>
                   <h3 className="font-medium">Food Security Champion</h3>
                   <p className="text-sm text-muted-foreground">Issued Feb 2023</p>

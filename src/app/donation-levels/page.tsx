@@ -69,7 +69,7 @@ export default function DonationLevelsPage() {
       {/* Back to profile button */}
       <div className="mb-8">
         <Link href="/profile">
-          <Button variant="ghost" className="flex items-center gap-2">
+          <Button variant="ghost" className="flex items-center gap-2 cursor-pointer">
             <ChevronLeft className="h-4 w-4" /> Back to Profile
           </Button>
         </Link>
@@ -127,8 +127,8 @@ export default function DonationLevelsPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/charity">
-              <Button className="bg-blue-600 hover:bg-blue-700">
+            <Link href="/charity/browse-projects">
+              <Button className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
                 Donate to Level Up
               </Button>
             </Link>
@@ -373,13 +373,13 @@ export default function DonationLevelsPage() {
                     <div className="h-5 w-5 flex-shrink-0 mt-0.5 text-blue-600">
                       <CheckSquare className="h-5 w-5" />
                     </div>
-                    <span>RM300 total</span>
+                    <span>RM2000 total</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="h-5 w-5 flex-shrink-0 mt-0.5 text-blue-600">
                       <CheckSquare className="h-5 w-5" />
                     </div>
-                    <span>3 projects</span>
+                    <span>5 projects</span>
                   </li>
                 </ul>
               </div>

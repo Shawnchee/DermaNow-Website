@@ -1397,7 +1397,7 @@ export default function StakingPage() {
                                 <h5 className="font-medium text-blue-800 mb-3">Select a Charity Milestone</h5>
                                 <RadioGroup
                                   value={selectedMilestone !== null ? selectedMilestone.toString() : ""}
-                                  onValueChange={(value) => setSelectedMilestone(Number(value))}
+                                  onValueChange={(value: any) => setSelectedMilestone(Number(value))}
                                   className="space-y-3"
                                 >
                                   {milestones
