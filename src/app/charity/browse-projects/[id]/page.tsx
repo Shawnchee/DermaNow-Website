@@ -530,220 +530,72 @@ export default function CharityPage() {
         {/* Detailed Project Description Section */}
         <div className="mb-12">
           <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 overflow-hidden">
-            <CardHeader>
-              <div className="flex justify-between">
-                <div>
-                  <CardTitle className="text-2xl font-bold">
-                    Education for Kids in Rural Areas
-                  </CardTitle>
-                  <CardDescription>
-                    A comprehensive initiative to build and equip modern schools
-                    in underserved communities
-                  </CardDescription>
+            <div className="relative">
+              <img
+                src="/community.jpg"
+                alt="Campaign Banner"
+                className="h-[200px] w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <Badge className="bg-blue-600 rounded-full px-3 py-1 text-xs font-medium">
+                      Active Campaign
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-black/30 text-white border-white/20 rounded-full px-3 py-1 text-xs font-medium"
+                    >
+                      Goal: {targetAmount * ethToMyrRate} MYR (
+                      {targetAmount.toFixed(2)} ETH)
+                    </Badge>
+                  </div>
+                  <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
+                    Community Support Initiative
+                  </h1>
+                  <p className="text-zinc-200 text-sm max-w-3xl">
+                    A transparent, milestone-based charity project to support
+                    community development initiatives.
+                  </p>
                 </div>
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700 px-6 py-6 text-lg font-medium"
-                  onClick={scrollToMilestones}
-                >
-                  Support This Project
-                </Button>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="col-span-2 space-y-4">
-                  <h3 className="text-lg font-semibold text-blue-700">
-                    Project Overview
-                  </h3>
-                  <p className="text-gray-700">
-                    This initiative aims to address the critical educational gap
-                    in rural Malaysian villages by establishing modern,
-                    well-equipped schools that provide quality education to
-                    underserved children. The project takes a holistic approach
-                    to education, focusing not only on building physical
-                    infrastructure but also on providing learning materials,
-                    training qualified teachers, and engaging the local
-                    community.
-                  </p>
-                  <p className="text-gray-700">
-                    Many children in remote areas face significant barriers to
-                    education, including long travel distances, inadequate
-                    facilities, and a shortage of qualified teachers. This
-                    project seeks to overcome these challenges by bringing
-                    education directly to these communities, ensuring that every
-                    child has access to the education they deserve.
-                  </p>
-
-                  <h3 className="text-lg font-semibold text-blue-700 mt-6">
-                    Key Objectives
-                  </h3>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-700">
-                    <li>
-                      Construct 5 modern school buildings in strategic rural
-                      locations to serve multiple villages
-                    </li>
-                    <li>
-                      Equip each school with essential learning materials,
-                      technology, and resources
-                    </li>
-                    <li>
-                      Recruit and train 25 qualified teachers from local
-                      communities
-                    </li>
-                    <li>
-                      Develop a curriculum that balances academic knowledge with
-                      practical skills
-                    </li>
-                    <li>
-                      Establish community involvement programs to ensure
-                      long-term sustainability
-                    </li>
-                    <li>
-                      Provide clean water and sanitation facilities at each
-                      school
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-semibold text-blue-700 mb-3">
-                      Project Impact
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <div className="font-medium">1,200+ Students</div>
-                          <div className="text-sm text-gray-500">
-                            Will gain access to education
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <Building className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <div className="font-medium">5 Schools</div>
-                          <div className="text-sm text-gray-500">
-                            Built in strategic locations
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <BookOpen className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <div className="font-medium">25 Teachers</div>
-                          <div className="text-sm text-gray-500">
-                            Trained and employed
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <Leaf className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <div className="font-medium">Sustainable Design</div>
-                          <div className="text-sm text-gray-500">
-                            Solar power & rainwater harvesting
-                          </div>
-                        </div>
-                      </div>
+            </div>
+            <div className="p-5 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center dark:bg-blue-900/30">
+                    <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                      Raised so far
+                    </div>
+                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
+                      {Math.min(
+                        Math.round((totalRaised / targetAmount) * 100),
+                        100
+                      )}
+                      % of goal
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="border-t pt-6 mt-6">
-                <h3 className="text-lg font-semibold text-blue-700 mb-4">
-                  Project Timeline
-                </h3>
-                <div className="relative">
-                  {/* Timeline line */}
-                  <div className="absolute left-[15px] top-0 bottom-0 w-[2px] bg-blue-200"></div>
-
-                  <div className="space-y-6">
-                    <div className="flex gap-4">
-                      <div className="h-8 w-8 rounded-full bg-blue-600 z-10 flex items-center justify-center text-white text-sm">
-                        1
-                      </div>
-                      <div>
-                        <h4 className="font-medium">
-                          Land Preparation and Surveying
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          Securing suitable land and finalizing architectural
-                          plans for the schools
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <div className="h-8 w-8 rounded-full bg-blue-500 z-10 flex items-center justify-center text-white text-sm">
-                        2
-                      </div>
-                      <div>
-                        <h4 className="font-medium">Foundation & Structure</h4>
-                        <p className="text-sm text-gray-600">
-                          To stabalise the structure of the campus buildings
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <div className="h-8 w-8 rounded-full bg-blue-400 z-10 flex items-center justify-center text-white text-sm">
-                        3
-                      </div>
-                      <div>
-                        <h4 className="font-medium">
-                          Electrical and Plumbing Installation
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          To complete the electrical wirings and plumbing works
-                          to ensure a conducive studying environment
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <div className="h-8 w-8 rounded-full bg-blue-300 z-10 flex items-center justify-center text-white text-sm">
-                        4
-                      </div>
-                      <div>
-                        <h4 className="font-medium">Painting and Furnishing</h4>
-                        <p className="text-sm text-gray-600">
-                          To finish painting the buildings of the school and to
-                          purchase desks and chairs.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <div className="h-8 w-8 rounded-full bg-green-500 z-10 flex items-center justify-center text-white text-sm">
-                        5
-                      </div>
-                      <div>
-                        <h4 className="font-medium">
-                          School Supplies and Equipment
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          To gather funds for purchasing school supplies.
-                        </p>
-                      </div>
-                    </div>
+                <div className="text-right">
+                  <div className="font-mono text-lg font-medium text-blue-700 dark:text-blue-400">
+                    {myrValues.totalRaised.toLocaleString()} MYR
+                  </div>
+                  <div className="text-xs text-zinc-500">
+                    ≈ {totalRaised.toFixed(4)} ETH
                   </div>
                 </div>
               </div>
-            </CardContent>
+              <Progress
+                value={Math.min(
+                  Math.round((totalRaised / targetAmount) * 100),
+                  100
+                )}
+                className="h-2 mt-2 bg-zinc-100 dark:bg-zinc-800"
+              />
+            </div>
           </Card>
         </div>
 
@@ -813,7 +665,7 @@ export default function CharityPage() {
                       (photo: string, index: number) => (
                         <img
                           key={index}
-                          src={photo || "/placeholder.svg"}
+                          src={photo}
                           alt={`Proof of Work Photo ${index + 1}`}
                           className="rounded-lg shadow-md"
                         />
