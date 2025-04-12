@@ -49,6 +49,8 @@ import {
   MoonStar,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { CharityChat } from "@/components/charity-chatbot"
+
 
 // Contract address from deployment
 const CONTRACT_ADDRESS = "0x8765b67425A42dD7ba3e0f350542426Ed2551c02";
@@ -1405,6 +1407,7 @@ export default function CharityPage() {
           )}
         </DialogContent>
       </Dialog>
+      <CharityChat />
     </div>
   );
 }
