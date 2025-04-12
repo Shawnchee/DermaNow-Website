@@ -442,7 +442,7 @@ export function CharityChat() {
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className="shadow-2xl border-blue-100 h-full flex flex-col overflow-hidden">
+            <Card className="shadow-2xl h-full flex flex-col overflow-hidden py-0 gap-0 border-0">
               <CardHeader className="bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-t-lg py-4 relative">
                 <div className="flex items-center">
                   <div className="relative">
@@ -1003,7 +1003,7 @@ export function CharityChat() {
                 </div>
               </CardContent>
 
-              <CardFooter className="p-4 border-t bg-white">
+              <CardFooter className="p-4 border-t bg-white [.border-t]:pt-3">
                 <div className="w-full space-y-3">
                   {!showQuickDonations && (
                     <div className="flex justify-between">

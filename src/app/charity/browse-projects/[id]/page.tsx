@@ -446,7 +446,7 @@ export default function CharityPage() {
   }, {});
 
   return (
-    <div className="min-h-screen pt-24 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
         <motion.div
           className="text-center max-w-4xl mx-auto mb-12"
@@ -463,8 +463,21 @@ export default function CharityPage() {
             Blockchain-Powered Charity
           </motion.div>
 
+          <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3, duration: 0.7 }}
+                        className="flex justify-center mb-6"
+                      >
+                        <img
+                          src="/icons/milestonebased.svg"
+                          alt="Milestone Icon"
+                          className="h-56 w-h-56"
+                        />
+                      </motion.div>
+
           <motion.h1
-            className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900"
+            className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900 leading-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.7 }}
@@ -900,10 +913,29 @@ export default function CharityPage() {
                                 </div>
                               )}
                             {milestone.released && (
-                              <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
+                              <>
+                                                            
+                                                            <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
+                                
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 Funds Released Successfully
                               </div>
+                              <Button
+                              variant="outline"
+                              className="w-full border-green-600 text-green-700 hover:bg-green-50 cursor-pointer"
+                              onClick={() => {
+                                setSelectedProofOfWork(
+                                  milestone.proofOfWork
+                                ); // Set proof of work data
+                                setProofOfWorkModalOpen(true); // Open modal
+                              }}
+                            >
+                              <ExternalLink className="h-4 w-4 mr-2 " />
+                              View Proof of Work
+                            </Button>
+
+                              </>
+                              
                             )}
                           </CardFooter>
                         </Card>
