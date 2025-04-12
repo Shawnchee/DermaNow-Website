@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Twitter, Instagram, Linkedin, Send } from "lucide-react";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -10,14 +11,20 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Logo and Newsletter */}
           <div className="md:col-span-1">
-            <Link href="/" className="flex items-center mb-6">
-              <div className="text-blue-600 font-bold text-xl flex items-center">
-                <div className="h-8 w-8 bg-blue-600 text-white flex items-center justify-center rounded-md mr-2">
-                  <span className="text-lg">D</span>
+          <Link href="/" className="flex items-center mb-6">
+                <div className="relative h-10 w-10 flex items-center justify-center rounded-full">
+                  <Image
+                    src="/icons/Dermanow.svg"
+                    alt="DermaNow Logo"
+                    width={50}
+                    height={50}
+                    className="object-contain"
+                  />
                 </div>
-                DERMANOW
-              </div>
-            </Link>
+                <span className="text-blue-600 font-bold text-xl tracking-wide ml-2">
+                  DermaNow
+                </span>
+              </Link>
             <p className="text-sm text-gray-600 mb-4">
               Subscribe to receive our latest news and updates.
             </p>
