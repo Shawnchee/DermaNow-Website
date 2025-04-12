@@ -10,7 +10,6 @@
 **Presentation Slide:**  
 🎞️ [View our Google Drive Link](https://drive.google.com/file/d/1q7-12SLgM7Yr1O8Ul4RD0flB8xMEly2u/view?usp=sharing)
 
-
 ## Blockchain-Powered Shariah-Compliant Charity Platform
 
 [![Follow on Twitter](https://img.shields.io/twitter/follow/dermanow?style=social)](https://twitter.com/dermanow)
@@ -39,12 +38,13 @@ DermaNow is Malaysia's revolutionary charity platform that leverages blockchain 
 
 ## 🚀 Unique Value Propositions
 
-- **100% Shariah-Compliant** - All projects and financial mechanisms adhere to Islamic principles
+- **100% Shariah-Compliant** - All projects and financial mechanisms adhere to Islamic principles, including Zakat, Sadaqah, Waqf, and Mudarabah
+- **Maximize Barakah** 🌙 - Amplify the spiritual and ethical value of your giving through transparency and sincerity
 - **Milestone-Based Funding** - Transparent release of funds based on project progress
 - **Direct-to-Provider Payments** - Eliminating middlemen for maximum donation impact
 - **Blockchain Transparency** - All transactions are verifiable on the Ethereum blockchain
 - **AI-Powered Compliance** - Automated Shariah compliance verification for all projects
-- **Ethical DeFi Staking** - Generate returns on donations through Shariah-compliant mechanisms
+- **Ethical DeFi Staking (Mudarabah)** - Generate returns on donations through halal profit-sharing mechanisms
 
 ## ✨ Core Features
 
@@ -58,10 +58,11 @@ DermaNow is Malaysia's revolutionary charity platform that leverages blockchain 
   <img src="public/readme/milestone.png" alt="Milestone" >
 </div>
 
-### 💼 Shariah-Compliant DeFi Staking
-- Stake ETH to earn 2-5% annual profit share (Mudarabah)
+### 💼 Shariah-Compliant DeFi Staking (Mudarabah)
+- Stake ETH to earn 2–5% annual profit share in a halal manner
 - All returns automatically channeled to charity projects
-- Fully compliant with Islamic financial principles
+- Aligns with Islamic financial principles for ethical investing
+- Donations that generate barakah through sustainable giving
 
 ### 🛡️ Rigorous Verification System
 - Service provider verification through legal documents and portfolio review
@@ -81,6 +82,7 @@ DermaNow is Malaysia's revolutionary charity platform that leverages blockchain 
 - Level-up system based on donation history
 - Exclusive perks for active donors
 - Community recognition for impact
+- Promote the spirit of giving and attaining barakah
 
 ## 🔍 How It Works
 
@@ -89,7 +91,9 @@ DermaNow is Malaysia's revolutionary charity platform that leverages blockchain 
 3. **Browse Projects** - Explore Shariah-compliant charity initiatives
 4. **Donate to Milestones** - Contribute to specific project phases
 5. **Track Progress** - Receive updates as milestones are completed
-6. **Stake for Impact** - Optionally stake ETH to generate additional charitable funds
+6. **Stake for Impact** - Optionally stake ETH (Mudarabah) to generate additional charitable funds
+
+> "We aim to not only maximize impact, but to maximize **barakah** — spiritual blessings that multiply good beyond what meets the eye."
 
 ## 💻 Tech Stack
 
@@ -112,4 +116,3 @@ furnished to do so, subject to the following conditions:
 
 > The above copyright notice and this permission notice shall  
 > be included in all copies or substantial portions of the Software.
-
