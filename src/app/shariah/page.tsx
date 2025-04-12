@@ -14,7 +14,7 @@ export default function Shariah() {
         </CardHeader>
         <CardContent>
           <p className="text-gray-600 mb-4">
-            <strong>Effective Date:</strong> 7/3/2025
+            <strong>Effective Date:</strong> 7/3/
           </p>
 
           {/* Shariah Principles Overview */}
