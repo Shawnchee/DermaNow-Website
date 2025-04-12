@@ -900,10 +900,29 @@ export default function CharityPage() {
                                 </div>
                               )}
                             {milestone.released && (
-                              <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
+                              <>
+                                                            
+                                                            <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
+                                
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 Funds Released Successfully
                               </div>
+                              <Button
+                              variant="outline"
+                              className="w-full border-green-600 text-green-700 hover:bg-green-50 cursor-pointer"
+                              onClick={() => {
+                                setSelectedProofOfWork(
+                                  milestone.proofOfWork
+                                ); // Set proof of work data
+                                setProofOfWorkModalOpen(true); // Open modal
+                              }}
+                            >
+                              <ExternalLink className="h-4 w-4 mr-2 " />
+                              View Proof of Work
+                            </Button>
+
+                              </>
+                              
                             )}
                           </CardFooter>
                         </Card>

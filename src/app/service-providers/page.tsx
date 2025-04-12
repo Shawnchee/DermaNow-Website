@@ -844,7 +844,7 @@ const ServiceProvidersPage = () => {
                                     key={item.id}
                                     className="overflow-hidden"
                                   >
-                                    <div className="h-48 w-full overflow-hidden">
+                                    <div className="h-24 w-full overflow-hidden">
                                       <img
                                         src={item.image || "/placeholder.svg"}
                                         alt={item.title}
