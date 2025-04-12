@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ethers } from "ethers";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,11 +45,11 @@ import {
   BadgeCheck,
   BookOpen,
   Leaf,
-  Scale,
   MoonStar,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import HalalChecker from "@/components/HalalChecker";
+import CampaignProgressCard from "@/components/campaign-process-card";
 
 // Contract address from deployment
 const CONTRACT_ADDRESS = "0x8765b67425A42dD7ba3e0f350542426Ed2551c02";
@@ -91,7 +91,10 @@ export default function CharityPage() {
     txHash?: string;
   }>({ status: null, message: "" });
 
-  const eventDescription = "This initiative aims to address the critical educational gap in rural Malaysian villages by establishing modern, well-equipped schools that provide quality education to underserved children. The project takes a holistic approach to education, focusing not only on building physical infrastructure but also on providing learning materials, training qualified teachers, and engaging the local community.";
+  const milestonesRef = useRef<HTMLDivElement>(null);
+
+  const eventDescription =
+    "This initiative aims to address the critical educational gap in rural Malaysian villages by establishing modern, well-equipped schools that provide quality education to underserved children. The project takes a holistic approach to education, focusing not only on building physical infrastructure but also on providing learning materials, training qualified teachers, and engaging the local community.";
 
   // Initialize contract when signer is available
   useEffect(() => {
@@ -422,6 +425,10 @@ export default function CharityPage() {
     }
   };
 
+  const scrollToMilestones = () => {
+    milestonesRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   // Connect on component mount if wallet is already connected
   useEffect(() => {
     if (window.ethereum) {
@@ -440,62 +447,6 @@ export default function CharityPage() {
 
   return (
     <div className="min-h-screen pt-24 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
-      {/* Organization Banner */}
-      <div className="container mx-auto px-6 pt-5">
-        <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-blue-400 dark:border-blue-700 bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm">
-          <div className="flex items-center">
-            <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-              <Building className="h-5 w-5 text-blue-100" />
-            </div>
-            <div>
-              <div className="text-xs text-blue-100 mb-0.5 font-medium">
-                Organization
-              </div>
-              <span className="font-semibold text-white">
-                Charity Milestone DAO
-              </span>
-            </div>
-          </div>
-
-          <a
-            href="https://github.com/charity-milestone-dao"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
-          >
-            <span className="text-blue-500">View GitHub</span>
-            <ExternalLink className="h-3 w-3 ml-1.5 text-blue-500" />
-          </a>
-        </div>
-      </div>
-
-      {/* Shariah compliance badge */}
-      <div className="container mx-auto px-6 pt-2">
-        <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
-          <div className="flex items-center">
-            <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-              <MoonStar className="h-5 w-5 text-green-100" />
-            </div>
-            <div>
-              <div className="text-xs text-green-100 mb-0.5 font-medium">
-                Certification
-              </div>
-              <span className="font-semibold text-white">
-                Shariah Compliant
-              </span>
-            </div>
-          </div>
-
-          <a
-            href="#shariah-info"
-            className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
-          >
-            <span className="text-blue-500">Learn More</span>
-            <BookOpen className="h-3 w-3 ml-1.5 text-blue-500" />
-          </a>
-        </div>
-      </div>
-
       <div className="container mx-auto px-4 py-12">
         <motion.div
           className="text-center max-w-4xl mx-auto mb-12"
@@ -569,103 +520,34 @@ export default function CharityPage() {
         </motion.div>
 
         {/* Campaign Progress Card */}
-        <div className="mb-12">
-          <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 overflow-hidden">
-            <div className="relative">
-              <img
-                src="/community.jpg"
-                alt="Campaign Banner"
-                className="h-[200px] w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <Badge className="bg-blue-600 rounded-full px-3 py-1 text-xs font-medium">
-                      Active Campaign
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="bg-black/30 text-white border-white/20 rounded-full px-3 py-1 text-xs font-medium"
-                    >
-                      Goal: {targetAmount * ethToMyrRate} MYR (
-                      {targetAmount.toFixed(2)} ETH)
-                    </Badge>
-                  </div>
-                  <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-                    Education for Kids in Rural Areas
-                  </h1>
-                  <p className="text-zinc-200 text-sm max-w-3xl mb-3">
-                    A comprehensive initiative to build and equip modern schools
-                    for underserved students in remote Malaysian villages.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
-                      <Leaf className="h-3 w-3 mr-1" />
-                      Sustainable Design
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
-                      <BookOpen className="h-3 w-3 mr-1" />
-                      Educational Resources
-                    </span>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
-                      <Users className="h-3 w-3 mr-1" />
-                      Community Involvement
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="p-5 border-t border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center dark:bg-blue-900/30">
-                    <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Raised so far
-                    </div>
-                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                      {Math.min(
-                        Math.round((totalRaised / targetAmount) * 100),
-                        100
-                      )}
-                      % of goal
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-mono text-lg font-medium text-blue-700 dark:text-blue-400">
-                    {myrValues.totalRaised.toLocaleString()} MYR /{" "}
-                    {myrValues.targetAmount.toLocaleString()}.00 MYR
-                  </div>
-                  <div className="text-xs text-zinc-500">
-                    ≈ {totalRaised.toFixed(4)} ETH
-                  </div>
-                </div>
-              </div>
-              <Progress
-                value={Math.min(
-                  Math.round((totalRaised / targetAmount) * 100),
-                  100
-                )}
-                className="h-2 mt-2 bg-zinc-100 dark:bg-zinc-800"
-              />
-            </div>
-          </Card>
-        </div>
+        <CampaignProgressCard
+          totalRaised={totalRaised}
+          targetAmount={targetAmount}
+          ethToMyrRate={ethToMyrRate}
+          myrValues={myrValues}
+        />
 
         {/* Detailed Project Description Section */}
         <div className="mb-12">
           <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 overflow-hidden">
             <CardHeader>
-              <CardTitle className="text-2xl font-bold">
-                Education for Kids in Rural Areas
-              </CardTitle>
-              <CardDescription>
-                A comprehensive initiative to build and equip modern schools in
-                underserved communities
-              </CardDescription>
+              <div className="flex justify-between">
+                <div>
+                  <CardTitle className="text-2xl font-bold">
+                    Education for Kids in Rural Areas
+                  </CardTitle>
+                  <CardDescription>
+                    A comprehensive initiative to build and equip modern schools
+                    in underserved communities
+                  </CardDescription>
+                </div>
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 px-6 py-6 text-lg font-medium"
+                  onClick={scrollToMilestones}
+                >
+                  Support This Project
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -862,11 +744,6 @@ export default function CharityPage() {
                 </div>
               </div>
             </CardContent>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                Support This Project
-              </Button>
-            </div>
           </Card>
         </div>
 
@@ -974,7 +851,7 @@ export default function CharityPage() {
         </Dialog>
 
         {/* Milestones Section */}
-        <div className="mb-16">
+        <div className="mb-16" ref={milestonesRef}>
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold text-gray-800">
               Active Charity Milestones
@@ -1427,6 +1304,61 @@ export default function CharityPage() {
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+        {/* Organization Banner */}
+        <div className="container mx-auto px-6 pt-5">
+          <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-blue-400 dark:border-blue-700 bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm">
+            <div className="flex items-center">
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
+                <Building className="h-5 w-5 text-blue-100" />
+              </div>
+              <div>
+                <div className="text-xs text-blue-100 mb-0.5 font-medium">
+                  Organization
+                </div>
+                <span className="font-semibold text-white">
+                  Charity Milestone DAO
+                </span>
+              </div>
+            </div>
+
+            <a
+              href="https://github.com/charity-milestone-dao"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
+            >
+              <span className="text-blue-500">View GitHub</span>
+              <ExternalLink className="h-3 w-3 ml-1.5 text-blue-500" />
+            </a>
+          </div>
+        </div>
+
+        {/* Shariah compliance badge */}
+        <div className="container mx-auto px-6 pt-2">
+          <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
+            <div className="flex items-center">
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
+                <MoonStar className="h-5 w-5 text-green-100" />
+              </div>
+              <div>
+                <div className="text-xs text-green-100 mb-0.5 font-medium">
+                  Certification
+                </div>
+                <span className="font-semibold text-white">
+                  Shariah Compliant
+                </span>
+              </div>
+            </div>
+
+            <a
+              href="#shariah-info"
+              className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
+            >
+              <span className="text-blue-500">Learn More</span>
+              <BookOpen className="h-3 w-3 ml-1.5 text-blue-500" />
+            </a>
           </div>
         </div>
       </div>

@@ -82,7 +82,7 @@ ${description}`;
   };
 
   return (
-    <div className="container max-w-3xl mx-auto py-8 px-4">
+    <div className="w-full px-4 py-8">
       <Card className="mb-8 overflow-hidden">
         <CardHeader className="relative">
           <div className="flex items-center space-x-2">
