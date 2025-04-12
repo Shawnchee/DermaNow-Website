@@ -18,6 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DermaNow",
   description: "Malaysia's BlockChain Charity Platform",
+  icons: {  
+    icon: "/icons/Dermanow.svg",
+  }
 };
 
 export default function RootLayout({
