@@ -38,7 +38,6 @@ import {
   Loader2,
   Check,
   X,
-  Shield,
   Building,
   Lock,
   AlertTriangle,
@@ -50,11 +49,15 @@ import {
 import { Input } from "@/components/ui/input";
 import HalalChecker from "@/components/HalalChecker";
 import CampaignProgressCard from "@/components/campaign-process-card";
+import supabase from "@/utils/supabase/client";
+import { useParams } from "next/navigation";
 
 // Contract address from deployment
 const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
 
 export default function CharityPage() {
+  const params = useParams();
+  const id = params.id;
   // Use the connectMetamask hook
   const { walletAddress, provider, signer, connectWallet } = connectMetamask();
   const [contract, setContract] = useState<ethers.Contract | null>(null);
@@ -96,6 +99,40 @@ export default function CharityPage() {
   const eventDescription =
     "This initiative aims to address the critical educational gap in rural Malaysian villages by establishing modern, well-equipped schools that provide quality education to underserved children. The project takes a holistic approach to education, focusing not only on building physical infrastructure but also on providing learning materials, training qualified teachers, and engaging the local community.";
 
+  const [projectTitle, setProjectTitle] = useState<string>("");
+  const [projectDescription, setProjectDescription] = useState<string>("");
+  const [image, setImage] = useState<string>("");
+  const [categories, setCategories] = useState<string[]>([""]);
+
+  useEffect(() => {
+    if (id) {
+      // Fetch project details from Supabase
+      const fetchProjectDetails = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("charity_projects")
+            .select("*")
+            .eq("id", id)
+            .single();
+          if (error) {
+            console.error("Error fetching project details:", error);
+            setProjectTitle("Unknown Project");
+          } else {
+            console.log("Successful fetching project details:", data);
+            setProjectTitle(data?.title || "Unknown Project");
+            setProjectDescription(data?.description || eventDescription);
+            setImage(data?.image || "/charity.jpg");
+            setCategories(data?.category || [""]);
+          }
+        } catch (err) {
+          console.error("Error fetching project details:", err);
+          setProjectTitle("Unknown Project");
+        }
+      };
+
+      fetchProjectDetails();
+    }
+  }, [id]);
   // Initialize contract when signer is available
   useEffect(() => {
     const initialize = async () => {
@@ -177,7 +214,8 @@ export default function CharityPage() {
               Number.parseFloat(formatEther(milestone.targetAmount))) *
             100,
           // Add project title - in a real app, this would come from the contract
-          projectTitle: "Education for Kids in Rural Areas",
+          projectTitle: projectTitle,
+          image: image,
           proofOfWork: {
             photos: [
               "https://images.pexels.com/photos/5802822/pexels-photo-5802822.jpeg?auto=compress&cs=tinysrgb&w=600",
@@ -464,17 +502,17 @@ export default function CharityPage() {
           </motion.div>
 
           <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3, duration: 0.7 }}
-                        className="flex justify-center mb-6"
-                      >
-                        <img
-                          src="/icons/milestonebased.svg"
-                          alt="Milestone Icon"
-                          className="h-56 w-h-56"
-                        />
-                      </motion.div>
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="flex justify-center mb-6"
+          >
+            <img
+              src="/icons/milestonebased.svg"
+              alt="Milestone Icon"
+              className="h-56 w-h-56"
+            />
+          </motion.div>
 
           <motion.h1
             className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900 leading-16"
@@ -538,6 +576,11 @@ export default function CharityPage() {
           targetAmount={targetAmount}
           ethToMyrRate={ethToMyrRate}
           myrValues={myrValues}
+          projectTitle={projectTitle}
+          projectDescription={projectDescription}
+          projectImage={image}
+          loading={loading}
+          categories={categories}
         />
 
         {/* Sequential Milestone Information */}
@@ -766,7 +809,6 @@ export default function CharityPage() {
                                   Service Provider:
                                 </span>{" "}
                                 {/* {milestone.serviceProviderName} */}
-
                               </div>
                               <div className="text-xs text-gray-500 font-mono">
                                 Address:{" "}
@@ -914,28 +956,24 @@ export default function CharityPage() {
                               )}
                             {milestone.released && (
                               <>
-                                                            
-                                                            <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
-                                
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Funds Released Successfully
-                              </div>
-                              <Button
-                              variant="outline"
-                              className="w-full border-green-600 text-green-700 hover:bg-green-50 cursor-pointer"
-                              onClick={() => {
-                                setSelectedProofOfWork(
-                                  milestone.proofOfWork
-                                ); // Set proof of work data
-                                setProofOfWorkModalOpen(true); // Open modal
-                              }}
-                            >
-                              <ExternalLink className="h-4 w-4 mr-2 " />
-                              View Proof of Work
-                            </Button>
-
+                                <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Funds Released Successfully
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  className="w-full border-green-600 text-green-700 hover:bg-green-50 cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedProofOfWork(
+                                      milestone.proofOfWork
+                                    ); // Set proof of work data
+                                    setProofOfWorkModalOpen(true); // Open modal
+                                  }}
+                                >
+                                  <ExternalLink className="h-4 w-4 mr-2 " />
+                                  View Proof of Work
+                                </Button>
                               </>
-                              
                             )}
                           </CardFooter>
                         </Card>
