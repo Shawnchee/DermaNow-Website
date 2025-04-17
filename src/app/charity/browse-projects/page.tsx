@@ -209,16 +209,7 @@ const PageContent = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortOption, setSortOption] = useState<string>("last-updated");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-
-  // Define available categories
-  const categories = [
-    "Water & Sanitation",
-    "Community Development",
-    "Disaster Relief",
-    "Food & Nutrition",
-    "Education",
-    "Children & Youth",
-  ];
+  const [categories, setCategories] = useState([]);
 
   // Fetch projects on load
   useEffect(() => {
@@ -227,6 +218,7 @@ const PageContent = () => {
       setShowSuccess(true);
     }
 
+    // Supabase fetch projects
     const fetchProjects = async () => {
       try {
         setLoading(true);
@@ -248,7 +240,21 @@ const PageContent = () => {
       }
     };
 
+    // Supabase fetch categories
+    const fetchCategories = async () => {
+      const { data, error } = await supabase
+        .from("charity_category")
+        .select("*");
+
+      if (error) {
+        console.error("Failed to fetch categories:", error.message);
+      } else {
+        setCategories(data ?? []);
+      }
+    };
+
     fetchProjects();
+    fetchCategories();
   }, [searchParams]);
 
   // Debounced search function
@@ -444,15 +450,17 @@ const PageContent = () => {
                 <CommandGroup>
                   {categories.map((category) => (
                     <CommandItem
-                      key={category}
-                      onSelect={() => handleCategoryToggle(category)}
+                      key={category.id}
+                      onSelect={() => handleCategoryToggle(category.name)}
                       className="flex items-center space-x-2"
                     >
                       <Checkbox
-                        checked={selectedCategories.includes(category)}
-                        onCheckedChange={() => handleCategoryToggle(category)}
+                        checked={selectedCategories.includes(category.name)}
+                        onCheckedChange={() =>
+                          handleCategoryToggle(category.name)
+                        }
                       />
-                      <span>{category}</span>
+                      <span>{category.name}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
