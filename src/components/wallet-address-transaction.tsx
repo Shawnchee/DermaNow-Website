@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { ethers, formatEther } from "ethers";
 import {
   Table,
@@ -28,9 +29,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import supabase from "@/utils/supabase";
 
 export default function WalletTransaction() {
   const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY || "";
   const walletAddress = "0x483bF34b4444dB73FB0b1b5EBDB0253A4E8b714f";
   const ETH_TO_MYR_RATE = 12500; // Conversion rate: 1 ETH = 12,500 MYR
 
@@ -43,14 +47,42 @@ export default function WalletTransaction() {
       // Etherscan API endpoint for Sepolia testnet
       const baseUrl = "https://api-sepolia.etherscan.io/api";
 
-      const url = `${baseUrl}?module=account&action=txlist&address=${walletAddress}&startblock=0&endblock=99999999&page=1&offset=5&sort=desc&apikey=${ETHERSCAN_API_KEY}`;
+      const url = `${baseUrl}?module=account&action=txlist&address=${walletAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${ETHERSCAN_API_KEY}`;
 
       const response = await fetch(url);
       const data = await response.json();
       console.log("Fetched transactions:", data);
 
       if (data.status === "1") {
-        setTransactions(data.result);
+        const sentTransactions = data.result.filter(
+          (tx) => tx.from.toLowerCase() === walletAddress.toLowerCase()
+        );
+
+        // Fetch contract addresses and project titles from Supabase
+        const { data: supabaseData, error: supabaseError } = await supabase
+          .from("wallet_transaction")
+          .select("contract_address, project_title")
+
+        if (supabaseError) {
+          console.error("Error fetching data from Supabase:", supabaseError);
+          setError("Failed to fetch project titles. Please try again later.");
+          return;
+        }
+
+        // Map project titles to transactions
+        const transactionsWithTitles = sentTransactions.map((tx) => {
+          const project = supabaseData.find(
+            (item) => item.contract_address.toLowerCase() === tx.to?.toLowerCase()
+          );
+
+          return {
+            ...tx,
+            project_title: project ? project.project_title : "Unknown Project",
+            
+          };
+        });
+
+        setTransactions(transactionsWithTitles);
       } else {
         setError(data.message || "No transactions found for the specified wallet address.");
       }
@@ -83,12 +115,12 @@ export default function WalletTransaction() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-blue-50 to-blue-100 p-4">
-      <Card className="w-full max-w-6xl bg-white/90 backdrop-blur-sm border border-blue-200">
+    <div className="flex flex-col items-center justify-center min-h-screen py-4">
+      <Card className="w-full max-w-7xl bg-white/90 backdrop-blur-sm border">
         <CardHeader>
-          <CardTitle className="text-2xl text-blue-900">Wallet Transaction History</CardTitle>
+          <CardTitle className="text-2xl text-black">User Donation History</CardTitle>
           <CardDescription className="text-gray-600">
-            Showing the 5 most recent transactions for the wallet
+            Recent donations from the specified wallet address
           </CardDescription>
           <div className="mt-2 p-2 bg-blue-50 rounded-md">
             <code className="text-sm font-mono break-all text-blue-800">{walletAddress}</code>
@@ -114,44 +146,31 @@ export default function WalletTransaction() {
           ) : (
             <div className="rounded-md border border-blue-200">
               <Table>
-                <TableCaption className="text-blue-800">
+                <TableCaption className="text-blue-800 my-4">
                   Transaction history for the specified wallet address
                 </TableCaption>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[180px] text-blue-900">Date</TableHead>
-                    <TableHead className="text-blue-900">Type</TableHead>
+                    <TableHead className="w text-blue-900">Date</TableHead>
+                    <TableHead className="text-blue-900">Project Title</TableHead>
                     <TableHead className="text-blue-900">Hash</TableHead>
-                    <TableHead className="text-blue-900">From</TableHead>
                     <TableHead className="text-blue-900">To</TableHead>
                     <TableHead className="text-right text-blue-900">Value (MYR)</TableHead>
-                    <TableHead className="text-center w-[100px] text-blue-900">Action</TableHead>
+                    <TableHead className="text-center text-blue-900">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-gray-500">
-                        No transactions found for this wallet
+                      <TableCell colSpan={6} className="text-center text-gray-500">
+                        No SENT transactions found for this wallet
                       </TableCell>
                     </TableRow>
                   ) : (
                     transactions.map((tx, index) => (
                       <TableRow key={index}>
                         <TableCell className="font-medium text-blue-800">{formatDate(tx.timeStamp)}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              tx.from.toLowerCase() === walletAddress.toLowerCase()
-                                ? "destructive"
-                                : "secondary"
-                            }
-                          >
-                            {tx.from.toLowerCase() === walletAddress.toLowerCase()
-                              ? "Sent"
-                              : "Received"}
-                          </Badge>
-                        </TableCell>
+                        <TableCell className="font-medium text-blue-800">{tx.project_title}</TableCell>
                         <TableCell className="font-mono text-xs text-blue-800">
                           <TooltipProvider>
                             <Tooltip>
@@ -160,18 +179,6 @@ export default function WalletTransaction() {
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p className="font-mono text-xs">{tx.hash}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-blue-800">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-2">
-                                {truncateAddress(tx.from)}
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="font-mono text-xs">{tx.from}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -193,7 +200,7 @@ export default function WalletTransaction() {
                             {convertEthToMyr(formatEther(tx.value))} MYR
                           </span>
                           <span className="text-xs text-gray-500">
-                            ≈ {parseFloat(formatEther(tx.value)).toFixed(4)} ETH
+                            ≈ {parseFloat(formatEther(tx.value)).toFixed(6)} ETH
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
