@@ -470,7 +470,7 @@ const PageContent = () => {
         </div>
       </div>
 
-      {loading ? (
+      {loading || filteredProjects.length === 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
@@ -486,7 +486,7 @@ const PageContent = () => {
             </div>
           ))}
         </div>
-      ) : displayedProjects.length === 0 && !loading ? (
+      ) : displayedProjects.length === 0 ? (
         <div className="text-center py-16">
           <div className="bg-blue-100 rounded-full p-4 inline-block mb-4">
             <Heart className="h-10 w-10 text-blue-500" />
