@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@alch/alchemy-sdk": "^1.1.1",
     "@moonpay/moonpay-js": "^0.6.6",
     "@moonpay/moonpay-react": "^1.8.10",
     "@radix-ui/react-avatar": "^1.1.4",
@@ -29,6 +30,7 @@
     "@solana/wallet-adapter-react-ui": "^0.9.36",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
+    "alchemy-sdk": "^3.5.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
