@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { formatEther } from "ethers";
+import { createClient } from "@supabase/supabase-js";
+import { ethers, formatEther } from "ethers";
 import {
   Table,
   TableBody,
@@ -28,13 +29,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import supabase from "@/utils/supabase";
 
 export default function WalletTransaction() {
   const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY || "";
   const walletAddress = "0x483bF34b4444dB73FB0b1b5EBDB0253A4E8b714f";
-  const ETH_TO_MYR_RATE = 12500;
+  const ETH_TO_MYR_RATE = 12500; // Conversion rate: 1 ETH = 12,500 MYR
 
-  
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,15 +46,43 @@ export default function WalletTransaction() {
     try {
       // Etherscan API endpoint for Sepolia testnet
       const baseUrl = "https://api-sepolia.etherscan.io/api";
-      
-      const url = `${baseUrl}?module=account&action=txlist&address=${walletAddress}&startblock=0&endblock=99999999&page=1&offset=5&sort=desc&apikey=${ETHERSCAN_API_KEY}`;
+
+      const url = `${baseUrl}?module=account&action=txlist&address=${walletAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${ETHERSCAN_API_KEY}`;
 
       const response = await fetch(url);
       const data = await response.json();
       console.log("Fetched transactions:", data);
-      
+
       if (data.status === "1") {
-        setTransactions(data.result);
+        const sentTransactions = data.result.filter(
+          (tx) => tx.from.toLowerCase() === walletAddress.toLowerCase()
+        );
+
+        // Fetch contract addresses and project titles from Supabase
+        const { data: supabaseData, error: supabaseError } = await supabase
+          .from("wallet_transaction")
+          .select("contract_address, project_title")
+
+        if (supabaseError) {
+          console.error("Error fetching data from Supabase:", supabaseError);
+          setError("Failed to fetch project titles. Please try again later.");
+          return;
+        }
+
+        // Map project titles to transactions
+        const transactionsWithTitles = sentTransactions.map((tx) => {
+          const project = supabaseData.find(
+            (item) => item.contract_address.toLowerCase() === tx.to?.toLowerCase()
+          );
+
+          return {
+            ...tx,
+            project_title: project ? project.project_title : "Unknown Project",
+            
+          };
+        });
+
+        setTransactions(transactionsWithTitles);
       } else {
         setError(data.message || "No transactions found for the specified wallet address.");
       }
@@ -78,32 +109,33 @@ export default function WalletTransaction() {
     return new Date(parseInt(timestamp) * 1000).toLocaleString();
   };
 
+  // Function to convert ETH to MYR
   const convertEthToMyr = (ethValue) => {
     return (parseFloat(ethValue) * ETH_TO_MYR_RATE).toFixed(2);
-  }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-      <Card className="w-full max-w-9xl">
+    <div className="flex flex-col items-center justify-center min-h-screen py-4">
+      <Card className="w-full max-w-7xl bg-white/90 backdrop-blur-sm border">
         <CardHeader>
-          <CardTitle className="text-2xl">Wallet Transaction History</CardTitle>
-          <CardDescription>
-            Showing the 5 most recent transactions for the wallet
+          <CardTitle className="text-2xl text-black">User Donation History</CardTitle>
+          <CardDescription className="text-gray-600">
+            Recent donations from the specified wallet address
           </CardDescription>
-          <div className="mt-2 p-2 bg-gray-100 rounded-md">
-            <code className="text-sm font-mono break-all">{walletAddress}</code>
+          <div className="mt-2 p-2 bg-blue-50 rounded-md">
+            <code className="text-sm font-mono break-all text-blue-800">{walletAddress}</code>
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <p>Loading transaction history...</p>
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                <p className="text-blue-800">Loading transaction history...</p>
               </div>
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="flex space-x-4">
-                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full bg-blue-100" />
                 </div>
               ))}
             </div>
@@ -112,39 +144,34 @@ export default function WalletTransaction() {
               {error}
             </div>
           ) : (
-            <div className="rounded-md border">
+            <div className="rounded-md border border-blue-200">
               <Table>
-                <TableCaption>
+                <TableCaption className="text-blue-800 my-4">
                   Transaction history for the specified wallet address
                 </TableCaption>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[180px]">Date</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Hash</TableHead>
-                    <TableHead>From</TableHead>
-                    <TableHead>To</TableHead>
-                    <TableHead className="text-right">Value (ETH)</TableHead>
-                    <TableHead className="text-center w-[100px]">Action</TableHead>
+                    <TableHead className="w text-blue-900">Date</TableHead>
+                    <TableHead className="text-blue-900">Project Title</TableHead>
+                    <TableHead className="text-blue-900">Hash</TableHead>
+                    <TableHead className="text-blue-900">To</TableHead>
+                    <TableHead className="text-right text-blue-900">Value (MYR)</TableHead>
+                    <TableHead className="text-center text-blue-900">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
-                        No transactions found for this wallet
+                      <TableCell colSpan={6} className="text-center text-gray-500">
+                        No SENT transactions found for this wallet
                       </TableCell>
                     </TableRow>
                   ) : (
                     transactions.map((tx, index) => (
                       <TableRow key={index}>
-                        <TableCell className="font-medium">{formatDate(tx.timeStamp)}</TableCell>
-                        <TableCell>
-                          <Badge variant={tx.from.toLowerCase() === walletAddress.toLowerCase() ? "destructive" : "secondary"}>
-                            {tx.from.toLowerCase() === walletAddress.toLowerCase() ? "Sent" : "Received"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
+                        <TableCell className="font-medium text-blue-800">{formatDate(tx.timeStamp)}</TableCell>
+                        <TableCell className="font-medium text-blue-800">{tx.project_title}</TableCell>
+                        <TableCell className="font-mono text-xs text-blue-800">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-2">
@@ -156,19 +183,7 @@ export default function WalletTransaction() {
                             </Tooltip>
                           </TooltipProvider>
                         </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-2">
-                                {truncateAddress(tx.from)}
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="font-mono text-xs">{tx.from}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
+                        <TableCell className="font-mono text-xs text-blue-800">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-2">
@@ -181,7 +196,7 @@ export default function WalletTransaction() {
                           </TooltipProvider>
                         </TableCell>
                         <TableCell className="text-right flex flex-col">
-                        <span className="font-bold text-md">
+                          <span className="font-bold text-md text-blue-900">
                             {convertEthToMyr(formatEther(tx.value))} MYR
                           </span>
                           <span className="text-xs text-gray-500">
@@ -189,13 +204,13 @@ export default function WalletTransaction() {
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <a 
-                            href={`https://sepolia.etherscan.io/tx/${tx.hash}`} 
-                            target="_blank" 
+                          <a
+                            href={`https://sepolia.etherscan.io/tx/${tx.hash}`}
+                            target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <Button variant="outline" size="sm" className="cursor-pointer">
-                              <ExternalLink className="h-4 w-4 mr-1 " />
+                            <Button variant="outline" size="sm" className="cursor-pointer text-blue-800 border-blue-200">
+                              <ExternalLink className="h-4 w-4 mr-1 text-blue-800" />
                               View
                             </Button>
                           </a>
