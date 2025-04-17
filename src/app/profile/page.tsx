@@ -5,7 +5,10 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import {
-  User, History, Bell, Heart, Edit, ChevronRight, Wallet, ExternalLink, Copy, ArrowUpRight, Save, Camera, X, Award, Sparkles, Gem, ChevronUp,} from "lucide-react"
+  User, History, Bell, Heart, Edit, ChevronRight, Wallet, ExternalLink, Copy, ArrowUpRight, Save, Camera, X, Award, Sparkles, Gem, ChevronUp,
+  Droplet,
+  LibraryBig,
+  Apple,} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -18,6 +21,7 @@ import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 import { useWallet } from "@/context/wallet-context"
+import WalletTransaction from "@/components/wallet-address-transaction"
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
@@ -65,20 +69,12 @@ export default function ProfilePage() {
 
   const impactProjects = [
     {
-      name: "Clean Water Initiative",
-      progress: 75,
-      raised: "15.5 ETH",
-      goal: "20 ETH",
+      name: "Education for Kids in Rural Areas",
+      progress: 56,
+      raised: "0.1508 ETH",
+      goal: "0.27 ETH",
       contributors: 128,
       description: "Providing clean water to communities in need",
-    },
-    {
-      name: "Education for All",
-      progress: 45,
-      raised: "9 ETH",
-      goal: "20 ETH",
-      contributors: 87,
-      description: "Building schools and providing educational resources",
     },
   ]
 
@@ -226,7 +222,7 @@ export default function ProfilePage() {
 
   // For preview purposes, always show the profile content
   return (
-    <div className="container max-w-5xl mx-auto py-8 px-4">
+    <div className="container max-w-7xl mx-auto py-8 px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div className="flex items-center gap-4">
           <div className="relative group">
@@ -339,7 +335,7 @@ export default function ProfilePage() {
             </div>
 
             <Link href="/donation-levels">
-              <Button className="bg-green-600 hover:bg-green-700 flex items-center gap-1">
+              <Button className="bg-green-600 hover:bg-green-700 flex items-center gap-1 cursor-pointer">
                 <ChevronUp className="h-4 w-4" /> Level Up
               </Button>
             </Link>
@@ -364,7 +360,7 @@ export default function ProfilePage() {
                       onClick={() => copyToClipboard(walletAddress)}
                       className="text-blue-500 hover:text-blue-700"
                     >
-                      <Copy className="h-4 w-4" />
+                      <Copy className="h-4 w-4 cursor-pointer" />
                     </button>
                   )}
                 </div>
@@ -396,18 +392,18 @@ export default function ProfilePage() {
         </TabsList>
 
         <TabsContent value="wallet">
-          <Card>
+          <Card className="py-8">
             <CardHeader>
               <CardTitle>Token Balance</CardTitle>
-              <CardDescription>Your available Sepolia ETH for donations</CardDescription>
+              <CardDescription>Your available  ETH for donations</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="space-y-4 mt-2">
                 <div className="flex justify-between items-center p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="text-2xl">🔷</div>
                     <div>
-                      <h3 className="font-medium">Sepolia ETH</h3>
+                      <h3 className="font-medium"> ETH</h3>
                       <p className="text-sm text-muted-foreground">
                         {ethBalance ? `RM${(Number.parseFloat(ethBalance) * 7000).toFixed(2)}` : "RM3,150.00"}
                       </p>
@@ -419,14 +415,14 @@ export default function ProfilePage() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-center">
+            <CardFooter className="flex justify-center mt-4">
               <Button variant="outline" onClick={refreshBalance} className="w-full">
                 Refresh Balance
               </Button>
             </CardFooter>
           </Card>
 
-          <Card className="mt-6">
+          <Card className="mt-6 py-8">
             <CardHeader>
               <CardTitle>Impact Projects</CardTitle>
               <CardDescription>Projects you're currently supporting</CardDescription>
@@ -442,8 +438,8 @@ export default function ProfilePage() {
                     <Progress value={project.progress} className="h-2" />
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>
-                        {project.raised.replace("ETH", "Sepolia ETH")} raised of{" "}
-                        {project.goal.replace("ETH", "Sepolia ETH")}
+                        {project.raised.replace("ETH", " ETH")} raised of{" "}
+                        {project.goal.replace("ETH", " ETH")}
                       </span>
                       <span>{project.contributors} contributors</span>
                     </div>
@@ -452,36 +448,38 @@ export default function ProfilePage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" className="w-full">
+              <Link href="/charity/browse-projects">
+              <Button variant="outline" className="w-full mt-4 cursor-pointer">
                 Explore More Projects
               </Button>
+              </Link>
             </CardFooter>
           </Card>
 
-          <Card className="mt-6">
+          <Card className="mt-6 py-8">
             <CardHeader>
               <CardTitle>NFT Impact Certificates</CardTitle>
-              <CardDescription>Proof of your contributions on the blockchain</CardDescription>
+              <CardDescription className="mb-4">Proof of your contributions on the blockchain</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="border rounded-lg p-4 flex flex-col items-center text-center">
-                  <div className="w-full aspect-square bg-gradient-to-br from-blue-100 to-emerald-100 rounded-lg mb-3 flex items-center justify-center">
-                    <Heart className="h-12 w-12 text-emerald-500" />
+                  <div className="w-full aspect-square bg-gradient-to-br from-blue-100 to-emerald-100 rounded-lg mb-3 flex items-center justify-center hover:scale-105 transition-transform duration-200">
+                    <Droplet className="h-20 w-20 text-emerald-500" />
                   </div>
                   <h3 className="font-medium">Clean Water Supporter</h3>
                   <p className="text-sm text-muted-foreground">Issued Apr 2023</p>
                 </div>
                 <div className="border rounded-lg p-4 flex flex-col items-center text-center">
-                  <div className="w-full aspect-square bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 flex items-center justify-center">
-                    <Heart className="h-12 w-12 text-purple-500" />
+                  <div className="w-full aspect-square bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 flex items-center justify-center hover:scale-105 transition-transform duration-200">
+                    <LibraryBig className="h-20 w-20 text-purple-500" />
                   </div>
                   <h3 className="font-medium">Education Advocate</h3>
                   <p className="text-sm text-muted-foreground">Issued Mar 2023</p>
                 </div>
                 <div className="border rounded-lg p-4 flex flex-col items-center text-center">
-                  <div className="w-full aspect-square bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg mb-3 flex items-center justify-center">
-                    <Heart className="h-12 w-12 text-amber-500" />
+                  <div className="w-full aspect-square bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg mb-3 flex items-center justify-center hover:scale-105 transition-transform duration-200">
+                    <Apple className="h-20 w-20 text-amber-500" />
                   </div>
                   <h3 className="font-medium">Food Security Champion</h3>
                   <p className="text-sm text-muted-foreground">Issued Feb 2023</p>
@@ -564,48 +562,7 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>Donation History</CardTitle>
-              <CardDescription>View all your past donations and their status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {donationHistory.map((donation, index) => (
-                  <div key={index} className="flex justify-between items-center p-4 border rounded-lg">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{donation.charity}</h3>
-                        <Badge variant="outline" className="bg-green-50 text-green-700">
-                          {donation.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {donation.amount.replace("ETH", "Sepolia ETH")} • {donation.date}
-                      </p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <p className="text-xs text-muted-foreground">TX: {donation.id}</p>
-                        <a
-                          href={`https://sepolia.etherscan.io/tx/${donation.txHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-700"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                      Details <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-center">
-              <Button variant="outline">View All Transactions</Button>
-            </CardFooter>
-          </Card>
+        <WalletTransaction />
 
           <Card className="mt-6">
             <CardHeader>
@@ -615,7 +572,7 @@ export default function ProfilePage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-blue-50 p-4 rounded-lg text-center">
-                  <h3 className="text-2xl font-bold text-blue-700">0.25 Sepolia ETH</h3>
+                  <h3 className="text-2xl font-bold text-blue-700">0.25  ETH</h3>
                   <p className="text-sm text-blue-600">Total Donated</p>
                 </div>
                 <div className="bg-emerald-50 p-4 rounded-lg text-center">

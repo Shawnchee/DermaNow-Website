@@ -69,7 +69,7 @@ export default function DonationLevelsPage() {
       {/* Back to profile button */}
       <div className="mb-8">
         <Link href="/profile">
-          <Button variant="ghost" className="flex items-center gap-2">
+          <Button variant="ghost" className="flex items-center gap-2 cursor-pointer">
             <ChevronLeft className="h-4 w-4" /> Back to Profile
           </Button>
         </Link>
@@ -127,8 +127,8 @@ export default function DonationLevelsPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/charity">
-              <Button className="bg-blue-600 hover:bg-blue-700">
+            <Link href="/charity/browse-projects">
+              <Button className="bg-blue-600 hover:bg-blue-700 cursor-pointer">
                 Donate to Level Up
               </Button>
             </Link>
@@ -139,7 +139,7 @@ export default function DonationLevelsPage() {
       {/* Level cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Level 1 */}
-        <Card className={`relative overflow-hidden ${currentLevel >= 1 ? "border-green-500 shadow-md" : "opacity-90"}`}>
+        <Card className={`relative overflow-hidden py-4 ${currentLevel >= 1 ? "border-green-500 shadow-md" : "opacity-90"}`}>
           {currentLevel === 1 && (
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-green-600"></div>
           )}
@@ -221,7 +221,7 @@ export default function DonationLevelsPage() {
         </Card>
 
         {/* Level 2 */}
-        <Card className={`relative overflow-hidden ${currentLevel >= 2 ? "border-amber-500 shadow-md" : "opacity-80"}`}>
+        <Card className={`relative overflow-hidden py-4 ${currentLevel >= 2 ? "border-amber-500 shadow-md" : "opacity-80"}`}>
           {currentLevel === 2 && (
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-600"></div>
           )}
@@ -338,7 +338,7 @@ export default function DonationLevelsPage() {
         </Card>
 
         {/* Level 3 */}
-        <Card className={`relative overflow-hidden ${currentLevel >= 3 ? "border-blue-500 shadow-md" : "opacity-70"}`}>
+        <Card className={`relative overflow-hidden py-4 ${currentLevel >= 3 ? "border-blue-500 shadow-md" : "opacity-70"}`}>
           {currentLevel === 3 && (
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-purple-600"></div>
           )}
@@ -373,13 +373,13 @@ export default function DonationLevelsPage() {
                     <div className="h-5 w-5 flex-shrink-0 mt-0.5 text-blue-600">
                       <CheckSquare className="h-5 w-5" />
                     </div>
-                    <span>RM300 total</span>
+                    <span>RM2000 total</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <div className="h-5 w-5 flex-shrink-0 mt-0.5 text-blue-600">
                       <CheckSquare className="h-5 w-5" />
                     </div>
-                    <span>3 projects</span>
+                    <span>5 projects</span>
                   </li>
                 </ul>
               </div>

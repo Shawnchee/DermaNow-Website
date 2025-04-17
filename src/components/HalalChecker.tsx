@@ -20,13 +20,13 @@ import {
   ArrowRight,
   BookOpen,
   Shield,
+  MoonStar,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
-export default function HalalChecker() {
-  const description = "to teach math to children";
+export default function HalalChecker({ description }: { description: string }) {
   const [response, setResponse] = useState<{
     isHalal: boolean;
     reasons: string[];
@@ -82,22 +82,24 @@ ${description}`;
   };
 
   return (
-    <div className="container max-w-3xl mx-auto py-8 px-4">
+    <div className="w-full py-2 max-w-8xl">
       <Card className="mb-8 overflow-hidden">
         <CardHeader className="relative">
-          <div className="flex items-center space-x-2">
-            <Shield className="h-6 w-6 text-blue-600" />
-            <CardTitle className="text-2xl">Donation Halal Status</CardTitle>
+          <div className="flex items-center space-x-2 py-4">
+            <MoonStar className="h-6 w-6 text-blue-600" />
+            <CardTitle className="text-lg font-semibold">
+              Donation Halal Status
+            </CardTitle>
           </div>
           <CardDescription>
-            Check if a charity event is Halal/Shariah compliant
+            Verify the Halal status of this project
           </CardDescription>
         </CardHeader>
         <CardFooter className="relative">
           <Button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 mb-4 mt-2"
           >
             {isLoading ? (
               <>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ethers } from "ethers";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,22 +38,27 @@ import {
   Loader2,
   Check,
   X,
-  Shield,
   Building,
   Lock,
   AlertTriangle,
   BadgeCheck,
   BookOpen,
   Leaf,
-  Scale,
   MoonStar,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import HalalChecker from "@/components/HalalChecker";
+import CampaignProgressCard from "@/components/campaign-process-card";
+import supabase from "@/utils/supabase/client";
+import { useParams } from "next/navigation";
+import SmartContractTransaction from "@/components/smart-contract-transaction";
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0x8765b67425A42dD7ba3e0f350542426Ed2551c02";
+const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
 
 export default function CharityPage() {
+  const params = useParams();
+  const id = params.id;
   // Use the connectMetamask hook
   const { walletAddress, provider, signer, connectWallet } = connectMetamask();
   const [contract, setContract] = useState<ethers.Contract | null>(null);
@@ -73,9 +78,9 @@ export default function CharityPage() {
     totalRaised: 0,
     targetAmount: 0,
     remainingAmount: 0,
-  })
-  const [votingThreshold, setVotingThreshold] = useState(0)
-  const [activeMilestoneId, setActiveMilestoneId] = useState<number>(-1)
+  });
+  const [votingThreshold, setVotingThreshold] = useState(0);
+  const [activeMilestoneId, setActiveMilestoneId] = useState<number>(-1);
   const [proofOfWorkModalOpen, setProofOfWorkModalOpen] = useState(false);
   const [selectedProofOfWork, setSelectedProofOfWork] = useState<any>(null);
 
@@ -90,6 +95,45 @@ export default function CharityPage() {
     txHash?: string;
   }>({ status: null, message: "" });
 
+  const milestonesRef = useRef<HTMLDivElement>(null);
+
+  const eventDescription =
+    "This initiative aims to address the critical educational gap in rural Malaysian villages by establishing modern, well-equipped schools that provide quality education to underserved children. The project takes a holistic approach to education, focusing not only on building physical infrastructure but also on providing learning materials, training qualified teachers, and engaging the local community.";
+
+  const [projectTitle, setProjectTitle] = useState<string>("");
+  const [projectDescription, setProjectDescription] = useState<string>("");
+  const [image, setImage] = useState<string>("");
+  const [categories, setCategories] = useState<string[]>([""]);
+
+  useEffect(() => {
+    if (id) {
+      // Fetch project details from Supabase
+      const fetchProjectDetails = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("charity_projects")
+            .select("*")
+            .eq("id", id)
+            .single();
+          if (error) {
+            console.error("Error fetching project details:", error);
+            setProjectTitle("Unknown Project");
+          } else {
+            console.log("Successful fetching project details:", data);
+            setProjectTitle(data?.title || "Unknown Project");
+            setProjectDescription(data?.description || eventDescription);
+            setImage(data?.image || "/charity.jpg");
+            setCategories(data?.category || [""]);
+          }
+        } catch (err) {
+          console.error("Error fetching project details:", err);
+          setProjectTitle("Unknown Project");
+        }
+      };
+
+      fetchProjectDetails();
+    }
+  }, [id]);
   // Initialize contract when signer is available
   useEffect(() => {
     const initialize = async () => {
@@ -171,18 +215,19 @@ export default function CharityPage() {
               Number.parseFloat(formatEther(milestone.targetAmount))) *
             100,
           // Add project title - in a real app, this would come from the contract
-          projectTitle: "Placeholder Project",
+          projectTitle: projectTitle,
+          image: image,
           proofOfWork: {
             photos: [
-              "https://images.pexels.com/photos/933624/pexels-photo-933624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-              "https://images.pexels.com/photos/933624/pexels-photo-933624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+              "https://images.pexels.com/photos/5802822/pexels-photo-5802822.jpeg?auto=compress&cs=tinysrgb&w=600",
+              "https://images.pexels.com/photos/27269603/pexels-photo-27269603/free-photo-of-a-small-drone-laying-on-the-ground.jpeg?auto=compress&cs=tinysrgb&w=600",
             ],
             videos: [
-              "https://videos.pexels.com/video-files/6740283/6740283-uhd_2560_1440_30fps.mp4",
+              "https://videos.pexels.com/video-files/20731378/20731378-sd_640_360_30fps.mp4",
             ],
           },
-        }
-      })
+        };
+      });
 
       // Sort milestones by ID to ensure sequential order
       formattedMilestones.sort((a, b) => a.id - b.id);
@@ -419,6 +464,10 @@ export default function CharityPage() {
     }
   };
 
+  const scrollToMilestones = () => {
+    milestonesRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   // Connect on component mount if wallet is already connected
   useEffect(() => {
     if (window.ethereum) {
@@ -436,63 +485,7 @@ export default function CharityPage() {
   }, {});
 
   return (
-    <div className="min-h-screen pt-24 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
-      {/* Organization Banner */}
-      <div className="container mx-auto px-6 pt-5">
-        <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-blue-400 dark:border-blue-700 bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm">
-          <div className="flex items-center">
-            <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-              <Building className="h-5 w-5 text-blue-100" />
-            </div>
-            <div>
-              <div className="text-xs text-blue-100 mb-0.5 font-medium">
-                Organization
-              </div>
-              <span className="font-semibold text-white">
-                Charity Milestone DAO
-              </span>
-            </div>
-          </div>
-
-          <a
-            href="https://github.com/charity-milestone-dao"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
-          >
-            <span className="text-blue-500">View GitHub</span>
-            <ExternalLink className="h-3 w-3 ml-1.5 text-blue-500" />
-          </a>
-        </div>
-      </div>
-
-      {/* Shariah compliance badge */}
-      <div className="container mx-auto px-6 pt-2">
-        <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
-          <div className="flex items-center">
-            <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-              <MoonStar className="h-5 w-5 text-green-100" />
-            </div>
-            <div>
-              <div className="text-xs text-green-100 mb-0.5 font-medium">
-                Certification
-              </div>
-              <span className="font-semibold text-white">
-                Shariah Compliant
-              </span>
-            </div>
-          </div>
-
-          <a
-            href="#shariah-info"
-            className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
-          >
-            <span className="text-blue-500">Learn More</span>
-            <BookOpen className="h-3 w-3 ml-1.5 text-blue-500" />
-          </a>
-        </div>
-      </div>
-
+    <div className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
         <motion.div
           className="text-center max-w-4xl mx-auto mb-12"
@@ -509,8 +502,21 @@ export default function CharityPage() {
             Blockchain-Powered Charity
           </motion.div>
 
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="flex justify-center mb-6"
+          >
+            <img
+              src="/icons/milestonebased.svg"
+              alt="Milestone Icon"
+              className="h-56 w-h-56"
+            />
+          </motion.div>
+
           <motion.h1
-            className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900"
+            className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900 leading-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.7 }}
@@ -566,76 +572,22 @@ export default function CharityPage() {
         </motion.div>
 
         {/* Campaign Progress Card */}
-        <div className="mb-12">
-          <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 overflow-hidden">
-            <div className="relative">
-              <img
-                src="/community.jpg"
-                alt="Campaign Banner"
-                className="h-[200px] w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <Badge className="bg-blue-600 rounded-full px-3 py-1 text-xs font-medium">
-                      Active Campaign
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="bg-black/30 text-white border-white/20 rounded-full px-3 py-1 text-xs font-medium"
-                    >
-                      Goal: {targetAmount * ethToMyrRate} MYR ({targetAmount.toFixed(2)} ETH)
-                    </Badge>
-                  </div>
-                  <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-                    Community Support Initiative
-                  </h1>
-                  <p className="text-zinc-200 text-sm max-w-3xl">
-                    A transparent, milestone-based charity project to support
-                    community development initiatives.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-5 border-t border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center dark:bg-blue-900/30">
-                    <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Raised so far
-                    </div>
-                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                      {Math.min(
-                        Math.round((totalRaised / targetAmount) * 100),
-                        100
-                      )}
-                      % of goal
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                <div className="font-mono text-lg font-medium text-blue-700 dark:text-blue-400">
-                    {myrValues.totalRaised.toLocaleString()} MYR
-                  </div>
-                  <div className="text-xs text-zinc-500">≈ {totalRaised.toFixed(4)} ETH</div>
-                </div>
-              </div>
-              <Progress
-                value={Math.min(
-                  Math.round((totalRaised / targetAmount) * 100),
-                  100
-                )}
-                className="h-2 mt-2 bg-zinc-100 dark:bg-zinc-800"
-              />
-            </div>
-          </Card>
-        </div>
+        <CampaignProgressCard
+          totalRaised={totalRaised}
+          targetAmount={targetAmount}
+          ethToMyrRate={ethToMyrRate}
+          myrValues={myrValues}
+          projectTitle={projectTitle}
+          projectDescription={projectDescription}
+          projectImage={image}
+          loading={loading}
+          categories={categories}
+        />
+
+        <HalalChecker description={eventDescription} />
 
         {/* Sequential Milestone Information */}
-        <div className="mb-8">
+        <div className="my-8 ">
           <Alert className="bg-blue-50 border-blue-200">
             <AlertTriangle className="h-5 w-5 text-blue-600" />
             <AlertTitle>Sequential Milestone Funding</AlertTitle>
@@ -679,60 +631,66 @@ export default function CharityPage() {
             </Card>
           </div>
         )}
-  <Dialog open={proofOfWorkModalOpen} onOpenChange={setProofOfWorkModalOpen}>
-  <DialogContent className="sm:max-w-lg">
-  <DialogHeader>
-  <DialogTitle>Proof of Work</DialogTitle>
-  <DialogDescription>
-    Below is the submitted media proof for this milestone.
-  </DialogDescription>
-</DialogHeader>
+        <Dialog
+          open={proofOfWorkModalOpen}
+          onOpenChange={setProofOfWorkModalOpen}
+        >
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Proof of Work</DialogTitle>
+              <DialogDescription>
+                Below is the submitted media proof for this milestone.
+              </DialogDescription>
+            </DialogHeader>
 
-<div className="space-y-4 mt-4">
-  {selectedProofOfWork?.photos?.length > 0 && (
-    <div>
-      <h4 className="text-sm font-medium">Photos</h4>
-      <div className="grid grid-cols-2 gap-4">
-        {selectedProofOfWork.photos.map((photo: string, index: number) => (
-          <img
-            key={index}
-            src={photo}
-            alt={`Proof of Work Photo ${index + 1}`}
-            className="rounded-lg shadow-md"
-          />
-        ))}
-      </div>
-    </div>
-  )}
+            <div className="space-y-4 mt-4">
+              {selectedProofOfWork?.photos?.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium">Photos</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedProofOfWork.photos.map(
+                      (photo: string, index: number) => (
+                        <img
+                          key={index}
+                          src={photo}
+                          alt={`Proof of Work Photo ${index + 1}`}
+                          className="rounded-lg shadow-md"
+                        />
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
 
-  {selectedProofOfWork?.videos?.length > 0 && (
-    <div>
-      <h4 className="text-sm font-medium">Videos</h4>
-      <div className="space-y-2">
-        {selectedProofOfWork.videos.map((video: string, index: number) => (
-          <video
-            key={index}
-            controls
-            src={video}
-            className="w-full rounded-lg shadow-md"
-          />
-        ))}
-      </div>
-    </div>
-  )}
+              {selectedProofOfWork?.videos?.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium">Videos</h4>
+                  <div className="space-y-2">
+                    {selectedProofOfWork.videos.map(
+                      (video: string, index: number) => (
+                        <video
+                          key={index}
+                          controls
+                          src={video}
+                          className="w-full rounded-lg shadow-md"
+                        />
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
 
-  {!selectedProofOfWork && (
-    <span className="text-sm text-gray-500">
-      No proof of work available for this milestone.
-    </span>
-  )}
-</div>
-
-  </DialogContent>
-</Dialog>
+              {!selectedProofOfWork && (
+                <span className="text-sm text-gray-500">
+                  No proof of work available for this milestone.
+                </span>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Milestones Section */}
-        <div className="mb-16">
+        <div className="mb-16" ref={milestonesRef}>
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold text-gray-800">
               Active Charity Milestones
@@ -789,7 +747,7 @@ export default function CharityPage() {
                               : milestone.released
                               ? "border-gray-200"
                               : "border-blue-100"
-                          } overflow-hidden h-full flex flex-col relative`}
+                          } overflow-hidden h-full flex flex-col relative p-2`}
                         >
                           {/* Sequential indicator */}
                           {activeMilestoneId === milestone.id && (
@@ -804,366 +762,274 @@ export default function CharityPage() {
                               </div>
                             )}
 
-                        <CardHeader
-                          className={`pb-2 ${activeMilestoneId !== -1 && activeMilestoneId === milestone.id ? "pt-8" : activeMilestoneId !== -1 && milestone.id > activeMilestoneId ? "pt-8 opacity-70" : ""}`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <CardTitle className="text-xl">{milestone.description}</CardTitle>
-                            {milestone.released ? (
-                              <Badge className="bg-green-500">Completed</Badge>
-                            ) : activeMilestoneId === milestone.id ? (
-                              <Badge className="bg-blue-500">Active</Badge>
-                            ) : milestone.id > activeMilestoneId ? (
-                              <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-300">
-                                <Lock className="h-3 w-3 mr-1" />
-                                Locked
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-yellow-500">Pending Release</Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1 mt-1 mb-2">
-                            <Badge
-                              variant="outline"
-                              className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1"
-                            >
-                              <BadgeCheck className="h-3 w-3" />
-                              Shariah Compliant
-                            </Badge>
-                          </div>
-                          <CardDescription className="space-y-2">
-                                                        <div>
-                                                          <span className="font-medium">Service Provider:</span> {milestone.serviceProviderName}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500 font-mono">
-                                                          Address: {milestone.serviceProvider.substring(0, 6)}...
-                                                          {milestone.serviceProvider.substring(38)}
-                                                        </div>
-                                                        <Button variant="outline" size="sm" className="mt-2 text-xs cursor-pointer">
-                                                          <Users className="h-3 w-3 mr-1" />
-                                                          View Provider Profile
-                                                        </Button>
-                                                      </CardDescription>
-                        </CardHeader>
-                        <CardContent className={`flex-grow ${milestone.id > activeMilestoneId ? "opacity-70" : ""}`}>
-                          <div className="mb-4">
-                            <div className="flex justify-between text-sm mb-1">
-                              <span>Progress</span>
-                              <span>{milestone.progress.toFixed(0)}%</span>
+                          <CardHeader
+                            className={`pb-2 ${
+                              activeMilestoneId !== -1 &&
+                              activeMilestoneId === milestone.id
+                                ? "pt-8"
+                                : activeMilestoneId !== -1 &&
+                                  milestone.id > activeMilestoneId
+                                ? "pt-8 opacity-70"
+                                : ""
+                            }`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <CardTitle className="text-xl">
+                                {milestone.description}
+                              </CardTitle>
+                              {milestone.released ? (
+                                <Badge className="bg-green-500">
+                                  Completed
+                                </Badge>
+                              ) : activeMilestoneId === milestone.id ? (
+                                <Badge className="bg-blue-500">Active</Badge>
+                              ) : milestone.id > activeMilestoneId ? (
+                                <Badge
+                                  variant="outline"
+                                  className="bg-gray-100 text-gray-500 border-gray-300"
+                                >
+                                  <Lock className="h-3 w-3 mr-1" />
+                                  Locked
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-yellow-500">
+                                  Pending Release
+                                </Badge>
+                              )}
                             </div>
-                            <Progress value={milestone.progress} className="h-2" />
-                          </div>
-                          <div className="grid grid-cols-2 gap-4 mb-4">
-                            <div className="bg-blue-50 p-3 rounded-lg">
-                              <div className="text-xs text-gray-500">Target</div>
-                              <div className="font-semibold flex items-center">
-                                <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
-                                {(Number(milestone.targetAmount) * ethToMyrRate).toLocaleString()} MYR
-                              </div>
-                              <div className="text-xs text-gray-500">≈ {milestone.targetAmount} ETH</div>
-                            </div>
-                            <div className="bg-blue-50 p-3 rounded-lg">
-                              <div className="text-xs text-gray-500">Raised</div>
-                              <div className="font-semibold flex items-center">
-                              <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
-                                {(Number(milestone.currentAmount) * ethToMyrRate).toLocaleString()} MYR
-                              </div>
-                              <div className="text-xs text-gray-500">≈ {milestone.currentAmount} ETH
-                              </div>
-                            </div>
-                          </div>
-                          <div className="bg-blue-50 p-3 rounded-lg mb-4">
-                            <div className="text-xs text-gray-500">Committee Votes</div>
-                            <div className="font-semibold flex items-center">
-                              <Users className="h-4 w-4 text-blue-600 mr-1" />
-                              {milestone.voteCount} of {votingThreshold} vote(s)
-                            </div>
-                            {milestone.voteCount > 0 && !milestone.released && (
-                              <Progress
-                              value={(Number(milestone.voteCount) / Number(votingThreshold)) * 100}
-                              className="h-1 mt-2"
-                            />
-                            )}
-                          </div>
-                        </CardContent>
-                        <CardFooter className="flex flex-col gap-3 pt-0">
-                          {!milestone.released && activeMilestoneId === milestone.id && (
-                            <>
-                              <Button
-                                className="w-full bg-blue-600 hover:bg-blue-700"
-                                onClick={() => openDonationModal(milestone)}
-                                disabled={!account}
+                            <div className="flex items-center gap-1 mt-1 mb-2">
+                              <Badge
+                                variant="outline"
+                                className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1"
                               >
-                                Donate to This Milestone
-                              </Button>
+                                <BadgeCheck className="h-3 w-3" />
+                                Shariah Compliant
+                              </Badge>
+                            </div>
+                            <CardDescription className="space-y-2">
+                              <div>
+                                <span className="font-medium">
+                                  Service Provider:
+                                </span>{" "}
+                                {/* {milestone.serviceProviderName} */}
+                              </div>
+                              <div className="text-xs text-gray-500 font-mono">
+                                Address:{" "}
+                                {milestone.serviceProvider.substring(0, 6)}...
+                                {milestone.serviceProvider.substring(38)}
+                              </div>
                               <Button
-                                      variant="outline"
-                                      className="w-full border-green-600 text-green-700 hover:bg-green-50 cursor-pointer"
-                                      onClick={() => {
-                                        setSelectedProofOfWork(milestone.proofOfWork); // Set proof of work data
-                                        setProofOfWorkModalOpen(true); // Open modal
-                                      }}
-                                    >
-                                      <ExternalLink className="h-4 w-4 mr-2 " />
-                                      View Proof of Work
-                                    </Button>
+                                variant="outline"
+                                size="sm"
+                                className="mt-2 text-xs cursor-pointer"
+                              >
+                                <Users className="h-3 w-3 mr-1" />
+                                View Provider Profile
+                              </Button>
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent
+                            className={`flex-grow ${
+                              milestone.id > activeMilestoneId
+                                ? "opacity-70"
+                                : ""
+                            }`}
+                          >
+                            <div className="mb-4">
+                              <div className="flex justify-between text-sm mb-1">
+                                <span>Progress</span>
+                                <span>{milestone.progress.toFixed(0)}%</span>
+                              </div>
+                              <Progress
+                                value={milestone.progress}
+                                className="h-2"
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                              <div className="bg-blue-50 p-3 rounded-lg">
+                                <div className="text-xs text-gray-500">
+                                  Target
+                                </div>
+                                <div className="font-semibold flex items-center">
+                                  <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
+                                  {(
+                                    Number(milestone.targetAmount) *
+                                    ethToMyrRate
+                                  ).toLocaleString()}{" "}
+                                  MYR
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  ≈ {milestone.targetAmount} ETH
+                                </div>
+                              </div>
+                              <div className="bg-blue-50 p-3 rounded-lg">
+                                <div className="text-xs text-gray-500">
+                                  Raised
+                                </div>
+                                <div className="font-semibold flex items-center">
+                                  <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
+                                  {(
+                                    Number(milestone.currentAmount) *
+                                    ethToMyrRate
+                                  ).toLocaleString()}{" "}
+                                  MYR
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  ≈ {milestone.currentAmount} ETH
+                                </div>
+                              </div>
+                            </div>
+                            <div className="bg-blue-50 p-3 rounded-lg mb-4">
+                              <div className="text-xs text-gray-500">
+                                Committee Votes
+                              </div>
+                              <div className="font-semibold flex items-center">
+                                <Users className="h-4 w-4 text-blue-600 mr-1" />
+                                {milestone.voteCount} of {votingThreshold}{" "}
+                                vote(s)
+                              </div>
+                              {milestone.voteCount > 0 &&
+                                !milestone.released && (
+                                  <Progress
+                                    value={
+                                      (Number(milestone.voteCount) /
+                                        Number(votingThreshold)) *
+                                      100
+                                    }
+                                    className="h-1 mt-2"
+                                  />
+                                )}
+                            </div>
+                          </CardContent>
+                          <CardFooter className="flex flex-col gap-3 pt-0">
+                            {!milestone.released &&
+                              activeMilestoneId === milestone.id && (
+                                <>
+                                  <Button
+                                    className="w-full bg-blue-600 hover:bg-blue-700"
+                                    onClick={() => openDonationModal(milestone)}
+                                    disabled={!account}
+                                  >
+                                    Donate to This Milestone
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    className="w-full border-green-600 text-green-700 hover:bg-green-50 cursor-pointer"
+                                    onClick={() => {
+                                      setSelectedProofOfWork(
+                                        milestone.proofOfWork
+                                      ); // Set proof of work data
+                                      setProofOfWorkModalOpen(true); // Open modal
+                                    }}
+                                  >
+                                    <ExternalLink className="h-4 w-4 mr-2 " />
+                                    View Proof of Work
+                                  </Button>
 
-                              {isCommittee && (
+                                  {isCommittee && (
+                                    <Button
+                                      variant="outline"
+                                      className="w-full border-blue-600 text-blue-700 hover:bg-blue-50"
+                                      onClick={() =>
+                                        voteToRelease(milestone.id)
+                                      }
+                                    >
+                                      <Vote className="h-4 w-4 mr-2" />
+                                      Vote to Release
+                                    </Button>
+                                  )}
+                                </>
+                              )}
+                            {!milestone.released &&
+                              activeMilestoneId !== milestone.id &&
+                              milestone.id < activeMilestoneId && (
+                                <div className="flex items-center justify-center w-full p-2 bg-yellow-50 rounded-lg text-yellow-700">
+                                  <Clock className="h-4 w-4 mr-2" />
+                                  Waiting for Committee Votes (
+                                  {milestone.voteCount}/{votingThreshold})
+                                </div>
+                              )}
+                            {!milestone.released &&
+                              activeMilestoneId !== -1 &&
+                              milestone.id > activeMilestoneId && (
+                                <div className="flex items-center justify-center w-full p-2 bg-gray-50 rounded-lg text-gray-500">
+                                  <Lock className="h-4 w-4 mr-2" />
+                                  Locked Until Previous Milestones Complete
+                                </div>
+                              )}
+                            {milestone.released && (
+                              <>
+                                <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Funds Released Successfully
+                                </div>
                                 <Button
                                   variant="outline"
-                                  className="w-full border-blue-600 text-blue-700 hover:bg-blue-50"
-                                  onClick={() => voteToRelease(milestone.id)}
+                                  className="w-full border-green-600 text-green-700 hover:bg-green-50 cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedProofOfWork(
+                                      milestone.proofOfWork
+                                    ); // Set proof of work data
+                                    setProofOfWorkModalOpen(true); // Open modal
+                                  }}
                                 >
-                                  <Vote className="h-4 w-4 mr-2" />
-                                  Vote to Release
+                                  <ExternalLink className="h-4 w-4 mr-2 " />
+                                  View Proof of Work
                                 </Button>
-                              )}
-                            </>
-                          )}
-                          {!milestone.released &&
-                            activeMilestoneId !== milestone.id &&
-                            milestone.id < activeMilestoneId && (
-                              <div className="flex items-center justify-center w-full p-2 bg-yellow-50 rounded-lg text-yellow-700">
-                                <Clock className="h-4 w-4 mr-2" />
-                                Waiting for Committee Votes ({milestone.voteCount}/{votingThreshold})
-                              </div>
+                              </>
                             )}
-                          {!milestone.released && activeMilestoneId !== -1 && milestone.id > activeMilestoneId && (
-                            <div className="flex items-center justify-center w-full p-2 bg-gray-50 rounded-lg text-gray-500">
-                              <Lock className="h-4 w-4 mr-2" />
-                              Locked Until Previous Milestones Complete
-                            </div>
-                          )}
-                          {milestone.released && (
-
-                                    <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
-                                      <CheckCircle className="h-4 w-4 mr-2" />
-                                      Funds Released Successfully
-                                    </div>
-                                )}
-                        </CardFooter>
-                      </Card>
-                    </motion.div>
-                  ))}
+                          </CardFooter>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))
+              )
+            )
           )}
         </div>
 
         {/* Transaction History */}
-        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 mb-12">
-          <CardHeader>
-            <CardTitle className="text-xl font-medium">
-              Recent Transactions
-            </CardTitle>
-            <CardDescription>
-              Latest donations to charity milestones
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Transaction
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      From
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Amount
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {transactions.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-4 text-center text-sm text-gray-500"
-                      >
-                        No transactions yet
-                      </td>
-                    </tr>
-                  ) : (
-                    transactions.map((tx, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          <a
-                            href={`https://sepolia.etherscan.io/tx/${tx.hash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center hover:text-blue-600"
-                          >
-                            <span className="font-mono">{tx.hash}</span>
-                            <ExternalLink className="ml-1 h-3 w-3" />
-                          </a>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                          {tx.from}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                          <div className="font-mono font-medium">
-                            {tx.value} ETH
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            ≈{" "}
-                            {(Number(tx.value) * ethToMyrRate).toLocaleString()}{" "}
-                            MYR
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                          {tx.timestamp}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+        <SmartContractTransaction />
+
+        <div className="bg-blue-50 border-green-900 p-4 rounded-lg mt-4">
+          <h3 className="font-medium text-blue-800 mb-2">Donation Types</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white p-3 rounded-md border border-blue-100">
+              <h4 className="font-medium text-blue-700 flex items-center">
+                <Leaf className="h-4 w-4 mr-1 text-blue-700" /> Sadaqah
+              </h4>
+              <p className="text-sm text-gray-600 mt-1">
+                Voluntary charitable giving that can be directed to any of our
+                projects.
+              </p>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Shariah Compliance Information */}
-        <div id="shariah-info" className="mb-12">
-          <Card className="bg-white/90 backdrop-blur-sm border border-green-100">
-            <CardHeader>
-              <CardTitle className="text-xl font-medium flex items-center">
-                <MoonStar className="h-6 w-6 text-green-600 mr-2" />
-                Shariah Compliance Information
-              </CardTitle>
-              <CardDescription>
-                Understanding how our charity projects adhere to Islamic
-                principles
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex items-start mb-2">
-                    <div className="bg-green-100 p-2 rounded-full mr-3">
-                      <Scale className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-green-800">Riba-Free</h3>
-                      <p className="text-sm text-green-700">
-                        All projects are free from interest-based transactions
-                        (riba) and comply with Islamic finance principles.
-                      </p>
-                    </div>
-                  </div>
-                </div>
+            <div className="bg-white p-3 rounded-md border border-green-100">
+              <h4 className="font-medium text-blue-700 flex items-center">
+                <Leaf className="h-4 w-4 mr-1 text-blue-700" /> Zakat
+              </h4>
+              <p className="text-sm text-gray-600 mt-1">
+                Obligatory alms that can be directed to eligible projects marked
+                with Zakat-eligible badge.
+              </p>
+            </div>
 
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex items-start mb-2">
-                    <div className="bg-green-100 p-2 rounded-full mr-3">
-                      <BadgeCheck className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-green-800">
-                        Certified Projects
-                      </h3>
-                      <p className="text-sm text-green-700">
-                        All charity milestones are reviewed and certified by
-                        qualified Shariah advisors.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-medium text-green-800 mb-2">
-                  Donation Types
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white p-3 rounded-md border border-green-100">
-                    <h4 className="font-medium text-green-700 flex items-center">
-                      <Leaf className="h-4 w-4 mr-1" /> Sadaqah
-                    </h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Voluntary charitable giving that can be directed to any of
-                      our projects.
-                    </p>
-                  </div>
-
-                  <div className="bg-white p-3 rounded-md border border-green-100">
-                    <h4 className="font-medium text-green-700 flex items-center">
-                      <Leaf className="h-4 w-4 mr-1" /> Zakat
-                    </h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Obligatory alms that can be directed to eligible projects
-                      marked with Zakat-eligible badge.
-                    </p>
-                  </div>
-
-                  <div className="bg-white p-3 rounded-md border border-green-100">
-                    <h4 className="font-medium text-green-700 flex items-center">
-                      <Leaf className="h-4 w-4 mr-1" /> Waqf
-                    </h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Endowment funds that provide sustainable support for
-                      long-term community projects.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <Alert className="bg-green-50 border-green-200">
-                <BookOpen className="h-5 w-5 text-green-600" />
-                <AlertTitle>Shariah Advisory Board</AlertTitle>
-                <AlertDescription>
-                  Our projects are regularly reviewed by a panel of qualified
-                  Shariah scholars to ensure compliance with Islamic principles.
-                  The board verifies that all funds are used in accordance with
-                  Shariah guidelines and that projects avoid prohibited
-                  activities.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Security and Verification Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          {/* Wallet Security Check */}
-          <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
-            <div className="flex items-start">
-              <div className="bg-blue-50 p-3 rounded-full mr-4">
-                <Shield className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-2">
-                  Wallet Security Check
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Verify the security of service provider wallets before
-                  donating to ensure your funds go to legitimate recipients.
-                </p>
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                  Verify Wallet Security
-                </Button>
-              </div>
+            <div className="bg-white p-3 rounded-md border border-green-100">
+              <h4 className="font-medium text-blue-700 flex items-center">
+                <Leaf className="h-4 w-4 mr-1 text-blue-700" /> Waqf
+              </h4>
+              <p className="text-sm text-gray-600 mt-1">
+                Endowment funds that provide sustainable support for long-term
+                community projects.
+              </p>
             </div>
           </div>
+        </div>
 
+
+        {/* Security and Verification Section */}
+        <div className="mb-12">
           {/* Committee Verification */}
           <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
             <div className="flex items-start">
@@ -1183,6 +1049,62 @@ export default function CharityPage() {
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Organization Banner */}
+        <div className="container mx-auto px-6 pt-5">
+          <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-blue-400 dark:border-blue-700 bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm">
+            <div className="flex items-center">
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
+                <Building className="h-5 w-5 text-blue-100" />
+              </div>
+              <div>
+                <div className="text-xs text-blue-100 mb-0.5 font-medium">
+                  Organization
+                </div>
+                <span className="font-semibold text-white">
+                  Charity Milestone DAO
+                </span>
+              </div>
+            </div>
+
+            <a
+              href="https://github.com/charity-milestone-dao"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
+            >
+              <span className="text-blue-500">View GitHub</span>
+              <ExternalLink className="h-3 w-3 ml-1.5 text-blue-500" />
+            </a>
+          </div>
+        </div>
+
+        {/* Shariah compliance badge */}
+        <div className="container mx-auto px-6 pt-2">
+          <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
+            <div className="flex items-center">
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
+                <MoonStar className="h-5 w-5 text-green-100" />
+              </div>
+              <div>
+                <div className="text-xs text-green-100 mb-0.5 font-medium">
+                  Certification
+                </div>
+                <span className="font-semibold text-white">
+                  Shariah Compliant
+                </span>
+              </div>
+            </div>
+
+            <a
+              href="#shariah-info"
+              className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
+            >
+              <span className="text-blue-500">Learn More</span>
+              <BookOpen className="h-3 w-3 ml-1.5 text-blue-500" />
+            </a>
           </div>
         </div>
       </div>

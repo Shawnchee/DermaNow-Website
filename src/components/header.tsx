@@ -5,6 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import connectMetamask from "@/hooks/connectMetamask";
 import { ChevronDown } from "lucide-react";
+import Image from "next/image";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,14 +40,22 @@ export default function Header() {
         <div className="max-w-7xl mx-auto py-3">
           <div className="flex items-center justify-between px-4 py-3 md:py-0 md:px-6">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="relative h-10 w-10 overflow-hidden">
-                <div className="absolute inset-0 bg-blue-600 rounded-full"></div>
-                <div className="absolute inset-1 bg-white rounded-full flex items-center justify-center">
-                  <div className="text-blue-600 font-bold text-xl">D</div>
-                </div>
+            <Link href="/" className="flex items-center space-x-3">
+              <div className="relative h-12 w-12 flex items-center justify-center rounded-full bg-white">
+                <Image
+                  src="/icons/Dermanow.svg"
+                  alt="DermaNow Logo"
+                  width={60}
+                  height={60}
+                  className="object-contain"
+                />
               </div>
-              <span className={cn("font-bold text-xl", scrolled ? "text-blue-700" : "text-white")}>
+              <span
+                className={cn(
+                  "font-bold text-2xl tracking-wide",
+                  scrolled ? "text-blue-700" : "text-white"
+                )}
+              >
                 DermaNow
               </span>
             </Link>
@@ -55,15 +64,31 @@ export default function Header() {
 <div className="hidden md:flex items-center space-x-8">
   {/* Explore */}
   <div className="group relative">
-    <span className="cursor-pointer text-sm font-medium text-white hover:text-blue-200 flex items-center gap-1">
+    <span
+      className={cn(
+        "cursor-pointer text-sm font-medium flex items-center gap-1",
+        scrolled ? "text-blue-700 hover:text-blue-900" : "text-white hover:text-blue-200"
+      )}
+    >
       Explore
-      <ChevronDown className="h-4 w-4 text-white group-hover:text-blue-200" />
+      <ChevronDown
+        className={cn(
+          "h-4 w-4",
+          scrolled ? "text-blue-700 group-hover:text-blue-900" : "text-white group-hover:text-blue-200"
+        )}
+      />
     </span>
     <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition duration-200 z-50">
-      <Link href="/why-us" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+      <Link
+        href="/why-us"
+        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+      >
         Why Us
       </Link>
-      <Link href="/shariah" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+      <Link
+        href="/shariah"
+        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+      >
         Shariah
       </Link>
     </div>
@@ -71,18 +96,37 @@ export default function Header() {
 
   {/* Charity */}
   <div className="group relative">
-    <span className="cursor-pointer text-sm font-medium text-white hover:text-blue-200 flex items-center gap-1">
+    <span
+      className={cn(
+        "cursor-pointer text-sm font-medium flex items-center gap-1",
+        scrolled ? "text-blue-700 hover:text-blue-900" : "text-white hover:text-blue-200"
+      )}
+    >
       Charity
-      <ChevronDown className="h-4 w-4 text-white group-hover:text-blue-200" />
+      <ChevronDown
+        className={cn(
+          "h-4 w-4",
+          scrolled ? "text-blue-700 group-hover:text-blue-900" : "text-white group-hover:text-blue-200"
+        )}
+      />
     </span>
     <div className="absolute left-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition duration-200 z-50">
-      <Link href="/browse-projects" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+      <Link
+        href="/charity/browse-projects"
+        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+      >
         Browse Projects
       </Link>
-      <Link href="/start-project" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+      <Link
+        href="/charity/start-project"
+        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+      >
         Start a Project
       </Link>
-      <Link href="/service-providers" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+      <Link
+        href="/service-providers"
+        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+      >
         Select Service Providers
       </Link>
     </div>
@@ -90,22 +134,44 @@ export default function Header() {
 
   {/* Funding */}
   <div className="group relative">
-    <span className="cursor-pointer text-sm font-medium text-white hover:text-blue-200 flex items-center gap-1">
+    <span
+      className={cn(
+        "cursor-pointer text-sm font-medium flex items-center gap-1",
+        scrolled ? "text-blue-700 hover:text-blue-900" : "text-white hover:text-blue-200"
+      )}
+    >
       Funding
-      <ChevronDown className="h-4 w-4 text-white group-hover:text-blue-200" />
+      <ChevronDown
+        className={cn(
+          "h-4 w-4",
+          scrolled ? "text-blue-700 group-hover:text-blue-900" : "text-white group-hover:text-blue-200"
+        )}
+      />
     </span>
     <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition duration-200 z-50">
-      <Link href="/onramp" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+      <Link
+        href="/onramp"
+        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+      >
         Deposit
       </Link>
-      <Link href="/defi" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+      <Link
+        href="/defi"
+        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+      >
         Shariah-Compliant Staking
       </Link>
     </div>
   </div>
 
   {/* Profile */}
-  <Link href="/profile" className="text-sm font-medium text-white hover:text-blue-200">
+  <Link
+    href="/profile"
+    className={cn(
+      "text-sm font-medium",
+      scrolled ? "text-blue-700 hover:text-blue-900" : "text-white hover:text-blue-200"
+    )}
+  >
     Profile
   </Link>
 </div>

@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { WalletProvider } from "@/context/wallet-context"
+import { CharityChat } from "@/components/charity-chatbot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,6 +19,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DermaNow",
   description: "Malaysia's BlockChain Charity Platform",
+  icons: {  
+    icon: "/icons/Dermanow.svg",
+  }
 };
 
 export default function RootLayout({
@@ -31,6 +35,7 @@ export default function RootLayout({
         <WalletProvider>
           <Header />
           {children}
+          <CharityChat />
           <Footer />
         </WalletProvider>
       </body>

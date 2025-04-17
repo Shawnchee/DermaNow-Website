@@ -110,22 +110,22 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
 const testimonials = [
   {
     quote:
-      "Students completing the course will learn about the key disruptive technologies powering Web3, how to apply the innovation in business and what implication the technologies will have on work, economy and society.",
-    author:
-      "Shawn Chee Bye, Professor of University of Western Australia Business School's Blockchain Program",
+      "Blockchain technology is revolutionizing the way we think about transparency and trust. Platforms like this are paving the way for a more equitable future.",
+    author: "Dr. Emily Carter, Blockchain Researcher at MIT",
     image:
       "https://images.pexels.com/photos/12064/pexels-photo-12064.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
   },
   {
     quote:
-      "This platform has allowed us to reach donors globally with full transparency. The blockchain impact reporting is game-changing.",
-    author: "Papa John, Founder of PapaJohn",
+      "This platform has empowered us to connect with donors in ways we never thought possible. The transparency it provides is unmatched.",
+    author: "Sarah Johnson, CEO of Global Aid Network",
     image:
       "https://images.pexels.com/photos/17323801/pexels-photo-17323801/free-photo-of-network-rack.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
   },
   {
-    quote: "I Just love keyboards",
-    author: "Yuan Zhen, Tech for Good Initiative",
+    quote:
+      "As a tech enthusiast, I’m amazed by how this platform integrates cutting-edge technology to create real-world impact. It’s inspiring to see innovation used for good.",
+    author: "Michael Tan, Founder of Tech for Humanity",
     image:
       "https://images.pexels.com/photos/1181396/pexels-photo-1181396.jpeg?auto=compress&cs=tinysrgb&w=800&h=750&dpr=2",
   },

@@ -155,7 +155,7 @@ export default function OnrampPage() {
     setQrExpiry(300)
   }
   return (
-    <div className="min-h-screen pt-16 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
 
       
@@ -173,6 +173,19 @@ export default function OnrampPage() {
           >
             Powered by MoonPay
           </motion.div>
+
+          <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.7 }}
+              className="flex justify-center mb-4"
+            >
+              <img
+                src="/icons/deposit.svg"
+                alt="DeFi Icon"
+                className="h-48 w-h-48"
+              />
+            </motion.div>
 
           <motion.h1
             className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900 leading-16"
@@ -409,7 +422,7 @@ export default function OnrampPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-blue-200">
+            <Card className="border-blue-200 py-8">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <DollarSign className="h-6 w-6 text-green-600 mr-2" />
