@@ -28,7 +28,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "./ui/separator";
 
 export default function SmartContractTransaction() {
   const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
@@ -88,7 +87,7 @@ export default function SmartContractTransaction() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <Card className="w-full max-w-9xl bg-white/90 backdrop-blur-sm border border-blue-200">
+      <Card className="w-full max-w-9xl bg-white/90 backdrop-blur-sm border ">
         <CardHeader>
           <CardTitle className="text-2xl text-black">Donation History</CardTitle>
           <CardDescription className="text-gray-600">
