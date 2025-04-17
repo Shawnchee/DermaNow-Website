@@ -32,6 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function SmartContractTransaction() {
   const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
   const contractAddress = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
+  const ETH_TO_MYR_RATE = 12500;
 
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +80,10 @@ export default function SmartContractTransaction() {
   const formatDate = (timestamp) => {
     return new Date(parseInt(timestamp) * 1000).toLocaleString();
   };
+
+  const convertEthToMyr = (ethValue) => {
+    return (parseFloat(ethValue) * ETH_TO_MYR_RATE).toFixed(2);
+    }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
@@ -159,8 +164,13 @@ export default function SmartContractTransaction() {
                             </Tooltip>
                           </TooltipProvider>
                         </TableCell>
-                        <TableCell className="text-right">
-                          {parseFloat(formatEther(tx.value)).toFixed(6)}
+                        <TableCell className="text-right flex flex-col">
+                        <span className="font-bold text-md">
+                            {convertEthToMyr(formatEther(tx.value))} MYR
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            ≈ {parseFloat(formatEther(tx.value)).toFixed(6)} ETH
+                          </span>
                         </TableCell>
                         <TableCell className="text-center">
                           <a 

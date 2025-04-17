@@ -32,6 +32,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function WalletTransaction() {
   const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
   const walletAddress = "0x483bF34b4444dB73FB0b1b5EBDB0253A4E8b714f";
+  const ETH_TO_MYR_RATE = 12500;
+
   
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,9 +78,13 @@ export default function WalletTransaction() {
     return new Date(parseInt(timestamp) * 1000).toLocaleString();
   };
 
+  const convertEthToMyr = (ethValue) => {
+    return (parseFloat(ethValue) * ETH_TO_MYR_RATE).toFixed(2);
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-      <Card className="w-full max-w-6xl">
+      <Card className="w-full max-w-9xl">
         <CardHeader>
           <CardTitle className="text-2xl">Wallet Transaction History</CardTitle>
           <CardDescription>
@@ -174,8 +180,13 @@ export default function WalletTransaction() {
                             </Tooltip>
                           </TooltipProvider>
                         </TableCell>
-                        <TableCell className="text-right">
-                          {parseFloat(formatEther(tx.value)).toFixed(6)}
+                        <TableCell className="text-right flex flex-col">
+                        <span className="font-bold text-md">
+                            {convertEthToMyr(formatEther(tx.value))} MYR
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            ≈ {parseFloat(formatEther(tx.value)).toFixed(6)} ETH
+                          </span>
                         </TableCell>
                         <TableCell className="text-center">
                           <a 
