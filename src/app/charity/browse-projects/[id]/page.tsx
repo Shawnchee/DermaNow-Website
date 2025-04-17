@@ -50,6 +50,7 @@ import {
 import { Input } from "@/components/ui/input";
 import HalalChecker from "@/components/HalalChecker";
 import CampaignProgressCard from "@/components/campaign-process-card";
+import SmartContractTransaction from "@/components/smart-contract-transaction";
 
 // Contract address from deployment
 const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
@@ -540,8 +541,10 @@ export default function CharityPage() {
           myrValues={myrValues}
         />
 
+        <HalalChecker description={eventDescription} />
+
         {/* Sequential Milestone Information */}
-        <div className="mb-8">
+        <div className="my-8 ">
           <Alert className="bg-blue-50 border-blue-200">
             <AlertTriangle className="h-5 w-5 text-blue-600" />
             <AlertTitle>Sequential Milestone Funding</AlertTitle>
@@ -949,96 +952,9 @@ export default function CharityPage() {
         </div>
 
         {/* Transaction History */}
-        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 mb-12 py-8">
-          <CardHeader>
-            <CardTitle className="text-xl font-medium">
-              Recent Transactions
-            </CardTitle>
-            <CardDescription>
-              Latest donations to charity milestones
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Transaction
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      From
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Amount
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {transactions.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-4 text-center text-sm text-gray-500"
-                      >
-                        No transactions yet
-                      </td>
-                    </tr>
-                  ) : (
-                    transactions.map((tx, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          <a
-                            href={`https://sepolia.etherscan.io/tx/${tx.hash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center hover:text-blue-600"
-                          >
-                            <span className="font-mono">{tx.hash}</span>
-                            <ExternalLink className="ml-1 h-3 w-3" />
-                          </a>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                          {tx.from}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                          <div className="font-mono font-medium">
-                            {tx.value} ETH
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            ≈{" "}
-                            {(Number(tx.value) * ethToMyrRate).toLocaleString()}{" "}
-                            MYR
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                          {tx.timestamp}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        <SmartContractTransaction />
 
-        <div className="bg-blue-50 border-green-900 p-4 rounded-lg">
+        <div className="bg-blue-50 border-green-900 p-4 rounded-lg mt-4">
           <h3 className="font-medium text-blue-800 mb-2">Donation Types</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-3 rounded-md border border-blue-100">
@@ -1073,7 +989,6 @@ export default function CharityPage() {
           </div>
         </div>
 
-        <HalalChecker description={eventDescription} />
 
         {/* Security and Verification Section */}
         <div className="mb-12">

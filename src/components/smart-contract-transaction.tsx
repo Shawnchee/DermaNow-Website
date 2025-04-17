@@ -28,6 +28,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "./ui/separator";
 
 export default function SmartContractTransaction() {
   const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
@@ -83,30 +84,30 @@ export default function SmartContractTransaction() {
 
   const convertEthToMyr = (ethValue) => {
     return (parseFloat(ethValue) * ETH_TO_MYR_RATE).toFixed(2);
-    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
-      <Card className="w-full max-w-8xl">
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <Card className="w-full max-w-9xl bg-white/90 backdrop-blur-sm border border-blue-200">
         <CardHeader>
-          <CardTitle className="text-2xl">Donation History</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl text-black">Donation History</CardTitle>
+          <CardDescription className="text-gray-600">
             Showing the 10 most recent donations to the smart contract
           </CardDescription>
-          <div className="mt-2 p-2 bg-gray-100 rounded-md">
-            <code className="text-sm font-mono break-all">{contractAddress}</code>
+          <div className="mt-2 p-2 bg-blue-50 rounded-md">
+            <code className="text-sm font-mono break-all text-blue-800">{contractAddress}</code>
           </div>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <p>Loading donation history...</p>
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                <p className="text-blue-800">Loading donation history...</p>
               </div>
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="flex space-x-4">
-                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full bg-blue-100" />
                 </div>
               ))}
             </div>
@@ -115,32 +116,32 @@ export default function SmartContractTransaction() {
               {error}
             </div>
           ) : (
-            <div className="rounded-md border">
+            <div className="rounded-md border border-blue-200">
               <Table>
-                <TableCaption>
+                <TableCaption className="text-blue-800 my-8">
                   Donation history for the specified smart contract address
                 </TableCaption>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[180px]">Date</TableHead>
-                    <TableHead>Hash</TableHead>
-                    <TableHead>From</TableHead>
-                    <TableHead className="text-right">Value (ETH)</TableHead>
-                    <TableHead className="text-center w-[100px]">Action</TableHead>
+                    <TableHead className=" text-blue-900">Date</TableHead>
+                    <TableHead className="text-blue-900">Hash</TableHead>
+                    <TableHead className="text-blue-900">From</TableHead>
+                    <TableHead className="text-right text-blue-900">Value (MYR)</TableHead>
+                    <TableHead className="text-center  text-blue-900">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center text-gray-500">
                         No donations found for this contract
                       </TableCell>
                     </TableRow>
                   ) : (
                     transactions.map((tx, index) => (
                       <TableRow key={index}>
-                        <TableCell className="font-medium">{formatDate(tx.timeStamp)}</TableCell>
-                        <TableCell className="font-mono text-xs">
+                        <TableCell className="font-medium text-blue-800 px">{formatDate(tx.timeStamp)}</TableCell>
+                        <TableCell className="font-mono text-xs text-blue-800">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-2">
@@ -152,7 +153,7 @@ export default function SmartContractTransaction() {
                             </Tooltip>
                           </TooltipProvider>
                         </TableCell>
-                        <TableCell className="font-mono text-xs">
+                        <TableCell className="font-mono text-xs text-blue-800">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-2">
@@ -165,7 +166,7 @@ export default function SmartContractTransaction() {
                           </TooltipProvider>
                         </TableCell>
                         <TableCell className="text-right flex flex-col">
-                        <span className="font-bold text-md">
+                          <span className="font-bold text-md text-blue-900">
                             {convertEthToMyr(formatEther(tx.value))} MYR
                           </span>
                           <span className="text-xs text-gray-500">
@@ -173,13 +174,13 @@ export default function SmartContractTransaction() {
                           </span>
                         </TableCell>
                         <TableCell className="text-center">
-                          <a 
-                            href={`https://sepolia.etherscan.io/tx/${tx.hash}`} 
-                            target="_blank" 
+                          <a
+                            href={`https://sepolia.etherscan.io/tx/${tx.hash}`}
+                            target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <Button variant="outline" size="sm" className="cursor-pointer">
-                              <ExternalLink className="h-4 w-4 mr-1 " />
+                            <Button variant="outline" size="sm" className="cursor-pointer text-blue-800 border-blue-200">
+                              <ExternalLink className="h-4 w-4 mr-1 text-blue-800" />
                               View
                             </Button>
                           </a>
