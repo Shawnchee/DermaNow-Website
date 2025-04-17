@@ -9,7 +9,6 @@ import {
   Clock,
   X,
   ArrowRight,
-  Calendar,
   Users,
   Heart,
   Search,
@@ -17,13 +16,6 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -32,6 +24,7 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
+import supabase from "@/utils/supabase/client";
 
 interface ProjectProps {
   id: number;
@@ -192,10 +185,7 @@ const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
               <Button variant="outline" className="flex-1" onClick={onClose}>
                 View All Projects
               </Button>
-              <Button
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
-                asChild
-              >
+              <Button className="flex-1 bg-blue-600 hover:bg-blue-700" asChild>
                 <Link href="/charity/start-project">
                   Create Another <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -230,7 +220,7 @@ const PageContent = () => {
     "Children & Youth",
   ];
 
-  // Fetch projects (initial load)
+  // Fetch projects on load
   useEffect(() => {
     const success = searchParams.get("success");
     if (success === "true") {
@@ -238,116 +228,24 @@ const PageContent = () => {
     }
 
     const fetchProjects = async () => {
-      setLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const mockProjects: ProjectProps[] = [
-        {
-          id: 1,
-          title: "Access to Clean Water in Rural Areas",
-          description:
-            "Providing clean and safe drinking water to underserved communities.",
-          image:
-            "/images/clean-water.jpeg",
-          funding_percentage: 44.5,
-          supporters: 600,
-          amount: 22250,
-          category: ["Water & Sanitation", "Community Development"],
-        },
-        {
-          id: 2,
-          title: "Emergency Relief for Natural Disasters",
-          description:
-            "Delivering immediate aid to victims of natural disasters worldwide.",
-          image:
-            "https://images.pexels.com/photos/14000696/pexels-photo-14000696.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-          funding_percentage: 100,
-          funding_complete: true,
-          supporters: 1000,
-          amount: 167080,
-          category: ["Disaster Relief"],
-        },
-        {
-          id: 3,
-          title: "Rebuilding Lives After Earthquakes",
-          description:
-            "Supporting earthquake survivors with shelter and essential supplies.",
-          image:
-            "https://images.pexels.com/photos/15861730/pexels-photo-15861730/free-photo-of-tents-in-a-refugee-camp.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-          funding_percentage: 45.48,
-          supporters: 5000,
-          amount: 454900,
-          category: ["Disaster Relief", "Community Development"],
-        },
-        {
-          id: 4,
-          title: "School Meals for Underprivileged Children",
-          description:
-            "Providing nutritious meals to children to support their education.",
-          image:
-            "https://images.pexels.com/photos/6995201/pexels-photo-6995201.jpeg",
-          funding_percentage: 100,
-          funding_complete: true,
-          supporters: 1000,
-          amount: 239090,
-          category: ["Food & Nutrition", "Education", "Children & Youth"],
-        },
-        {
-          id: 5,
-          title: "Education for Kids in Rural Areas",
-          description:
-            "A comprehensive initiative to build and equip modern schools for underserved students in remote Malaysian villages.",
-          image:
-            "/classroom.jpg",
-          funding_percentage: 100,
-          in_progress: true,
-          progress_percentage: 19.0,
-          supporters: 492,
-          amount: 625,
-          category: ["Food & Nutrition", "Education"],
-        },
-        {
-          id: 6,
-          title: "Building a Brighter Future for Students",
-          description:
-            "Providing meals to help students achieve their educational goals.",
-          image:
-            "https://images.pexels.com/photos/3401403/pexels-photo-3401403.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-          funding_percentage: 100,
-          funding_complete: true,
-          supporters: 1000,
-          amount: 123540,
-          category: ["Food & Nutrition", "Education"],
-        },
-        {
-          id: 7,
-          title: "Supporting Education Through Meal Programs",
-          description:
-            "Helping children stay in school by providing daily meals.",
-          image:
-            "/images/education-through-meals.jpg",
-          funding_percentage: 100,
-          funding_complete: true,
-          supporters: 1000,
-          amount: 81080,
-          category: ["Food & Nutrition", "Education", "Children & Youth"],
-        },
-        {
-          id: 8,
-          title: "Nutrition for Academic Success",
-          description:
-            "Providing meals to ensure children can focus on learning.",
-          image:
-            "https://images.pexels.com/photos/6590920/pexels-photo-6590920.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-          funding_percentage: 100,
-          funding_complete: true,
-          supporters: 1000,
-          amount: 92320,
-          category: ["Food & Nutrition", "Education"],
-        },
-      ];
-      setProjects(mockProjects);
-      setFilteredProjects(mockProjects);
-      setLoading(false);
+      try {
+        setLoading(true);
+
+        const { data, error } = await supabase
+          .from("charity_projects")
+          .select("*");
+
+        if (error) {
+          console.error("Failed to fetch projects:", error.message);
+          return;
+        }
+
+        setProjects(data ?? []);
+      } catch (err) {
+        console.error("Unexpected error:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchProjects();
@@ -580,7 +478,7 @@ const PageContent = () => {
             </div>
           ))}
         </div>
-      ) : displayedProjects.length === 0 ? (
+      ) : displayedProjects.length === 0 && !loading ? (
         <div className="text-center py-16">
           <div className="bg-blue-100 rounded-full p-4 inline-block mb-4">
             <Heart className="h-10 w-10 text-blue-500" />
@@ -599,7 +497,10 @@ const PageContent = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {displayedProjects.map((project) => (
-            <Link href={`/charity/browse-projects/${project.id}`} key={project.id}>
+            <Link
+              href={`/charity/browse-projects/${project.id}`}
+              key={project.id}
+            >
               <ProjectCard {...project} />
             </Link>
           ))}
@@ -607,7 +508,7 @@ const PageContent = () => {
       )}
     </div>
   );
-}
+};
 
 const ProjectPage = () => {
   return (
