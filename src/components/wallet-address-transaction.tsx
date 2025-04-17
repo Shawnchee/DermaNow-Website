@@ -30,17 +30,28 @@ import {
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import supabase from "@/utils/supabase";
+import { EthereumLivePrice } from "@/utils/ethLivePrice";
 
 export default function WalletTransaction() {
   const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
   const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY || "";
   const walletAddress = "0x483bF34b4444dB73FB0b1b5EBDB0253A4E8b714f";
-  const ETH_TO_MYR_RATE = 12500; // Conversion rate: 1 ETH = 12,500 MYR
 
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [ethToMyr, setEthToMyr] = useState(12500);
+
+  async function fetchEthToMyrRate() {
+    try {
+      const ethPriceInMyr = await EthereumLivePrice();
+      setEthToMyr(ethPriceInMyr);
+    } catch (error) {
+      console.error("Error fetching ETH to MYR rate:", error);
+      setEthToMyr(12500); 
+    }
+  }
 
   async function fetchTransactions(walletAddress) {
     try {
@@ -59,30 +70,38 @@ export default function WalletTransaction() {
         );
 
         // Fetch contract addresses and project titles from Supabase
-        const { data: supabaseData, error: supabaseError } = await supabase
-          .from("wallet_transaction")
-          .select("contract_address, project_title")
+        const { data: walletData, error: walletError } = await supabase
+          .from("charity_projects")
+          .select("smart_contract_address, title")
 
-        if (supabaseError) {
-          console.error("Error fetching data from Supabase:", supabaseError);
-          setError("Failed to fetch project titles. Please try again later.");
-          return;
-        }
-
-        // Map project titles to transactions
-        const transactionsWithTitles = sentTransactions.map((tx) => {
-          const project = supabaseData.find(
-            (item) => item.contract_address.toLowerCase() === tx.to?.toLowerCase()
+          if (walletError) {
+            console.error("Error fetching data from Supabase:", walletError);
+            setError("Failed to fetch project titles. Please try again later.");
+            return;
+          }
+          
+          const filteredTransactions = sentTransactions.filter(
+            (tx) => parseFloat(tx.value) > 0)
+            .filter((tx) => walletData.some(
+              (item) => item.smart_contract_address?.toLowerCase() === tx.to?.toLowerCase(
+            ))
           );
 
-          return {
-            ...tx,
-            project_title: project ? project.project_title : "Unknown Project",
-            
-          };
-        });
 
-        setTransactions(transactionsWithTitles);
+          
+          // Map project titles to transactions
+          const transactionsWithTitles = filteredTransactions.map((tx) => {
+            const project = walletData.find(
+              (item) => item.smart_contract_address?.toLowerCase() === tx.to?.toLowerCase()
+            );
+          
+            return {
+              ...tx,
+              project_title: project ? project.title : "Unknown Project",
+            };
+          });
+          
+          setTransactions(transactionsWithTitles);
       } else {
         setError(data.message || "No transactions found for the specified wallet address.");
       }
@@ -95,6 +114,7 @@ export default function WalletTransaction() {
   }
 
   useEffect(() => {
+    fetchEthToMyrRate();
     fetchTransactions(walletAddress);
   }, []);
 
@@ -111,11 +131,11 @@ export default function WalletTransaction() {
 
   // Function to convert ETH to MYR
   const convertEthToMyr = (ethValue) => {
-    return (parseFloat(ethValue) * ETH_TO_MYR_RATE).toFixed(2);
+    return (parseFloat(ethValue) * ethToMyr).toFixed(2);
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-4">
+    <div className="flex flex-col items-center justify-start py-4">
       <Card className="w-full max-w-7xl bg-white/90 backdrop-blur-sm border">
         <CardHeader>
           <CardTitle className="text-2xl text-black">User Donation History</CardTitle>
@@ -147,7 +167,7 @@ export default function WalletTransaction() {
             <div className="rounded-md border border-blue-200">
               <Table>
                 <TableCaption className="text-blue-800 my-4">
-                  Transaction history for the specified wallet address
+                  Donation history for the specified wallet address
                 </TableCaption>
                 <TableHeader>
                   <TableRow>
