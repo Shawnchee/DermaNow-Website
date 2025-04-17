@@ -38,7 +38,6 @@ import {
   Loader2,
   Check,
   X,
-  Shield,
   Building,
   Lock,
   AlertTriangle,
@@ -46,15 +45,18 @@ import {
   BookOpen,
   Leaf,
   MoonStar,
+  Receipt,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import HalalChecker from "@/components/HalalChecker";
 import CampaignProgressCard from "@/components/campaign-process-card";
+import { useRouter } from "next/navigation";
 
 // Contract address from deployment
 const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
 
 export default function CharityPage() {
+  const router = useRouter();
   // Use the connectMetamask hook
   const { walletAddress, provider, signer, connectWallet } = connectMetamask();
   const [contract, setContract] = useState<ethers.Contract | null>(null);
@@ -89,6 +91,7 @@ export default function CharityPage() {
     status: "success" | "error" | null;
     message: string;
     txHash?: string;
+    amount?: string;
   }>({ status: null, message: "" });
 
   const milestonesRef = useRef<HTMLDivElement>(null);
@@ -305,6 +308,7 @@ export default function CharityPage() {
         status: "success",
         message: `Successfully donated ${amount} ETH to milestone: ${milestones[milestoneId].description}`,
         txHash: receipt.transactionHash,
+        amount: amount,
       });
     } catch (error) {
       console.error("Donation error:", error);
@@ -411,6 +415,7 @@ export default function CharityPage() {
         status: "success",
         message: `Successfully donated ${modalDonationAmount} ETH to milestone: ${selectedMilestone.description}`,
         txHash: receipt.transactionHash,
+        amount: modalDonationAmount,
       });
     } catch (error) {
       console.error("Donation error:", error);
@@ -422,6 +427,47 @@ export default function CharityPage() {
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Navigate to tax receipt page
+  const navigateToTaxReceipt = () => {
+    try {
+      // Create a mock transaction if needed for testing
+      const mockTransaction = {
+        txHash: `0x${Math.random().toString(16).substring(2, 42)}`,
+        amount: modalDonationAmount || "1.0",
+      };
+
+      // Use either the real transaction or the mock one
+      const txData = {
+        txHash: transactionResult.txHash || mockTransaction.txHash,
+        amount: transactionResult.amount || mockTransaction.amount,
+        amountMYR:
+          Number(transactionResult.amount || mockTransaction.amount) *
+          ethToMyrRate,
+        date: new Date().toISOString(),
+        milestoneDescription:
+          selectedMilestone?.description || "General Donation",
+        projectTitle:
+          selectedMilestone?.projectTitle ||
+          "Education for Kids in Rural Areas",
+      };
+
+      console.log("Storing donation data:", txData);
+      localStorage.setItem("donationDetails", JSON.stringify(txData));
+
+      // Close the modal before navigation
+      setModalOpen(false);
+
+      // Use window.location for more reliable navigation
+      window.location.href = "/charity/tax-receipt";
+    } catch (error) {
+      console.error("Error navigating to tax receipt:", error);
+      toast("Navigation Error", {
+        description:
+          "Failed to navigate to tax receipt page. Please try again.",
+      });
     }
   };
 
@@ -464,17 +510,17 @@ export default function CharityPage() {
           </motion.div>
 
           <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3, duration: 0.7 }}
-                        className="flex justify-center mb-6"
-                      >
-                        <img
-                          src="/icons/milestonebased.svg"
-                          alt="Milestone Icon"
-                          className="h-56 w-h-56"
-                        />
-                      </motion.div>
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="flex justify-center mb-6"
+          >
+            <img
+              src="/icons/milestonebased.svg"
+              alt="Milestone Icon"
+              className="h-56 w-h-56"
+            />
+          </motion.div>
 
           <motion.h1
             className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900 leading-16"
@@ -606,7 +652,7 @@ export default function CharityPage() {
                       (photo: string, index: number) => (
                         <img
                           key={index}
-                          src={photo}
+                          src={photo || "/placeholder.svg"}
                           alt={`Proof of Work Photo ${index + 1}`}
                           className="rounded-lg shadow-md"
                         />
@@ -766,7 +812,6 @@ export default function CharityPage() {
                                   Service Provider:
                                 </span>{" "}
                                 {/* {milestone.serviceProviderName} */}
-
                               </div>
                               <div className="text-xs text-gray-500 font-mono">
                                 Address:{" "}
@@ -914,28 +959,24 @@ export default function CharityPage() {
                               )}
                             {milestone.released && (
                               <>
-                                                            
-                                                            <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
-                                
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Funds Released Successfully
-                              </div>
-                              <Button
-                              variant="outline"
-                              className="w-full border-green-600 text-green-700 hover:bg-green-50 cursor-pointer"
-                              onClick={() => {
-                                setSelectedProofOfWork(
-                                  milestone.proofOfWork
-                                ); // Set proof of work data
-                                setProofOfWorkModalOpen(true); // Open modal
-                              }}
-                            >
-                              <ExternalLink className="h-4 w-4 mr-2 " />
-                              View Proof of Work
-                            </Button>
-
+                                <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Funds Released Successfully
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  className="w-full border-green-600 text-green-700 hover:bg-green-50 cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedProofOfWork(
+                                      milestone.proofOfWork
+                                    ); // Set proof of work data
+                                    setProofOfWorkModalOpen(true); // Open modal
+                                  }}
+                                >
+                                  <ExternalLink className="h-4 w-4 mr-2 " />
+                                  View Proof of Work
+                                </Button>
                               </>
-                              
                             )}
                           </CardFooter>
                         </Card>
@@ -1333,7 +1374,15 @@ export default function CharityPage() {
                   )}
                 </AlertDescription>
               </Alert>
-              <div className="mt-6 flex justify-end">
+              <div className="mt-6 flex flex-col gap-4">
+                <Button
+                  type="button"
+                  onClick={navigateToTaxReceipt}
+                  className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2 py-6 text-lg"
+                >
+                  <Receipt className="h-5 w-5" />
+                  Generate Tax Relief Receipt
+                </Button>
                 <Button
                   type="button"
                   onClick={() => setModalOpen(false)}
