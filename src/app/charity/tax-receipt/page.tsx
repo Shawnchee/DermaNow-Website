@@ -147,31 +147,33 @@ export default function TaxReceiptPage() {
       </Button>
 
       {!receiptGenerated ? (
-        <Card className="print:hidden">
+        <Card className="print:hidden shadow-md">
           <CardHeader>
-            <CardTitle className="text-2xl">
+            <CardTitle className="text-2xl text-blue-900">
               Tax Relief Receipt Information
             </CardTitle>
             <CardDescription>
-              Please provide your details to generate a tax relief receipt for
-              your donation.
+              Please provide your details below to generate a tax relief receipt
+              for your donation.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-md mb-6">
-                <h3 className="font-medium text-blue-800 mb-2">
-                  Donation Details
-                </h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+            <CardContent className="space-y-8">
+              <Card className="bg-blue-50">
+                <CardHeader>
+                  <CardTitle className="text-blue-800 text-lg">
+                    Donation Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-500">Transaction Hash:</span>
+                    <span className="text-gray-500">Transaction Hash</span>
                     <div className="font-mono text-gray-700 truncate">
                       {donationDetails.txHash}
                     </div>
                   </div>
                   <div>
-                    <span className="text-gray-500">Amount:</span>
+                    <span className="text-gray-500">Amount</span>
                     <div className="font-medium text-gray-700">
                       {donationDetails.amount} ETH
                       <span className="block text-xs text-gray-500">
@@ -180,29 +182,34 @@ export default function TaxReceiptPage() {
                     </div>
                   </div>
                   <div>
-                    <span className="text-gray-500">Date:</span>
+                    <span className="text-gray-500">Date</span>
                     <div className="text-gray-700">
                       {formatDate(donationDetails.date)}
                     </div>
                   </div>
                   <div>
-                    <span className="text-gray-500">Project:</span>
+                    <span className="text-gray-500">Project</span>
                     <div className="text-gray-700">
                       {donationDetails.projectTitle}
                     </div>
                   </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-500">Milestone:</span>
+                  <div className="md:col-span-2">
+                    <span className="text-gray-500">Milestone</span>
                     <div className="text-gray-700">
                       {donationDetails.milestoneDescription ||
                         "General Donation"}
                     </div>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
+              <Card className="bg-white">
+                <CardHeader>
+                  <CardTitle className="text-blue-800 text-lg">
+                    Personal Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name</Label>
                     <Input
@@ -214,65 +221,65 @@ export default function TaxReceiptPage() {
                       required
                     />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="identificationNumber">
+                        Identification Number
+                      </Label>
+                      <Input
+                        id="identificationNumber"
+                        name="identificationNumber"
+                        placeholder="Enter your ID number"
+                        value={formData.identificationNumber}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneNumber">Phone Number</Label>
+                      <Input
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        placeholder="Enter your phone number"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="identificationNumber">
-                      Identification Number
-                    </Label>
+                    <Label htmlFor="email">Email Address</Label>
                     <Input
-                      id="identificationNumber"
-                      name="identificationNumber"
-                      placeholder="Enter your ID number"
-                      value={formData.identificationNumber}
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={formData.email}
                       onChange={handleInputChange}
                       required
                     />
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="phoneNumber">Phone Number</Label>
-                    <Input
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      placeholder="Enter your phone number"
-                      value={formData.phoneNumber}
+                    <Label htmlFor="address">Full Address</Label>
+                    <Textarea
+                      id="address"
+                      name="address"
+                      placeholder="Enter your full address"
+                      value={formData.address}
                       onChange={handleInputChange}
+                      required
+                      className="min-h-[100px]"
                     />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Full Address</Label>
-                  <Textarea
-                    id="address"
-                    name="address"
-                    placeholder="Enter your full address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    required
-                    className="min-h-[100px]"
-                  />
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </CardContent>
             <CardFooter>
               <Button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-blue-600 hover:bg-blue-700 my-5"
               >
                 Generate Tax Receipt
               </Button>
