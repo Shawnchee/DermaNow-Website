@@ -1,20 +1,14 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { useState, useRef, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import type React from "react"
+import { useState, useRef, useEffect } from "react"
+import { ethers } from "ethers"
+import { AnimatePresence, motion } from "framer-motion"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import {
   MessageCircle,
   Send,
@@ -35,39 +29,47 @@ import {
   ChevronDown,
   ImageIcon,
   Smile,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { marked } from "marked";
-import DOMPurify from "dompurify";
+  Wallet,
+  AlertTriangle,
+  ExternalLink,
+  Loader2,
+  Receipt,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import { marked } from "marked"
+import DOMPurify from "dompurify"
+import { toast } from "sonner"
+import connectMetamask from "@/hooks/connectMetamask"
+import { contractABI } from "@/lib/contract-abi"
+import { parseEther } from "ethers"
+import supabase from "@/utils/supabase/client"
 
 // Types for chat messages
-type MessageType =
-  | "text"
-  | "donation-suggestion"
-  | "donation-confirmation"
-  | "donation-success";
+type MessageType = "text" | "donation-suggestion" | "donation-confirmation" | "donation-success"
 
 interface Message {
-  id: string;
-  content: string;
-  sender: "user" | "bot";
-  type: MessageType;
-  timestamp: Date;
-  donationOption?: DonationOption;
-  selectedDonation?: DonationOption;
+  id: string
+  content: string
+  sender: "user" | "bot"
+  type: MessageType
+  timestamp: Date
+  donationOption?: DonationOption
+  selectedDonation?: DonationOption
 }
 
 interface DonationOption {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  minAmount: number;
-  image?: string;
-  funding_percentage?: number;
-  supporters?: number;
-  amount?: number;
-  categories?: string[];
+  id: string
+  name: string
+  description: string
+  icon: React.ReactNode
+  minAmount: number
+  image?: string
+  funding_percentage?: number
+  supporters?: number
+  amount?: number
+  categories?: string[]
+  contractAddress?: string
+  milestoneId?: number
 }
 
 // Map categories to icons
@@ -78,7 +80,7 @@ const CATEGORY_TO_ICON: Record<string, React.ReactNode> = {
   "Water & Sanitation": <Home className="h-5 w-5" />,
   "Community Development": <Home className="h-5 w-5" />,
   "Disaster Relief": <Heart className="h-5 w-5" />,
-};
+}
 
 // Sample donation suggestions for quick access
 const QUICK_DONATIONS: DonationOption[] = [
@@ -115,103 +117,161 @@ const QUICK_DONATIONS: DonationOption[] = [
     supporters: 876,
     image: "/placeholder.svg?height=200&width=400",
   },
-];
+]
 
 // API endpoints
-const API_BASE_URL = "http://localhost:8000";
-const CHAT_ENDPOINT = `${API_BASE_URL}/chatbot/chat`;
+const API_BASE_URL = "http://localhost:8000"
+const CHAT_ENDPOINT = `${API_BASE_URL}/chatbot/chat`
 
 export function CharityChat() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
-      content:
-        "Welcome to DermaNow! How can I help you make a difference today?",
+      content: "Welcome to DermaNow! How can I help you make a difference today?",
       sender: "bot",
       type: "text",
       timestamp: new Date(),
     },
-  ]);
-  const [inputValue, setInputValue] = useState("");
-  const [donationAmount, setDonationAmount] = useState<number>(0);
-  const [donationStep, setDonationStep] = useState<
-    "select" | "amount" | "confirm" | "success"
-  >("select");
-  const [selectedDonation, setSelectedDonation] =
-    useState<DonationOption | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showQuickDonations, setShowQuickDonations] = useState(false);
-  const [typingEffect, setTypingEffect] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  ])
+  const [inputValue, setInputValue] = useState("")
+  const [donationAmount, setDonationAmount] = useState<number>(0)
+  const [donationStep, setDonationStep] = useState<"select" | "amount" | "confirm" | "success">("select")
+  const [selectedDonation, setSelectedDonation] = useState<DonationOption | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showQuickDonations, setShowQuickDonations] = useState(false)
+  const [typingEffect, setTypingEffect] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
+  // Blockchain related state
+  const { walletAddress, provider, signer, connectWallet } = connectMetamask()
+  const [contract, setContract] = useState<ethers.Contract | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [transactionResult, setTransactionResult] = useState<{
+    status: "success" | "error" | null
+    message: string
+    txHash?: string
+    amount?: string
+  }>({ status: null, message: "" })
+  const [contractAddress, setContractAddress] = useState<string>("")
+
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+
+  // Initialize contract when signer is available
+  useEffect(() => {
+    const initialize = async () => {
+      if (signer && provider && selectedDonation?.contractAddress) {
+        try {
+          const charityContract = new ethers.Contract(selectedDonation.contractAddress, contractABI, signer)
+          setContract(charityContract)
+          console.log("Contract initialized:", charityContract.address)
+        } catch (error) {
+          console.error("Error initializing contract:", error)
+          toast("Contract Error", {
+            description: "Failed to initialize the charity contract.",
+          })
+        }
+      }
+    }
+
+    // Add a small delay to ensure signer and provider are loaded
+    const timeout = setTimeout(() => {
+      initialize()
+    }, 500) // 500ms delay
+
+    return () => clearTimeout(timeout) // Cleanup timeout on unmount
+  }, [signer, provider, selectedDonation])
+
+  // Auto-connect wallet if already connected
+  useEffect(() => {
+    if (window.ethereum) {
+      connectWallet()
+    }
+  }, [])
 
   // Auto-scroll
   useEffect(() => {
     if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
     }
-  }, [messages]);
+  }, [messages])
 
   // Typing effect
   useEffect(() => {
     if (typingEffect) {
       const timer = setTimeout(() => {
-        setTypingEffect(false);
-      }, 2000);
-      return () => clearTimeout(timer);
+        setTypingEffect(false)
+      }, 2000)
+      return () => clearTimeout(timer)
     }
-  }, [typingEffect]);
+  }, [typingEffect])
 
   // Fetch chat response
   const fetchChatResponse = async (message: string) => {
     try {
-      setIsLoading(true);
-      setTypingEffect(true);
+      setIsLoading(true)
+      setTypingEffect(true)
 
       // Prepare history: only text messages, exclude welcome and donation flow
       const history = messages
         .filter(
           (msg) =>
-            (msg.id !== "welcome" &&
-              msg.type === "text" &&
-              msg.sender !== "bot") ||
-            msg.type === "donation-suggestion"
+            (msg.id !== "welcome" && msg.type === "text" && msg.sender !== "bot") || msg.type === "donation-suggestion",
         )
         .map((msg) => ({
           role: msg.sender === "user" ? "user" : "assistant",
           content: msg.content,
-        }));
+        }))
 
       const response = await fetch(CHAT_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message, history }),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      return await response.json();
+      const data = await response.json()
+
+      // If there's a donation intent, fetch the contract address from Supabase
+      if (data.donation_intent && data.charities && data.charities.length > 0) {
+        const topCharity = data.charities[0]
+
+        try {
+          const { data: projectData, error } = await supabase
+            .from("charity_projects")
+            .select("smart_contract_address")
+            .eq("id", topCharity.id)
+            .single()
+
+          if (!error && projectData) {
+            topCharity.contractAddress = projectData.smart_contract_address
+          }
+        } catch (err) {
+          console.error("Error fetching contract address:", err)
+        }
+      }
+
+      return data
     } catch (error) {
-      console.error("Error fetching chat response:", error);
+      console.error("Error fetching chat response:", error)
       return {
         message: "Sorry, something went wrong. Please try again!",
         donation_intent: false,
         charities: null,
-      };
+      }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Handle sending message
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading) return
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -219,23 +279,19 @@ export function CharityChat() {
       sender: "user",
       type: "text",
       timestamp: new Date(),
-    };
+    }
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInputValue("");
+    setMessages((prev) => [...prev, userMessage])
+    setInputValue("")
 
-    const response = await fetchChatResponse(inputValue);
-    let messageType: MessageType = "text";
-    let donationOption: DonationOption | undefined;
+    const response = await fetchChatResponse(inputValue)
+    let messageType: MessageType = "text"
+    let donationOption: DonationOption | undefined
 
     // Check for donation intent
-    if (
-      response.donation_intent &&
-      response.charities &&
-      response.charities.length > 0
-    ) {
-      messageType = "donation-suggestion";
-      const topCharity = response.charities[0];
+    if (response.donation_intent && response.charities && response.charities.length > 0) {
+      messageType = "donation-suggestion"
+      const topCharity = response.charities[0]
       donationOption = {
         id: topCharity.id.toString(),
         name: topCharity.title,
@@ -247,7 +303,9 @@ export function CharityChat() {
         supporters: topCharity.supporters,
         amount: topCharity.amount,
         categories: topCharity.category,
-      };
+        contractAddress: topCharity.contractAddress,
+        milestoneId: 0, // Default to first milestone
+      }
     }
 
     const botMessage: Message = {
@@ -257,32 +315,32 @@ export function CharityChat() {
       type: messageType,
       timestamp: new Date(),
       donationOption,
-    };
+    }
 
-    setMessages((prev) => [...prev, botMessage]);
+    setMessages((prev) => [...prev, botMessage])
 
     if (messageType === "donation-suggestion") {
-      setDonationStep("select");
-      setSelectedDonation(null);
-      setDonationAmount(0);
+      setDonationStep("select")
+      setSelectedDonation(null)
+      setDonationAmount(0)
     }
-  };
+  }
 
   // Get icon for categories
   const getIconForCategories = (categories: string[] = []): React.ReactNode => {
     for (const category of categories) {
       if (CATEGORY_TO_ICON[category]) {
-        return CATEGORY_TO_ICON[category];
+        return CATEGORY_TO_ICON[category]
       }
     }
-    return <Heart className="h-5 w-5" />;
-  };
+    return <Heart className="h-5 w-5" />
+  }
 
   // Handle selecting donation
   const handleSelectDonation = (option: DonationOption) => {
-    setSelectedDonation(option);
-    setDonationAmount(option.minAmount || 10);
-    setDonationStep("amount");
+    setSelectedDonation(option)
+    setDonationAmount(option.minAmount || 10)
+    setDonationStep("amount")
 
     const selectionMessage: Message = {
       id: Date.now().toString(),
@@ -290,7 +348,7 @@ export function CharityChat() {
       sender: "user",
       type: "text",
       timestamp: new Date(),
-    };
+    }
 
     const responseMessage: Message = {
       id: (Date.now() + 1).toString(),
@@ -299,88 +357,147 @@ export function CharityChat() {
       type: "donation-confirmation",
       timestamp: new Date(),
       selectedDonation: option,
-    };
+    }
 
-    setMessages((prev) => [...prev, selectionMessage, responseMessage]);
-  };
+    setMessages((prev) => [...prev, selectionMessage, responseMessage])
+  }
 
   // Handle confirming donation
-  const handleConfirmDonation = () => {
-    if (!selectedDonation) return;
+  const handleConfirmDonation = async () => {
+    if (!selectedDonation || !contract || !signer) {
+      toast("Wallet Not Connected", {
+        description: "Please connect your wallet to make a donation.",
+      })
+      return
+    }
 
-    setDonationStep("success");
+    try {
+      setIsProcessing(true)
 
-    const confirmMessage: Message = {
-      id: Date.now().toString(),
-      content: `I confirm my donation of ${donationAmount} MYR to ${selectedDonation.name}`,
-      sender: "user",
-      type: "text",
-      timestamp: new Date(),
-    };
+      // Convert donation amount from MYR to ETH (simplified conversion)
+      const ethAmount = (donationAmount / 12500).toFixed(6) // Using a fixed rate of 1 ETH = 12,500 MYR
 
-    const thankYouMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      content: `Thank you for your generous donation of ${donationAmount} MYR to ${selectedDonation.name}! Your contribution will make a real difference.`,
-      sender: "bot",
-      type: "donation-success",
-      timestamp: new Date(),
-      selectedDonation: selectedDonation,
-    };
+      // Donate to the first milestone (in a real app, you'd select the appropriate milestone)
+      const milestoneId = selectedDonation.milestoneId || 0
 
-    setMessages((prev) => [...prev, confirmMessage, thankYouMessage]);
+      const tx = await contract.donateToMilestone(milestoneId, {
+        value: parseEther(ethAmount),
+      })
 
-    setTimeout(() => {
-      setDonationStep("select");
-      setSelectedDonation(null);
-      setDonationAmount(0);
-    }, 10000);
-  };
+      toast("Donation Processing", {
+        description: "Your donation is being processed. Please wait for confirmation.",
+      })
+
+      const receipt = await tx.wait()
+
+      // Add user confirmation message
+      const confirmMessage: Message = {
+        id: Date.now().toString(),
+        content: `I confirm my donation of ${donationAmount} MYR (${ethAmount} ETH) to ${selectedDonation.name}`,
+        sender: "user",
+        type: "text",
+        timestamp: new Date(),
+      }
+
+      // Add success message
+      const thankYouMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: `Thank you for your generous donation of ${donationAmount} MYR (${ethAmount} ETH) to ${selectedDonation.name}! Your contribution will make a real difference. Your transaction has been confirmed on the blockchain.`,
+        sender: "bot",
+        type: "donation-success",
+        timestamp: new Date(),
+        selectedDonation: selectedDonation,
+      }
+
+      setMessages((prev) => [...prev, confirmMessage, thankYouMessage])
+
+      setTransactionResult({
+        status: "success",
+        message: `Successfully donated ${ethAmount} ETH to ${selectedDonation.name}`,
+        txHash: receipt.transactionHash,
+        amount: ethAmount,
+      })
+
+      setDonationStep("success")
+
+      // Store donation details for tax receipt
+      const txData = {
+        txHash: receipt.transactionHash,
+        amount: ethAmount,
+        amountMYR: donationAmount,
+        date: new Date().toISOString(),
+        milestoneDescription: selectedDonation.description,
+        projectTitle: selectedDonation.name,
+      }
+
+      localStorage.setItem("donationDetails", JSON.stringify(txData))
+    } catch (error) {
+      console.error("Donation error:", error)
+
+      toast("Donation Failed", {
+        description: "Failed to process your donation. Please try again.",
+      })
+
+      setTransactionResult({
+        status: "error",
+        message: (error as any)?.reason || "Transaction failed. Please try again.",
+      })
+
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content: `I'm sorry, but there was an error processing your donation. ${(error as any)?.reason || "Please try again or contact support."}`,
+        sender: "bot",
+        type: "text",
+        timestamp: new Date(),
+      }
+
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
+      setIsProcessing(false)
+    }
+  }
 
   // Handle back in donation flow
   const handleDonationBack = () => {
     if (donationStep === "amount") {
-      setDonationStep("select");
-      setSelectedDonation(null);
+      setDonationStep("select")
+      setSelectedDonation(null)
     } else if (donationStep === "confirm") {
-      setDonationStep("amount");
+      setDonationStep("amount")
     }
-  };
+  }
 
   // Handle key press
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isLoading) {
-      handleSendMessage();
+      handleSendMessage()
     }
-  };
+  }
 
   // Handle quick donation selection
   const handleQuickDonation = (option: DonationOption) => {
-    handleSelectDonation(option);
-    setShowQuickDonations(false);
-  };
+    handleSelectDonation(option)
+    setShowQuickDonations(false)
+  }
 
   // Toggle expanded view
   const toggleExpandedView = () => {
-    setIsExpanded(!isExpanded);
-  };
+    setIsExpanded(!isExpanded)
+  }
 
   // Render Markdown content safely
   const renderMessageContent = (content: string) => {
     const markdown = marked(content, {
       breaks: true, // Convert \n to <br>
       gfm: true, // Support GitHub-flavored Markdown
-    }) as string;
-    const sanitized = DOMPurify.sanitize(markdown);
-    return (
-      <div
-        className="text-sm"
-        dangerouslySetInnerHTML={{ __html: sanitized }}
-      />
-    );
-  };
+    }) as string
+    const sanitized = DOMPurify.sanitize(markdown)
+    return <div className="text-sm" dangerouslySetInnerHTML={{ __html: sanitized }} />
+  }
 
   // Predefined donation amounts
-  const predefinedAmounts = [10, 25, 50, 100];
+  const predefinedAmounts = [10, 25, 50, 100]
 
   return (
     <>
@@ -410,7 +527,7 @@ export function CharityChat() {
               "h-15 w-15 rounded-full shadow-xl",
               isOpen
                 ? "bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
-                : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-"
+                : "bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-",
             )}
           >
             {isOpen ? (
@@ -433,9 +550,7 @@ export function CharityChat() {
           <motion.div
             className={cn(
               "fixed z-50",
-              isExpanded
-                ? "top-20 right-6 bottom-24 md:left-auto md:w-125"
-                : "bottom-24 right-6 w-100 top-40"
+              isExpanded ? "top-20 right-6 bottom-24 md:left-auto md:w-125" : "bottom-24 right-6 w-100 top-40",
             )}
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -460,14 +575,9 @@ export function CharityChat() {
                     <div className="absolute bottom-0 left-10 h-4 w-4 rounded-full bg-green-400 border-2 border-white"></div>
                   </div>
                   <div className="flex-1">
-                    <CardTitle className="text-2xl font-bold">
-                      DermaNow Assistant
-                    </CardTitle>
+                    <CardTitle className="text-2xl font-bold">DermaNow Assistant</CardTitle>
                     <CardDescription className="text-blue-100 text-sm">
-                      <span className="text-green-300 font-semibold">
-                        Online
-                      </span>{" "}
-                      | Typically replies instantly
+                      <span className="text-green-300 font-semibold">Online</span> | Typically replies instantly
                     </CardDescription>
                   </div>
                   <Button
@@ -476,11 +586,7 @@ export function CharityChat() {
                     className="text-white hover:bg-white/20"
                     onClick={toggleExpandedView}
                   >
-                    {isExpanded ? (
-                      <ChevronDown className="h-5 w-5" />
-                    ) : (
-                      <ChevronUp className="h-5 w-5" />
-                    )}
+                    {isExpanded ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
                   </Button>
                 </div>
 
@@ -501,14 +607,8 @@ export function CharityChat() {
                     >
                       <div className="p-3 space-y-2">
                         <div className="flex justify-between items-center">
-                          <h3 className="text-sm font-medium text-gray-700">
-                            Popular Causes
-                          </h3>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowQuickDonations(false)}
-                          >
+                          <h3 className="text-sm font-medium text-gray-700">Popular Causes</h3>
+                          <Button variant="ghost" size="sm" onClick={() => setShowQuickDonations(false)}>
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
@@ -521,13 +621,9 @@ export function CharityChat() {
                               onClick={() => handleQuickDonation(donation)}
                             >
                               <div className="flex items-center mb-2">
-                                <div className="bg-blue-100 p-2 rounded-full mr-2">
-                                  {donation.icon}
-                                </div>
+                                <div className="bg-blue-100 p-2 rounded-full mr-2">{donation.icon}</div>
                                 <div>
-                                  <p className="font-medium text-gray-900 text-sm">
-                                    {donation.name}
-                                  </p>
+                                  <p className="font-medium text-gray-900 text-sm">{donation.name}</p>
                                 </div>
                               </div>
                               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -539,9 +635,7 @@ export function CharityChat() {
                                 ></div>
                               </div>
                               <div className="flex justify-between mt-1 text-xs text-gray-500">
-                                <span>
-                                  {donation.funding_percentage}% funded
-                                </span>
+                                <span>{donation.funding_percentage}% funded</span>
                                 <span>{donation.supporters} supporters</span>
                               </div>
                             </motion.div>
@@ -566,184 +660,173 @@ export function CharityChat() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3 }}
-                      className={cn(
-                        "mb-4",
-                        message.sender === "user"
-                          ? "ml-auto max-w-[85%]"
-                          : "mr-auto max-w-[85%]"
-                      )}
+                      className={cn("mb-4", message.sender === "user" ? "ml-auto max-w-[85%]" : "mr-auto max-w-[85%]")}
                     >
                       <div
                         className={cn(
                           "rounded-2xl p-4 shadow-sm",
                           message.sender === "user"
                             ? "bg-gradient-to-r from-blue-700 to-blue-600 text-white"
-                            : "bg-gray-100 border border-gray-200"
+                            : "bg-gray-100 border border-gray-200",
                         )}
                       >
-                        {message.type === "text" ||
-                        message.type === "donation-suggestion"
+                        {message.type === "text" || message.type === "donation-suggestion"
                           ? renderMessageContent(message.content)
-                          : message.type === "donation-confirmation" ||
-                            message.type === "donation-success"
-                          ? renderMessageContent(message.content)
-                          : null}
+                          : message.type === "donation-confirmation" || message.type === "donation-success"
+                            ? renderMessageContent(message.content)
+                            : null}
 
                         {/* Donation suggestion (single card) */}
-                        {message.type === "donation-suggestion" &&
-                          message.donationOption && (
-                            <motion.div
-                              className="mt-4"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.3, duration: 0.3 }}
-                            >
-                              <div className="bg-white p-4 rounded-xl border border-blue-200 shadow-md">
-                                {message.donationOption.image && (
-                                  <div className="relative rounded-lg overflow-hidden mb-3">
-                                    <img
-                                      src={
-                                        message.donationOption.image ||
-                                        "/placeholder.svg"
-                                      }
-                                      alt={message.donationOption.name}
-                                      className="w-full h-48 object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                                      <div className="p-3 text-white">
-                                        <Badge className="bg-blue-500 mb-1">
-                                          Featured Cause
-                                        </Badge>
-                                        <h3 className="text-lg font-bold">
-                                          {message.donationOption.name}
-                                        </h3>
+                        {message.type === "donation-suggestion" && message.donationOption && (
+                          <motion.div
+                            className="mt-4"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3, duration: 0.3 }}
+                          >
+                            <div className="bg-white p-4 rounded-xl border border-blue-200 shadow-md">
+                              {message.donationOption.image && (
+                                <div className="relative rounded-lg overflow-hidden mb-3">
+                                  <img
+                                    src={message.donationOption.image || "/placeholder.svg" || "/placeholder.svg"}
+                                    alt={message.donationOption.name}
+                                    className="w-full h-48 object-cover"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                                    <div className="p-3 text-white">
+                                      <Badge className="bg-blue-500 mb-1">Featured Cause</Badge>
+                                      <h3 className="text-lg font-bold">{message.donationOption.name}</h3>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              <div className="flex items-start mb-3">
+                                <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-full mr-3">
+                                  {message.donationOption.icon}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900">{message.donationOption.name}</p>
+                                  <p className="text-sm text-gray-600 mt-1">{message.donationOption.description}</p>
+                                </div>
+                              </div>
+
+                              {message.donationOption.categories && (
+                                <div className="flex flex-wrap gap-1 mb-3">
+                                  {message.donationOption.categories.map((category, idx) => (
+                                    <Badge
+                                      key={idx}
+                                      variant="outline"
+                                      className="bg-blue-50 text-blue-700 border-blue-200"
+                                    >
+                                      {category}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+
+                              {message.donationOption.funding_percentage && (
+                                <div className="mb-3">
+                                  <div className="flex justify-between text-sm mb-1">
+                                    <span className="font-medium">Funding Progress</span>
+                                    <span className="text-blue-600 font-bold">
+                                      {message.donationOption.funding_percentage}%
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div
+                                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2.5 rounded-full"
+                                      style={{
+                                        width: `${message.donationOption.funding_percentage}%`,
+                                      }}
+                                    ></div>
+                                  </div>
+                                  <div className="flex justify-between mt-1 text-xs text-gray-500">
+                                    <span className="flex items-center">
+                                      <Users className="h-3 w-3 mr-1" />
+                                      {message.donationOption.supporters} supporters
+                                    </span>
+                                    <span className="flex items-center">
+                                      <Calendar className="h-3 w-3 mr-1" />
+                                      Ends in 14 days
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+
+                              <Button
+                                className="w-full bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 rounded-lg shadow-md transition-all duration-200 transform hover:scale-[1.02]"
+                                onClick={() => handleSelectDonation(message.donationOption!)}
+                              >
+                                <Gift className="h-5 w-5 mr-2" />
+                                Donate Now
+                              </Button>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {/* Donation confirmation */}
+                        {message.type === "donation-confirmation" && message.selectedDonation && (
+                          <motion.div
+                            className="mt-4 space-y-4"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3, duration: 0.3 }}
+                          >
+                            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-200 shadow-md">
+                              {message.selectedDonation.image && (
+                                <div className="relative rounded-lg overflow-hidden mb-3">
+                                  <img
+                                    src={message.selectedDonation.image || "/placeholder.svg" || "/placeholder.svg"}
+                                    alt={message.selectedDonation.name}
+                                    className="w-full h-40 object-cover"
+                                  />
+                                  <div className="absolute top-2 right-2">
+                                    <Badge className="bg-blue-500">Selected Cause</Badge>
+                                  </div>
+                                </div>
+                              )}
+                              <div className="flex items-center mb-4">
+                                <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-full mr-3">
+                                  {message.selectedDonation.icon}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900">{message.selectedDonation.name}</p>
+                                  <p className="text-xs text-gray-600">{message.selectedDonation.description}</p>
+                                </div>
+                              </div>
+
+                              {!walletAddress ? (
+                                <div className="mb-4">
+                                  <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-3">
+                                    <div className="flex items-center">
+                                      <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
+                                      <p className="text-sm text-yellow-700">
+                                        You need to connect your wallet to make a donation
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                    onClick={connectWallet}
+                                  >
+                                    <Wallet className="h-4 w-4 mr-2" />
+                                    Connect Wallet
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  <div className="bg-green-50 p-3 rounded-lg border border-green-200 mb-3">
+                                    <div className="flex items-center">
+                                      <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                                      <div>
+                                        <p className="text-sm text-green-700">Wallet Connected</p>
+                                        <p className="text-xs text-green-600 font-mono">
+                                          {walletAddress.substring(0, 6)}...{walletAddress.substring(38)}
+                                        </p>
                                       </div>
                                     </div>
                                   </div>
-                                )}
-                                <div className="flex items-start mb-3">
-                                  <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-full mr-3">
-                                    {message.donationOption.icon}
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-gray-900">
-                                      {message.donationOption.name}
-                                    </p>
-                                    <p className="text-sm text-gray-600 mt-1">
-                                      {message.donationOption.description}
-                                    </p>
-                                  </div>
-                                </div>
 
-                                {message.donationOption.categories && (
-                                  <div className="flex flex-wrap gap-1 mb-3">
-                                    {message.donationOption.categories.map(
-                                      (category, idx) => (
-                                        <Badge
-                                          key={idx}
-                                          variant="outline"
-                                          className="bg-blue-50 text-blue-700 border-blue-200"
-                                        >
-                                          {category}
-                                        </Badge>
-                                      )
-                                    )}
-                                  </div>
-                                )}
-
-                                {message.donationOption.funding_percentage && (
-                                  <div className="mb-3">
-                                    <div className="flex justify-between text-sm mb-1">
-                                      <span className="font-medium">
-                                        Funding Progress
-                                      </span>
-                                      <span className="text-blue-600 font-bold">
-                                        {
-                                          message.donationOption
-                                            .funding_percentage
-                                        }
-                                        %
-                                      </span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                                      <div
-                                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-2.5 rounded-full"
-                                        style={{
-                                          width: `${message.donationOption.funding_percentage}%`,
-                                        }}
-                                      ></div>
-                                    </div>
-                                    <div className="flex justify-between mt-1 text-xs text-gray-500">
-                                      <span className="flex items-center">
-                                        <Users className="h-3 w-3 mr-1" />
-                                        {message.donationOption.supporters}{" "}
-                                        supporters
-                                      </span>
-                                      <span className="flex items-center">
-                                        <Calendar className="h-3 w-3 mr-1" />
-                                        Ends in 14 days
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
-
-                                <Button
-                                  className="w-full bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 rounded-lg shadow-md transition-all duration-200 transform hover:scale-[1.02]"
-                                  onClick={() =>
-                                    handleSelectDonation(
-                                      message.donationOption!
-                                    )
-                                  }
-                                >
-                                  <Gift className="h-5 w-5 mr-2" />
-                                  Donate Now
-                                </Button>
-                              </div>
-                            </motion.div>
-                          )}
-
-                        {/* Donation confirmation */}
-                        {message.type === "donation-confirmation" &&
-                          message.selectedDonation && (
-                            <motion.div
-                              className="mt-4 space-y-4"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.3, duration: 0.3 }}
-                            >
-                              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-200 shadow-md">
-                                {message.selectedDonation.image && (
-                                  <div className="relative rounded-lg overflow-hidden mb-3">
-                                    <img
-                                      src={
-                                        message.selectedDonation.image ||
-                                        "/placeholder.svg"
-                                      }
-                                      alt={message.selectedDonation.name}
-                                      className="w-full h-40 object-cover"
-                                    />
-                                    <div className="absolute top-2 right-2">
-                                      <Badge className="bg-blue-500">
-                                        Selected Cause
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                )}
-                                <div className="flex items-center mb-4">
-                                  <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-full mr-3">
-                                    {message.selectedDonation.icon}
-                                  </div>
-                                  <div>
-                                    <p className="font-medium text-gray-900">
-                                      {message.selectedDonation.name}
-                                    </p>
-                                    <p className="text-xs text-gray-600">
-                                      {message.selectedDonation.description}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-4">
                                   <div>
                                     <label className="text-sm font-medium text-gray-700 block mb-2">
                                       Donation Amount (MYR)
@@ -755,11 +838,7 @@ export function CharityChat() {
                                       <Input
                                         type="number"
                                         value={donationAmount}
-                                        onChange={(e) =>
-                                          setDonationAmount(
-                                            Number(e.target.value)
-                                          )
-                                        }
+                                        onChange={(e) => setDonationAmount(Number(e.target.value))}
                                         min={message.selectedDonation.minAmount}
                                         className="bg-white rounded-l-none border-l-0"
                                       />
@@ -769,24 +848,25 @@ export function CharityChat() {
                                       {predefinedAmounts.map((amount) => (
                                         <Button
                                           key={amount}
-                                          variant={
-                                            donationAmount === amount
-                                              ? "default"
-                                              : "outline"
-                                          }
+                                          variant={donationAmount === amount ? "default" : "outline"}
                                           className={cn(
                                             "text-sm h-10",
                                             donationAmount === amount
                                               ? "bg-gradient-to-r from-blue-600 to-purple-600"
-                                              : "hover:bg-blue-50"
+                                              : "hover:bg-blue-50",
                                           )}
-                                          onClick={() =>
-                                            setDonationAmount(amount)
-                                          }
+                                          onClick={() => setDonationAmount(amount)}
                                         >
                                           {amount} MYR
                                         </Button>
                                       ))}
+                                    </div>
+
+                                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-3">
+                                      <p className="text-xs text-blue-700 mb-1">Estimated ETH Amount:</p>
+                                      <p className="text-sm font-mono font-medium text-blue-800">
+                                        {(donationAmount / 12500).toFixed(6)} ETH
+                                      </p>
                                     </div>
                                   </div>
 
@@ -804,19 +884,21 @@ export function CharityChat() {
                                       size="sm"
                                       className="text-sm flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                                       onClick={handleConfirmDonation}
-                                      disabled={
-                                        donationAmount <
-                                        message.selectedDonation.minAmount
-                                      }
+                                      disabled={donationAmount < message.selectedDonation.minAmount || isProcessing}
                                     >
-                                      <CheckCircle className="h-4 w-4 mr-1" />
-                                      Confirm Donation
+                                      {isProcessing ? (
+                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                      ) : (
+                                        <CheckCircle className="h-4 w-4 mr-1" />
+                                      )}
+                                      {isProcessing ? "Processing..." : "Confirm Donation"}
                                     </Button>
                                   </div>
                                 </div>
-                              </div>
-                            </motion.div>
-                          )}
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
 
                         {/* Donation success */}
                         {message.type === "donation-success" && (
@@ -841,59 +923,62 @@ export function CharityChat() {
                                 Donation Successful!
                               </h3>
                               <p className="text-center text-sm text-gray-600 mb-3">
-                                Thank you for your generosity. Your contribution
-                                will make a real difference.
+                                Thank you for your generosity. Your contribution will make a real difference.
                               </p>
                               <div className="bg-white p-3 rounded-lg border border-green-100 mb-3">
                                 <div className="flex justify-between mb-2">
-                                  <span className="text-sm text-gray-500">
-                                    Amount:
-                                  </span>
+                                  <span className="text-sm text-gray-500">Amount:</span>
+                                  <span className="text-sm font-bold text-gray-900">{donationAmount} MYR</span>
+                                </div>
+                                <div className="flex justify-between mb-2">
+                                  <span className="text-sm text-gray-500">ETH Amount:</span>
                                   <span className="text-sm font-bold text-gray-900">
-                                    {donationAmount} MYR
+                                    {(donationAmount / 12500).toFixed(6)} ETH
                                   </span>
                                 </div>
                                 <div className="flex justify-between mb-2">
-                                  <span className="text-sm text-gray-500">
-                                    Recipient:
-                                  </span>
+                                  <span className="text-sm text-gray-500">Recipient:</span>
                                   <span className="text-sm font-bold text-gray-900">
                                     {message.selectedDonation?.name}
                                   </span>
                                 </div>
-                                <div className="flex justify-between mb-2">
-                                  <span className="text-sm text-gray-500">
-                                    Transaction ID:
-                                  </span>
-                                  <span className="text-sm font-mono text-gray-900">
-                                    U1CDLX6U
-                                  </span>
-                                </div>
+                                {transactionResult.txHash && (
+                                  <div className="flex justify-between mb-2">
+                                    <span className="text-sm text-gray-500">Transaction:</span>
+                                    <a
+                                      href={`https://sepolia.etherscan.io/tx/${transactionResult.txHash}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm font-mono text-blue-600 hover:text-blue-800 flex items-center"
+                                    >
+                                      {transactionResult.txHash.substring(0, 6)}...
+                                      {transactionResult.txHash.substring(62)}
+                                      <ExternalLink className="h-3 w-3 ml-1" />
+                                    </a>
+                                  </div>
+                                )}
                                 <div className="flex justify-between">
-                                  <span className="text-sm text-gray-500">
-                                    Date:
-                                  </span>
-                                  <span className="text-sm text-gray-900">
-                                    {new Date().toLocaleDateString()}
-                                  </span>
+                                  <span className="text-sm text-gray-500">Date:</span>
+                                  <span className="text-sm text-gray-900">{new Date().toLocaleDateString()}</span>
                                 </div>
                               </div>
                               <div className="flex justify-center gap-2">
-                                <Badge
-                                  variant="outline"
-                                  className="bg-green-100 text-green-800 border-green-200"
-                                >
+                                <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
                                   <CheckCircle className="h-3 w-3 mr-1" />
                                   Tax Deductible
                                 </Badge>
-                                <Badge
-                                  variant="outline"
-                                  className="bg-blue-100 text-blue-800 border-blue-200"
-                                >
+                                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
                                   <Globe className="h-3 w-3 mr-1" />
                                   Impact Verified
                                 </Badge>
                               </div>
+                              <Button
+                                className="w-full mt-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                                onClick={() => (window.location.href = "/charity/tax-receipt")}
+                              >
+                                <Receipt className="h-4 w-4 mr-2" />
+                                View Tax Receipt
+                              </Button>
                             </div>
                           </motion.div>
                         )}
@@ -903,7 +988,7 @@ export function CharityChat() {
                       <div
                         className={cn(
                           "text-xs text-gray-500 mt-1",
-                          message.sender === "user" ? "text-right" : "text-left"
+                          message.sender === "user" ? "text-right" : "text-left",
                         )}
                       >
                         <span className="flex items-center gap-1 inline-block">
@@ -1069,5 +1154,5 @@ export function CharityChat() {
         )}
       </AnimatePresence>
     </>
-  );
+  )
 }
