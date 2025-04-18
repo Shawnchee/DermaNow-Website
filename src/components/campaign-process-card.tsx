@@ -3,7 +3,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, DollarSign, Leaf, Users } from "lucide-react";
+import { BookOpen, DollarSign, Leaf, Users, Droplet, PersonStanding, Apple } from "lucide-react";
 
 interface CampaignProgressCardProps {
   totalRaised: number;
@@ -14,6 +14,11 @@ interface CampaignProgressCardProps {
     targetAmount: number;
     remainingAmount: number;
   };
+  projectTitle: string;
+  projectDescription: string;
+  projectImage: string;
+  loading: boolean;
+  categories: string[];
 }
 
 export default function CampaignProgressCard({
@@ -21,7 +26,49 @@ export default function CampaignProgressCard({
   targetAmount,
   ethToMyrRate,
   myrValues,
+  projectTitle,
+  projectDescription,
+  projectImage,
+  loading,
+  categories,
 }: CampaignProgressCardProps) {
+  if (loading) {
+    return (
+      <div className="mb-12">
+        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 overflow-hidden">
+          <div className="p-6">
+            <div className="animate-pulse">
+              <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
+              <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  type Category =
+    | "Food & Nutrition"
+    | "Education"
+    | "Community Involvement"
+    | "Disaster Relief"
+    | "Community Development"
+    | "Water & Sanitation"
+    | "Children & Youth";
+
+  const categoryIcons: Record<Category, React.ReactNode> = {
+    "Food & Nutrition": <Apple className="h-3 w-3 mr-1" />,
+    "Education": <BookOpen className="h-3 w-3 mr-1" />,
+    "Community Involvement": <Users className="h-3 w-3 mr-1" />,
+    "Disaster Relief": <Leaf className="h-3 w-3 mr-1" />,
+    "Community Development": <PersonStanding className="h-3 w-3 mr-1" />,
+    "Water & Sanitation": <Droplet className="h-3 w-3 mr-1" />,
+    "Children & Youth": <Users className="h-3 w-3 mr-1" />,
+  };
+
   const percentRaised = Math.min(
     Math.round((totalRaised / targetAmount) * 100),
     100
@@ -39,7 +86,7 @@ export default function CampaignProgressCard({
       <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 overflow-hidden">
         <div className="relative">
           <img
-            src="/classroom.jpg"
+            src={projectImage}
             alt="Campaign Banner"
             className="h-[200px] w-full object-cover"
           />
@@ -58,25 +105,21 @@ export default function CampaignProgressCard({
                 </Badge>
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-                Education for Kids in Rural Areas
+                {projectTitle}
               </h1>
               <p className="text-zinc-200 text-sm max-w-3xl mb-3">
-                A comprehensive initiative to build and equip modern schools for
-                underserved students in remote Malaysian villages.
+                {projectDescription}
               </p>
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
-                  <Leaf className="h-3 w-3 mr-1" />
-                  Sustainable Design
-                </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
-                  <BookOpen className="h-3 w-3 mr-1" />
-                  Educational Resources
-                </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
-                  <Users className="h-3 w-3 mr-1" />
-                  Community Involvement
-                </span>
+                {categories.map((category) => (
+                  <span
+                    key={category}
+                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white"
+                  >
+                    {categoryIcons[category]}
+                    {category}
+                  </span>
+                ))}
               </div>
             </div>
           </div>

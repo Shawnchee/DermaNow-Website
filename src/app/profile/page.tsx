@@ -21,6 +21,7 @@ import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 import { useWallet } from "@/context/wallet-context"
+import WalletTransaction from "@/components/wallet-address-transaction"
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
@@ -68,20 +69,12 @@ export default function ProfilePage() {
 
   const impactProjects = [
     {
-      name: "Clean Water Initiative",
-      progress: 75,
-      raised: "15.5 ETH",
-      goal: "20 ETH",
+      name: "Education for Kids in Rural Areas",
+      progress: 56,
+      raised: "0.1508 ETH",
+      goal: "0.27 ETH",
       contributors: 128,
       description: "Providing clean water to communities in need",
-    },
-    {
-      name: "Education for All",
-      progress: 45,
-      raised: "9 ETH",
-      goal: "20 ETH",
-      contributors: 87,
-      description: "Building schools and providing educational resources",
     },
   ]
 
@@ -229,7 +222,7 @@ export default function ProfilePage() {
 
   // For preview purposes, always show the profile content
   return (
-    <div className="container max-w-5xl mx-auto py-8 px-4">
+    <div className="container max-w-7xl mx-auto py-8 px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div className="flex items-center gap-4">
           <div className="relative group">
@@ -401,7 +394,7 @@ export default function ProfilePage() {
           <Card className="py-8">
             <CardHeader>
               <CardTitle>Token Balance</CardTitle>
-              <CardDescription>Your available Sepolia ETH for donations</CardDescription>
+              <CardDescription>Your available  ETH for donations</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 mt-2">
@@ -409,7 +402,7 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-3">
                     <div className="text-2xl">🔷</div>
                     <div>
-                      <h3 className="font-medium">Sepolia ETH</h3>
+                      <h3 className="font-medium"> ETH</h3>
                       <p className="text-sm text-muted-foreground">
                         {ethBalance ? `RM${(Number.parseFloat(ethBalance) * 7000).toFixed(2)}` : "RM3,150.00"}
                       </p>
@@ -444,8 +437,8 @@ export default function ProfilePage() {
                     <Progress value={project.progress} className="h-2" />
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>
-                        {project.raised.replace("ETH", "Sepolia ETH")} raised of{" "}
-                        {project.goal.replace("ETH", "Sepolia ETH")}
+                        {project.raised.replace("ETH", " ETH")} raised of{" "}
+                        {project.goal.replace("ETH", " ETH")}
                       </span>
                       <span>{project.contributors} contributors</span>
                     </div>
@@ -454,9 +447,11 @@ export default function ProfilePage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" className="w-full mt-4">
+              <Link href="/charity/browse-projects">
+              <Button variant="outline" className="w-full mt-4 cursor-pointer">
                 Explore More Projects
               </Button>
+              </Link>
             </CardFooter>
           </Card>
 
@@ -566,48 +561,7 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>Donation History</CardTitle>
-              <CardDescription>View all your past donations and their status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {donationHistory.map((donation, index) => (
-                  <div key={index} className="flex justify-between items-center p-4 border rounded-lg">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{donation.charity}</h3>
-                        <Badge variant="outline" className="bg-green-50 text-green-700">
-                          {donation.status}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {donation.amount.replace("ETH", "Sepolia ETH")} • {donation.date}
-                      </p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <p className="text-xs text-muted-foreground">TX: {donation.id}</p>
-                        <a
-                          href={`https://sepolia.etherscan.io/tx/${donation.txHash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-700"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                      Details <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-center">
-              <Button variant="outline">View All Transactions</Button>
-            </CardFooter>
-          </Card>
+        <WalletTransaction />
 
           <Card className="mt-6">
             <CardHeader>
@@ -617,7 +571,7 @@ export default function ProfilePage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-blue-50 p-4 rounded-lg text-center">
-                  <h3 className="text-2xl font-bold text-blue-700">0.25 Sepolia ETH</h3>
+                  <h3 className="text-2xl font-bold text-blue-700">0.25  ETH</h3>
                   <p className="text-sm text-blue-600">Total Donated</p>
                 </div>
                 <div className="bg-emerald-50 p-4 rounded-lg text-center">

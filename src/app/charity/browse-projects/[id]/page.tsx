@@ -50,13 +50,16 @@ import {
 import { Input } from "@/components/ui/input";
 import HalalChecker from "@/components/HalalChecker";
 import CampaignProgressCard from "@/components/campaign-process-card";
-import { useRouter } from "next/navigation";
+import supabase from "@/utils/supabase/client";
+import { useParams } from "next/navigation";
+import SmartContractTransaction from "@/components/smart-contract-transaction";
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
+// const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
 
 export default function CharityPage() {
-  const router = useRouter();
+  const params = useParams();
+  const id = params.id;
   // Use the connectMetamask hook
   const { walletAddress, provider, signer, connectWallet } = connectMetamask();
   const [contract, setContract] = useState<ethers.Contract | null>(null);
@@ -99,13 +102,50 @@ export default function CharityPage() {
   const eventDescription =
     "This initiative aims to address the critical educational gap in rural Malaysian villages by establishing modern, well-equipped schools that provide quality education to underserved children. The project takes a holistic approach to education, focusing not only on building physical infrastructure but also on providing learning materials, training qualified teachers, and engaging the local community.";
 
+  const [projectTitle, setProjectTitle] = useState<string>("");
+  const [projectDescription, setProjectDescription] = useState<string>("");
+  const [image, setImage] = useState<string>("");
+  const [categories, setCategories] = useState<string[]>([""]);
+  const [contractAddress, setContractAddress] = useState<string>("");
+
+  useEffect(() => {
+    if (id) {
+      // Fetch project details from Supabase
+      const fetchProjectDetails = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("charity_projects")
+            .select("*")
+            .eq("id", id)
+            .single();
+          if (error) {
+            console.error("Error fetching project details:", error);
+            setProjectTitle("Unknown Project");
+          } else {
+            console.log("Successful fetching project details:", data);
+            setProjectTitle(data?.title || "Unknown Project");
+            setProjectDescription(data?.description || eventDescription);
+            setImage(data?.image || "/charity.jpg");
+            setCategories(data?.category || [""]);
+            setContractAddress(data?.smart_contract_address || "");
+          }
+          console.log("Smart Contract Address:", data?.smart_contract_address);
+        } catch (err) {
+          console.error("Error fetching project details:", err);
+          setProjectTitle("Unknown Project");
+        }
+      };
+
+      fetchProjectDetails();
+    }
+  }, [id]);
   // Initialize contract when signer is available
   useEffect(() => {
     const initialize = async () => {
-      if (signer && provider) {
+      if (signer && provider && contractAddress) {
         try {
           const charityContract = new ethers.Contract(
-            CONTRACT_ADDRESS,
+            contractAddress,
             contractABI,
             signer
           );
@@ -130,7 +170,7 @@ export default function CharityPage() {
     }, 500); // 500ms delay
 
     return () => clearTimeout(timeout); // Cleanup timeout on unmount
-  }, [signer, provider]);
+  }, [signer, provider, contractAddress]);
 
   // Auto-connect wallet if already connected
   useEffect(() => {
@@ -154,7 +194,7 @@ export default function CharityPage() {
         setVotingThreshold(threshold);
       } catch (error) {
         console.error("Error fetching voting threshold:", error);
-        setVotingThreshold(3); // Default threshold if error
+        setVotingThreshold(2); // Default threshold if error
       }
 
       // Fetch milestones
@@ -180,7 +220,8 @@ export default function CharityPage() {
               Number.parseFloat(formatEther(milestone.targetAmount))) *
             100,
           // Add project title - in a real app, this would come from the contract
-          projectTitle: "Education for Kids in Rural Areas",
+          projectTitle: projectTitle,
+          image: image,
           proofOfWork: {
             photos: [
               "https://images.pexels.com/photos/5802822/pexels-photo-5802822.jpeg?auto=compress&cs=tinysrgb&w=600",
@@ -584,10 +625,17 @@ export default function CharityPage() {
           targetAmount={targetAmount}
           ethToMyrRate={ethToMyrRate}
           myrValues={myrValues}
+          projectTitle={projectTitle}
+          projectDescription={projectDescription}
+          projectImage={image}
+          loading={loading}
+          categories={categories}
         />
 
+        <HalalChecker description={eventDescription} />
+
         {/* Sequential Milestone Information */}
-        <div className="mb-8">
+        <div className="my-8 ">
           <Alert className="bg-blue-50 border-blue-200">
             <AlertTriangle className="h-5 w-5 text-blue-600" />
             <AlertTitle>Sequential Milestone Funding</AlertTitle>
@@ -990,96 +1038,28 @@ export default function CharityPage() {
         </div>
 
         {/* Transaction History */}
-        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 mb-12 py-8">
-          <CardHeader>
-            <CardTitle className="text-xl font-medium">
-              Recent Transactions
-            </CardTitle>
-            <CardDescription>
-              Latest donations to charity milestones
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Transaction
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      From
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Amount
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {transactions.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-4 text-center text-sm text-gray-500"
-                      >
-                        No transactions yet
-                      </td>
-                    </tr>
-                  ) : (
-                    transactions.map((tx, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          <a
-                            href={`https://sepolia.etherscan.io/tx/${tx.hash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center hover:text-blue-600"
-                          >
-                            <span className="font-mono">{tx.hash}</span>
-                            <ExternalLink className="ml-1 h-3 w-3" />
-                          </a>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                          {tx.from}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                          <div className="font-mono font-medium">
-                            {tx.value} ETH
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            ≈{" "}
-                            {(Number(tx.value) * ethToMyrRate).toLocaleString()}{" "}
-                            MYR
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                          {tx.timestamp}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        {contractAddress ? (
+          <SmartContractTransaction smart_contract_address={contractAddress} />
+        ) : (
+          <div className="mb-12">
+            <Card className="bg-white/80 backdrop-blur-sm border border-blue-100">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <Clock className="h-8 w-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-medium text-gray-800 mb-2">
+                  No Transaction History Yet
+                </h3>
+                <p className="text-gray-600 text-center max-w-md">
+                  There are currently no transaction history available. Check
+                  back later or contact the administrator.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-        <div className="bg-blue-50 border-green-900 p-4 rounded-lg">
+        <div className="bg-blue-50 border-green-900 p-4 rounded-lg mt-4">
           <h3 className="font-medium text-blue-800 mb-2">Donation Types</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-3 rounded-md border border-blue-100">
@@ -1114,10 +1094,8 @@ export default function CharityPage() {
           </div>
         </div>
 
-        <HalalChecker description={eventDescription} />
-
         {/* Security and Verification Section */}
-        <div className="mb-12">
+        <div className="mb-6 mt-12">
           {/* Committee Verification */}
           <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
             <div className="flex items-start">
@@ -1140,37 +1118,46 @@ export default function CharityPage() {
           </div>
         </div>
 
-        {/* Organization Banner */}
-        <div className="container mx-auto px-6 pt-5">
-          <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-blue-400 dark:border-blue-700 bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm">
-            <div className="flex items-center">
-              <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-                <Building className="h-5 w-5 text-blue-100" />
-              </div>
-              <div>
-                <div className="text-xs text-blue-100 mb-0.5 font-medium">
-                  Organization
-                </div>
-                <span className="font-semibold text-white">
-                  Charity Milestone DAO
-                </span>
+        {/* DAO Committee Application */}
+        <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
+          <div className="flex items-start">
+            <div className="bg-green-50 p-3 rounded-full mr-4">
+              <Vote className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">
+                Apply to be a DAO Committee Member
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Help ensure transparency and accountability by joining our DAO
+                committee. As a committee member, you'll vote on milestone
+                completions and fund releases.
+              </p>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Requirements:</span> Active
+                  wallet with at least 0.1 ETH in transactions, commitment to
+                  review project milestones, and adherence to our ethical
+                  guidelines.
+                </p>
+                <Alert className="bg-blue-50 border-blue-200">
+                  <BadgeCheck className="h-5 w-5 text-blue-600" />
+                  <AlertTitle>Community Governance</AlertTitle>
+                  <AlertDescription>
+                    Committee members participate in decentralized governance
+                    through transparent voting on the blockchain.
+                  </AlertDescription>
+                </Alert>
+                <Button className="bg-green-500 hover:bg-green-600 text-white">
+                  Apply Now
+                </Button>
               </div>
             </div>
-
-            <a
-              href="https://github.com/charity-milestone-dao"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
-            >
-              <span className="text-blue-500">View GitHub</span>
-              <ExternalLink className="h-3 w-3 ml-1.5 text-blue-500" />
-            </a>
           </div>
         </div>
 
         {/* Shariah compliance badge */}
-        <div className="container mx-auto px-6 pt-2">
+        <div className="container mx-auto px-6 pt-2 mt-4">
           <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
             <div className="flex items-center">
               <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
