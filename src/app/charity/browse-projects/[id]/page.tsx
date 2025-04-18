@@ -811,7 +811,7 @@ export default function CharityPage() {
                             )}
 
                           <CardHeader
-                            className={`pb-2 ${
+                            className={`pb-2 pt-3 ${
                               activeMilestoneId !== -1 &&
                               activeMilestoneId === milestone.id
                                 ? "pt-8"
