@@ -29,7 +29,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import supabase from "@/utils/supabase";
+import supabase from "@/utils/supabase/client";
 import { EthereumLivePrice } from "@/utils/ethLivePrice";
 
 export default function WalletTransaction() {
@@ -49,7 +49,7 @@ export default function WalletTransaction() {
       setEthToMyr(ethPriceInMyr);
     } catch (error) {
       console.error("Error fetching ETH to MYR rate:", error);
-      setEthToMyr(12500); 
+      setEthToMyr(12500);
     }
   }
 
@@ -72,38 +72,44 @@ export default function WalletTransaction() {
         // Fetch contract addresses and project titles from Supabase
         const { data: walletData, error: walletError } = await supabase
           .from("charity_projects")
-          .select("smart_contract_address, title")
+          .select("smart_contract_address, title");
 
-          if (walletError) {
-            console.error("Error fetching data from Supabase:", walletError);
-            setError("Failed to fetch project titles. Please try again later.");
-            return;
-          }
-          
-          const filteredTransactions = sentTransactions.filter(
-            (tx) => parseFloat(tx.value) > 0)
-            .filter((tx) => walletData.some(
-              (item) => item.smart_contract_address?.toLowerCase() === tx.to?.toLowerCase(
-            ))
+        if (walletError) {
+          console.error("Error fetching data from Supabase:", walletError);
+          setError("Failed to fetch project titles. Please try again later.");
+          return;
+        }
+
+        const filteredTransactions = sentTransactions
+          .filter((tx) => parseFloat(tx.value) > 0)
+          .filter((tx) =>
+            walletData.some(
+              (item) =>
+                item.smart_contract_address?.toLowerCase() ===
+                tx.to?.toLowerCase()
+            )
           );
 
+        // Map project titles to transactions
+        const transactionsWithTitles = filteredTransactions.map((tx) => {
+          const project = walletData.find(
+            (item) =>
+              item.smart_contract_address?.toLowerCase() ===
+              tx.to?.toLowerCase()
+          );
 
-          
-          // Map project titles to transactions
-          const transactionsWithTitles = filteredTransactions.map((tx) => {
-            const project = walletData.find(
-              (item) => item.smart_contract_address?.toLowerCase() === tx.to?.toLowerCase()
-            );
-          
-            return {
-              ...tx,
-              project_title: project ? project.title : "Unknown Project",
-            };
-          });
-          
-          setTransactions(transactionsWithTitles);
+          return {
+            ...tx,
+            project_title: project ? project.title : "Unknown Project",
+          };
+        });
+
+        setTransactions(transactionsWithTitles);
       } else {
-        setError(data.message || "No transactions found for the specified wallet address.");
+        setError(
+          data.message ||
+            "No transactions found for the specified wallet address."
+        );
       }
     } catch (err) {
       console.error("Error fetching transactions:", err);
@@ -138,12 +144,16 @@ export default function WalletTransaction() {
     <div className="flex flex-col items-center justify-start py-4">
       <Card className="w-full max-w-7xl bg-white/90 backdrop-blur-sm border">
         <CardHeader>
-          <CardTitle className="text-2xl text-black">User Donation History</CardTitle>
+          <CardTitle className="text-2xl text-black">
+            User Donation History
+          </CardTitle>
           <CardDescription className="text-gray-600">
             Recent donations from the specified wallet address
           </CardDescription>
           <div className="mt-2 p-2 bg-blue-50 rounded-md">
-            <code className="text-sm font-mono break-all text-blue-800">{walletAddress}</code>
+            <code className="text-sm font-mono break-all text-blue-800">
+              {walletAddress}
+            </code>
           </div>
         </CardHeader>
         <CardContent>
@@ -172,25 +182,38 @@ export default function WalletTransaction() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w text-blue-900">Date</TableHead>
-                    <TableHead className="text-blue-900">Project Title</TableHead>
+                    <TableHead className="text-blue-900">
+                      Project Title
+                    </TableHead>
                     <TableHead className="text-blue-900">Hash</TableHead>
                     <TableHead className="text-blue-900">To</TableHead>
-                    <TableHead className="text-right text-blue-900">Value (MYR)</TableHead>
-                    <TableHead className="text-center text-blue-900">Action</TableHead>
+                    <TableHead className="text-right text-blue-900">
+                      Value (MYR)
+                    </TableHead>
+                    <TableHead className="text-center text-blue-900">
+                      Action
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-gray-500">
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-gray-500"
+                      >
                         No SENT transactions found for this wallet
                       </TableCell>
                     </TableRow>
                   ) : (
                     transactions.map((tx, index) => (
                       <TableRow key={index}>
-                        <TableCell className="font-medium text-blue-800">{formatDate(tx.timeStamp)}</TableCell>
-                        <TableCell className="font-medium text-blue-800">{tx.project_title}</TableCell>
+                        <TableCell className="font-medium text-blue-800">
+                          {formatDate(tx.timeStamp)}
+                        </TableCell>
+                        <TableCell className="font-medium text-blue-800">
+                          {tx.project_title}
+                        </TableCell>
                         <TableCell className="font-mono text-xs text-blue-800">
                           <TooltipProvider>
                             <Tooltip>
@@ -210,7 +233,9 @@ export default function WalletTransaction() {
                                 {truncateAddress(tx.to)}
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p className="font-mono text-xs">{tx.to || "Contract Creation"}</p>
+                                <p className="font-mono text-xs">
+                                  {tx.to || "Contract Creation"}
+                                </p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -229,7 +254,11 @@ export default function WalletTransaction() {
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            <Button variant="outline" size="sm" className="cursor-pointer text-blue-800 border-blue-200">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="cursor-pointer text-blue-800 border-blue-200"
+                            >
                               <ExternalLink className="h-4 w-4 mr-1 text-blue-800" />
                               View
                             </Button>
