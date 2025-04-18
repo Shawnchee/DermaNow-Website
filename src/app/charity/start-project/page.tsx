@@ -32,6 +32,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import supabase from "@/utils/supabase/client";
 
 interface ServiceProvider {
   id: string;
@@ -84,38 +85,17 @@ const StartProjectPage = () => {
     const fetchServiceProviders = async () => {
       setLoading(true);
       try {
-        // In a real app, this would be a real Supabase query
-        // const { data, error } = await supabase.from('service_providers').select('*')
-
-        // For demo purposes, we'll use mock data
-        const mockProviders = [
-          {
-            id: "1",
-            name: "BuildRight Construction",
-            service_type: "Construction",
-          },
-          { id: "2", name: "EduTech Solutions", service_type: "Education" },
-          { id: "3", name: "MediCare Services", service_type: "Healthcare" },
-          {
-            id: "4",
-            name: "GreenEarth Initiative",
-            service_type: "Environment",
-          },
-          { id: "5", name: "TechForAll", service_type: "Technology" },
-          {
-            id: "6",
-            name: "FoodBank Network",
-            service_type: "Food & Nutrition",
-          },
-          { id: "7", name: "ShelterPlus", service_type: "Housing" },
-          {
-            id: "8",
-            name: "CleanWater Projects",
-            service_type: "Water & Sanitation",
-          },
-        ];
-
-        setServiceProviders(mockProviders);
+        const { data, error } = await supabase
+          .from("service_providers")
+          .select("*");
+        if (error) {
+          console.error("Error fetching service providers:", error);
+          return;
+        }
+        if (data) {
+          console.log("Service Providers:", data);
+          setServiceProviders(data);
+        }
       } catch (error) {
         console.error("Error fetching service providers:", error);
       } finally {
