@@ -45,6 +45,7 @@ import {
   BookOpen,
   Leaf,
   MoonStar,
+  Receipt,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import HalalChecker from "@/components/HalalChecker";
@@ -93,6 +94,7 @@ export default function CharityPage() {
     status: "success" | "error" | null;
     message: string;
     txHash?: string;
+    amount?: string;
   }>({ status: null, message: "" });
 
   const milestonesRef = useRef<HTMLDivElement>(null);
@@ -347,6 +349,7 @@ export default function CharityPage() {
         status: "success",
         message: `Successfully donated ${amount} ETH to milestone: ${milestones[milestoneId].description}`,
         txHash: receipt.transactionHash,
+        amount: amount,
       });
     } catch (error) {
       console.error("Donation error:", error);
@@ -453,6 +456,7 @@ export default function CharityPage() {
         status: "success",
         message: `Successfully donated ${modalDonationAmount} ETH to milestone: ${selectedMilestone.description}`,
         txHash: receipt.transactionHash,
+        amount: modalDonationAmount,
       });
     } catch (error) {
       console.error("Donation error:", error);
@@ -464,6 +468,47 @@ export default function CharityPage() {
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Navigate to tax receipt page
+  const navigateToTaxReceipt = () => {
+    try {
+      // Create a mock transaction if needed for testing
+      const mockTransaction = {
+        txHash: `0x${Math.random().toString(16).substring(2, 42)}`,
+        amount: modalDonationAmount || "1.0",
+      };
+
+      // Use either the real transaction or the mock one
+      const txData = {
+        txHash: transactionResult.txHash || mockTransaction.txHash,
+        amount: transactionResult.amount || mockTransaction.amount,
+        amountMYR:
+          Number(transactionResult.amount || mockTransaction.amount) *
+          ethToMyrRate,
+        date: new Date().toISOString(),
+        milestoneDescription:
+          selectedMilestone?.description || "General Donation",
+        projectTitle:
+          selectedMilestone?.projectTitle ||
+          "Education for Kids in Rural Areas",
+      };
+
+      console.log("Storing donation data:", txData);
+      localStorage.setItem("donationDetails", JSON.stringify(txData));
+
+      // Close the modal before navigation
+      setModalOpen(false);
+
+      // Use window.location for more reliable navigation
+      window.location.href = "/charity/tax-receipt";
+    } catch (error) {
+      console.error("Error navigating to tax receipt:", error);
+      toast("Navigation Error", {
+        description:
+          "Failed to navigate to tax receipt page. Please try again.",
+      });
     }
   };
 
@@ -655,7 +700,7 @@ export default function CharityPage() {
                       (photo: string, index: number) => (
                         <img
                           key={index}
-                          src={photo}
+                          src={photo || "/placeholder.svg"}
                           alt={`Proof of Work Photo ${index + 1}`}
                           className="rounded-lg shadow-md"
                         />
@@ -994,27 +1039,25 @@ export default function CharityPage() {
 
         {/* Transaction History */}
         {contractAddress ? (
-  <SmartContractTransaction smart_contract_address={contractAddress} />
-) : (
-  <div className="mb-12">
-    <Card className="bg-white/80 backdrop-blur-sm border border-blue-100">
-      
-      <CardContent className="flex flex-col items-center justify-center py-12">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-          <Clock className="h-8 w-8 text-blue-600" />
-          </div>
-          <h3 className="text-xl font-medium text-gray-800 mb-2">
-            No Transaction History Yet
-            </h3>
-            <p className="text-gray-600 text-center max-w-md">
-              There are currently no transaction history available. Check back
-                
-                later or contact the administrator.
-                </p>
-                </CardContent>
-                </Card>
+          <SmartContractTransaction smart_contract_address={contractAddress} />
+        ) : (
+          <div className="mb-12">
+            <Card className="bg-white/80 backdrop-blur-sm border border-blue-100">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <Clock className="h-8 w-8 text-blue-600" />
                 </div>
-                )}
+                <h3 className="text-xl font-medium text-gray-800 mb-2">
+                  No Transaction History Yet
+                </h3>
+                <p className="text-gray-600 text-center max-w-md">
+                  There are currently no transaction history available. Check
+                  back later or contact the administrator.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="bg-blue-50 border-green-900 p-4 rounded-lg mt-4">
           <h3 className="font-medium text-blue-800 mb-2">Donation Types</h3>
@@ -1051,7 +1094,6 @@ export default function CharityPage() {
           </div>
         </div>
 
-
         {/* Security and Verification Section */}
         <div className="mb-6 mt-12">
           {/* Committee Verification */}
@@ -1077,38 +1119,42 @@ export default function CharityPage() {
         </div>
 
         {/* DAO Committee Application */}
-  <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
-    <div className="flex items-start">
-      <div className="bg-green-50 p-3 rounded-full mr-4">
-        <Vote className="h-6 w-6 text-green-600" />
-      </div>
-      <div>
-        <h3 className="text-lg font-semibold mb-2">
-          Apply to be a DAO Committee Member
-        </h3>
-        <p className="text-gray-600 mb-4">
-          Help ensure transparency and accountability by joining our DAO committee. 
-          As a committee member, you'll vote on milestone completions and fund releases.
-        </p>
-        <div className="space-y-4">
-          <p className="text-sm text-gray-700">
-            <span className="font-medium">Requirements:</span> Active wallet with at least 0.1 ETH in transactions, 
-            commitment to review project milestones, and adherence to our ethical guidelines.
-          </p>
-          <Alert className="bg-blue-50 border-blue-200">
-            <BadgeCheck className="h-5 w-5 text-blue-600" />
-            <AlertTitle>Community Governance</AlertTitle>
-            <AlertDescription>
-              Committee members participate in decentralized governance through transparent voting on the blockchain.
-            </AlertDescription>
-          </Alert>
-          <Button className="bg-green-500 hover:bg-green-600 text-white">
-            Apply Now
-          </Button>
+        <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
+          <div className="flex items-start">
+            <div className="bg-green-50 p-3 rounded-full mr-4">
+              <Vote className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">
+                Apply to be a DAO Committee Member
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Help ensure transparency and accountability by joining our DAO
+                committee. As a committee member, you'll vote on milestone
+                completions and fund releases.
+              </p>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Requirements:</span> Active
+                  wallet with at least 0.1 ETH in transactions, commitment to
+                  review project milestones, and adherence to our ethical
+                  guidelines.
+                </p>
+                <Alert className="bg-blue-50 border-blue-200">
+                  <BadgeCheck className="h-5 w-5 text-blue-600" />
+                  <AlertTitle>Community Governance</AlertTitle>
+                  <AlertDescription>
+                    Committee members participate in decentralized governance
+                    through transparent voting on the blockchain.
+                  </AlertDescription>
+                </Alert>
+                <Button className="bg-green-500 hover:bg-green-600 text-white">
+                  Apply Now
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      </div>
-      </div>
 
         {/* Shariah compliance badge */}
         <div className="container mx-auto px-6 pt-2 mt-4">
@@ -1315,7 +1361,15 @@ export default function CharityPage() {
                   )}
                 </AlertDescription>
               </Alert>
-              <div className="mt-6 flex justify-end">
+              <div className="mt-6 flex flex-col gap-4">
+                <Button
+                  type="button"
+                  onClick={navigateToTaxReceipt}
+                  className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2 py-6 text-lg"
+                >
+                  <Receipt className="h-5 w-5" />
+                  Generate Tax Relief Receipt
+                </Button>
                 <Button
                   type="button"
                   onClick={() => setModalOpen(false)}
