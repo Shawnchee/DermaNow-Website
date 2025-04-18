@@ -134,7 +134,7 @@ export default function CommitteeVotingPage() {
         setVotingThreshold(threshold)
       } catch (error) {
         console.error("Error fetching voting threshold:", error)
-        setVotingThreshold(3) // Default threshold if error
+        setVotingThreshold(2) // Default threshold if error
       }
 
       // Fetch milestones

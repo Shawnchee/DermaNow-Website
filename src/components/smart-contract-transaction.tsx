@@ -29,9 +29,9 @@ import {
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function SmartContractTransaction() {
+export default function SmartContractTransaction({ smart_contract_address }: {smart_contract_address: string}) {
   const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
-  const contractAddress = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
+  const contractAddress = smart_contract_address
   const ETH_TO_MYR_RATE = 12500;
 
   const [transactions, setTransactions] = useState([]);
@@ -86,7 +86,7 @@ export default function SmartContractTransaction() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
+    <div className="flex flex-col items-center justify-center">
       <Card className="w-full max-w-9xl bg-white/90 backdrop-blur-sm border ">
         <CardHeader>
           <CardTitle className="text-2xl text-black">Donation History</CardTitle>
