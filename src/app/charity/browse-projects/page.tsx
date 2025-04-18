@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useCallback, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,6 +14,9 @@ import {
   Search,
   AlertCircle,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +41,7 @@ interface ProjectProps {
   supporters: number;
   amount: number;
   category?: string[];
+  featured?: boolean;
 }
 
 interface SearchResult {
@@ -45,8 +49,7 @@ interface SearchResult {
   confidence: number;
 }
 
-// ProjectCard remains unchanged
-const ProjectCard: React.FC<ProjectProps> = ({
+const ProjectCard: React.FC<ProjectProps & { listView?: boolean }> = ({
   id,
   title,
   description,
@@ -57,28 +60,39 @@ const ProjectCard: React.FC<ProjectProps> = ({
   progress_percentage,
   supporters,
   amount,
+  listView = false,
 }) => (
-  <div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-    <div className="relative">
+  <div
+    className={`bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 ${
+      listView ? "flex flex-col md:flex-row w-full" : "h-full flex flex-col"
+    }`}
+  >
+    <div className={`relative ${listView ? "md:w-1/3" : ""}`}>
       <img
         src={
           image || "/placeholder.svg?height=200&width=400&text=Project+Image"
         }
         alt={title}
-        className="w-full h-48 object-cover"
+        className={`${
+          listView
+            ? "w-full h-48 md:h-full object-cover"
+            : "w-full h-48 object-cover"
+        }`}
       />
-      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-2 bg-gradient-to-t from-black/60 to-transparent text-white">
-        <div className="flex items-center space-x-2">
-          <Users className="h-4 w-4" />
-          <span className="text-sm">{supporters}</span>
+      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-2 bg-gradient-to-t from-black to-transparent pt-8">
+        <div className="flex items-center space-x-2 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+          <Users className="h-4 w-4 text-white" />
+          <span className="text-sm font-medium text-white">{supporters}</span>
         </div>
-        <div className="flex items-center space-x-2">
-          <Heart className="h-4 w-4" />
-          <span className="text-sm">{amount.toLocaleString()} MYR</span>
+        <div className="flex items-center space-x-2 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+          <Heart className="h-4 w-4 text-white" />
+          <span className="text-sm font-medium text-white">
+            {amount.toLocaleString()} MYR
+          </span>
         </div>
       </div>
     </div>
-    <div className="p-4">
+    <div className={`p-4 ${listView ? "md:w-2/3" : "flex-1 flex flex-col"}`}>
       <div className="mb-2">
         <div className="bg-gray-200 h-2 rounded-full">
           <div
@@ -110,12 +124,169 @@ const ProjectCard: React.FC<ProjectProps> = ({
         </div>
       </div>
       <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">{title}</h3>
-      <p className="text-sm text-gray-600 line-clamp-3">{description}</p>
+      <p className="text-sm text-gray-600 line-clamp-3 mb-auto">
+        {description}
+      </p>
     </div>
   </div>
 );
 
-// Updated SuccessDialog to show pending approval state
+const FeaturedProjectCard: React.FC<ProjectProps> = ({
+  id,
+  title,
+  description,
+  image,
+  funding_percentage,
+  funding_complete,
+  in_progress,
+  progress_percentage,
+  supporters,
+  amount,
+}) => (
+  <div className="relative h-[400px] w-full rounded-xl overflow-hidden group">
+    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10"></div>
+    <img
+      src={
+        image || "/placeholder.svg?height=600&width=1200&text=Featured+Project"
+      }
+      alt={title}
+      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+    />
+    <div className="absolute bottom-0 left-0 right-0 p-6 px-20 z-20 text-white">
+      <div className="flex items-center mb-3">
+        <div className="bg-blue-500 rounded-full p-1 mr-2">
+          <Star className="h-4 w-4 text-white" fill="white" />
+        </div>
+        <span className="text-sm font-medium uppercase tracking-wider">
+          Featured Project
+        </span>
+      </div>
+      <h2 className="text-2xl md:text-3xl font-bold mb-2 drop-shadow-md">
+        {title}
+      </h2>
+      <p className="text-white/80 mb-4 line-clamp-2 max-w-2xl drop-shadow-md">
+        {description}
+      </p>
+      <div className="flex flex-wrap items-center gap-4 mb-4">
+        <div className="flex items-center space-x-2">
+          <Users className="h-5 w-5" />
+          <span className="font-medium">{supporters} Supporters</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Heart className="h-5 w-5" />
+          <span className="font-medium">{amount.toLocaleString()} MYR</span>
+        </div>
+      </div>
+      <div className="w-full bg-white/30 h-2 rounded-full mb-2 backdrop-blur-sm">
+        <div
+          className={`h-2 rounded-full ${
+            in_progress
+              ? "bg-yellow-500"
+              : funding_complete
+              ? "bg-green-500"
+              : "bg-blue-500"
+          }`}
+          style={{
+            width: `${
+              in_progress ? progress_percentage || 0 : funding_percentage || 0
+            }%`,
+          }}
+        ></div>
+      </div>
+      <div className="flex justify-between text-xs text-white/90 mb-4">
+        <span>
+          {funding_percentage === 100
+            ? funding_complete
+              ? "Complete"
+              : "In Progress"
+            : "Funding"}
+        </span>
+        <span>
+          {in_progress ? `${progress_percentage}%` : `${funding_percentage}%`}
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
+const FeaturedProjectsCarousel = ({
+  projects,
+}: {
+  projects: ProjectProps[];
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const featuredProjects = projects.filter((project) => project.featured);
+
+  const handlePrevious = () => {
+    setCurrentIndex((prev) =>
+      prev === 0 ? featuredProjects.length - 1 : prev - 1
+    );
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) =>
+      prev === featuredProjects.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  if (featuredProjects.length === 0) return null;
+
+  return (
+    <div className="relative mb-12 mt-6">
+      <div className="overflow-hidden rounded-xl">
+        <div className="relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Link
+                href={`/charity/browse-projects/${featuredProjects[currentIndex].id}`}
+              >
+                <FeaturedProjectCard {...featuredProjects[currentIndex]} />
+              </Link>
+            </motion.div>
+          </AnimatePresence>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full h-10 w-10 shadow-lg z-30"
+            onClick={handlePrevious}
+          >
+            <ChevronLeft className="h-6 w-6" />
+            <span className="sr-only">Previous</span>
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full h-10 w-10 shadow-lg z-30"
+            onClick={handleNext}
+          >
+            <ChevronRight className="h-6 w-6" />
+            <span className="sr-only">Next</span>
+          </Button>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-30">
+            {featuredProjects.map((_, index) => (
+              <button
+                key={index}
+                className={`w-2 h-2 rounded-full ${
+                  index === currentIndex ? "bg-white" : "bg-white/50"
+                }`}
+                onClick={() => setCurrentIndex(index)}
+              >
+                <span className="sr-only">Slide {index + 1}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
   return (
     <AnimatePresence>
@@ -131,7 +302,6 @@ const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
           animate={{ scale: 1, y: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
         >
-          {/* Updated header with pending status */}
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 relative">
             <button
               onClick={onClose}
@@ -171,14 +341,6 @@ const SuccessDialog = ({ onClose }: { onClose: () => void }) => {
                     approved
                   </span>
                 </li>
-                {/* <li className="flex items-start">
-                  <div className="bg-blue-100 rounded-full p-1 mr-3 mt-0.5">
-                    <Calendar className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <span className="text-sm text-blue-700">
-                    You can check your project status in your dashboard
-                  </span>
-                </li> */}
               </ul>
             </div>
             <div className="flex space-x-3">
@@ -210,15 +372,16 @@ const PageContent = () => {
   const [sortOption, setSortOption] = useState<string>("last-updated");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [categories, setCategories] = useState([]);
+  const [searchLoading, setSearchLoading] = useState<boolean>(false);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const initialProjectsRef = useRef<ProjectProps[]>([]);
 
-  // Fetch projects on load
   useEffect(() => {
     const success = searchParams.get("success");
     if (success === "true") {
       setShowSuccess(true);
     }
 
-    // Supabase fetch projects
     const fetchProjects = async () => {
       try {
         setLoading(true);
@@ -233,7 +396,15 @@ const PageContent = () => {
           return;
         }
 
-        setProjects(data ?? []);
+        const projectsWithFeatured =
+          data?.map((project, index) => ({
+            ...project,
+            featured: index % 5 === 0,
+          })) || [];
+
+        setProjects(projectsWithFeatured);
+        setFilteredProjects(projectsWithFeatured);
+        initialProjectsRef.current = projectsWithFeatured;
       } catch (err) {
         console.error("Unexpected error:", err);
       } finally {
@@ -241,7 +412,6 @@ const PageContent = () => {
       }
     };
 
-    // Supabase fetch categories
     const fetchCategories = async () => {
       const { data, error } = await supabase
         .from("charity_category")
@@ -258,13 +428,18 @@ const PageContent = () => {
     fetchCategories();
   }, [searchParams]);
 
-  // Debounced search function
   const performSearch = useCallback(
     async (query: string) => {
       if (!query.trim()) {
-        setFilteredProjects(projects);
+        setIsSearching(false);
+        setFilteredProjects(initialProjectsRef.current);
+        setSearchLoading(false);
         return;
       }
+
+      setIsSearching(true);
+      setSearchLoading(true);
+      setFilteredProjects([]); // Clear filteredProjects to prevent showing stale results
 
       try {
         const response = await fetch("http://localhost:8000/search", {
@@ -272,27 +447,28 @@ const PageContent = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query }),
         });
+
         if (!response.ok) throw new Error("Search failed");
+
         const results: SearchResult[] = await response.json();
 
-        // Create a map for quick lookup
         const projectMap = new Map(projects.map((p) => [p.id, p]));
-        // Order projects based on search results
+
         const sortedProjects = results
           .map((result) => projectMap.get(result.id))
           .filter((p): p is ProjectProps => p !== undefined);
 
-        // If no projects match, set to empty array
-        setFilteredProjects(sortedProjects.length ? sortedProjects : []);
+        setFilteredProjects(sortedProjects);
       } catch (error) {
         console.error("Search error:", error);
-        setFilteredProjects(projects);
+        setFilteredProjects([]); // Show no results on error
+      } finally {
+        setSearchLoading(false);
       }
     },
     [projects]
   );
 
-  // Handle search query changes
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       performSearch(searchQuery);
@@ -306,7 +482,6 @@ const PageContent = () => {
     router.replace("/charity/browse-projects");
   };
 
-  // Handle category selection
   const handleCategoryToggle = (category: string) => {
     setSelectedCategories((prev) =>
       prev.includes(category)
@@ -315,10 +490,8 @@ const PageContent = () => {
     );
   };
 
-  // Apply filters and sort
   const displayedProjects = filteredProjects
     .filter((project) => {
-      // Status filter
       if (statusFilter === "completed") {
         return project.funding_complete && !project.in_progress;
       }
@@ -328,7 +501,6 @@ const PageContent = () => {
       return true;
     })
     .filter((project) => {
-      // Category filter
       if (selectedCategories.length === 0) return true;
       return (
         project.category &&
@@ -336,7 +508,6 @@ const PageContent = () => {
       );
     })
     .sort((a, b) => {
-      // Only apply sorting if no search query is active
       if (!searchQuery.trim()) {
         if (sortOption === "last-updated" || sortOption === "newest") {
           return b.id - a.id;
@@ -345,13 +516,12 @@ const PageContent = () => {
           return a.id - b.id;
         }
       }
-      return 0; // Preserve search result order
+      return 0;
     });
 
   return (
     <div className="container mx-auto py-8 px-4">
       {showSuccess && <SuccessDialog onClose={closeSuccessDialog} />}
-
       <div className="text-center mb-6">
         <h1 className="text-4xl md:text-5xl font-bold mb-6 text-blue-900">
           Browse Projects
@@ -359,25 +529,25 @@ const PageContent = () => {
         <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-8">
           Find and contribute to meaningful causes that are changing lives
         </p>
-        <div className="w-full h-6 bg-gradient-to-r from-blue-100 to-white rounded-full"></div>
-
-        <div className="mt-6">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-7 w-7" />
-            <Input
-              type="text"
-              placeholder="Describe what you're looking for..."
-              className="pl-14 bg-gray-50 border-gray-200 w-full py-7 placeholder:text-lg md:text-lg"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+      </div>
+      <div className="w-full h-6 bg-gradient-to-r from-blue-100 to-white rounded-full mb-6"></div>
+      {!isSearching && !loading && (
+        <FeaturedProjectsCarousel projects={projects} />
+      )}
+      <div className="mt-6 mb-8">
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-7 w-7" />
+          <Input
+            type="text"
+            placeholder="Describe what you're looking for..."
+            className="pl-14 bg-gray-50 border-gray-200 w-full py-7 placeholder:text-lg md:text-lg rounded-xl"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
-
       <div className="flex justify-end mb-4">
         <div className="flex gap-4">
-          {/* Sort Option Popover */}
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -404,8 +574,6 @@ const PageContent = () => {
               </Command>
             </PopoverContent>
           </Popover>
-
-          {/* Status Filter Popover */}
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -432,8 +600,6 @@ const PageContent = () => {
               </Command>
             </PopoverContent>
           </Popover>
-
-          {/* Multi-select Category Filter Popover */}
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -470,8 +636,7 @@ const PageContent = () => {
           </Popover>
         </div>
       </div>
-
-      {loading || filteredProjects.length === 0 ? (
+      {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div
@@ -487,6 +652,13 @@ const PageContent = () => {
             </div>
           ))}
         </div>
+      ) : searchQuery.trim() && searchLoading ? (
+        <div className="flex justify-center items-center py-16">
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-600">Searching projects...</p>
+          </div>
+        </div>
       ) : displayedProjects.length === 0 ? (
         <div className="text-center py-16">
           <div className="bg-blue-100 rounded-full p-4 inline-block mb-4">
@@ -496,21 +668,29 @@ const PageContent = () => {
             No projects found
           </h3>
           <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            Be the first to create a project and start making a difference
-            today.
+            {searchQuery.trim()
+              ? "No projects match your search criteria. Try different keywords or browse all projects."
+              : "Be the first to create a project and start making a difference today."}
           </p>
           <Button className="bg-blue-600 hover:bg-blue-700" asChild>
             <Link href="/start-project">Start a Project</Link>
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div
+          className={
+            searchQuery.trim()
+              ? "space-y-6"
+              : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          }
+        >
           {displayedProjects.map((project) => (
             <Link
               href={`/charity/browse-projects/${project.id}`}
               key={project.id}
+              className={searchQuery.trim() ? "block w-full" : ""}
             >
-              <ProjectCard {...project} />
+              <ProjectCard {...project} listView={!!searchQuery.trim()} />
             </Link>
           ))}
         </div>
