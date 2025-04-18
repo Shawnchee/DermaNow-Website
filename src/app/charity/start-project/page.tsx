@@ -195,19 +195,87 @@ const StartProjectPage = () => {
     setSubmitting(true);
 
     try {
-      // In a real app, you would:
-      // 1. Upload images to storage
-      // 2. Upload documents to storage
-      // 3. Create the project record in the database
-      // 4. Create milestone records in the database
+      // Upload the cover image
+      let coverImageUrl = null;
+      if (formData.coverImage) {
+        const { data, error } = await supabase.storage
+          .from("project-assets")
+          .upload(
+            `cover-images/${Date.now()}-${formData.coverImage.name}`,
+            formData.coverImage
+          );
 
-      // For demo purposes, we'll simulate a successful submission
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (error) {
+          throw new Error(`Error uploading cover image: ${error.message}`);
+        }
+        coverImageUrl = data?.path
+          ? supabase.storage.from("project-assets").getPublicUrl(data.path).data
+              .publicUrl
+          : null;
+      }
+
+      // Upload the documents
+      const documentUrls = [];
+      for (const document of formData.documents) {
+        const { data, error } = await supabase.storage
+          .from("project-assets")
+          .upload(`documents/${Date.now()}-${document.name}`, document);
+
+        if (error) {
+          throw new Error(`Error uploading document: ${error.message}`);
+        }
+        if (data?.path) {
+          const publicUrl = supabase.storage
+            .from("project-assets")
+            .getPublicUrl(data.path).data.publicUrl;
+          documentUrls.push(publicUrl);
+        }
+      }
+
+      // Create the project record in the database
+      const { data: projectData, error: projectError } = await supabase
+        .from("charity_projects")
+        .insert({
+          title: formData.title,
+          description: formData.description,
+          goal_amount: parseFloat(formData.goal_amount),
+          location: formData.location,
+          organization_name: formData.organization_name,
+          image: coverImageUrl,
+          document_urls: documentUrls,
+          verified: false,
+        })
+        .select()
+        .single();
+
+      if (projectError) {
+        throw new Error(`Error creating project: ${projectError.message}`);
+      }
+
+      // Create milestone records in the database
+      const milestonePromises = milestones.map((milestone) =>
+        supabase.from("milestones").insert({
+          project_id: projectData.id,
+          title: milestone.title,
+          description: milestone.description,
+          provider_id: milestone.provider_id,
+          estimated_completion_date: milestone.estimated_completion_date,
+        })
+      );
+
+      const milestoneResults = await Promise.all(milestonePromises);
+      milestoneResults.forEach(({ error }) => {
+        if (error) {
+          throw new Error(`Error creating milestone: ${error.message}`);
+        }
+      });
 
       // Redirect to the browse projects page with success parameter
       router.push("/charity/browse-projects?success=true");
     } catch (error) {
       console.error("Error submitting project:", error);
+      alert(`Submission failed: ${error.message}`);
+    } finally {
       setSubmitting(false);
     }
   };
