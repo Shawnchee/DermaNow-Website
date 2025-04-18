@@ -225,7 +225,8 @@ const PageContent = () => {
 
         const { data, error } = await supabase
           .from("charity_projects")
-          .select("*");
+          .select("*")
+          .eq("verified", true);
 
         if (error) {
           console.error("Failed to fetch projects:", error.message);
