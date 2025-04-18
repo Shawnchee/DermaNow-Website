@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import supabase from "@/utils/supabase";
+import supabase from "@/utils/supabase/client";
 import { motion, useAnimation } from "framer-motion";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Globe, Calendar } from "lucide-react";
