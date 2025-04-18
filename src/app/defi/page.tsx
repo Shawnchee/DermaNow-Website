@@ -38,15 +38,20 @@ import {
   Leaf,
   ChurchIcon as Mosque,
   Scale,
+  Hospital,
+  School,
+  Building,
 } from "lucide-react"
 import { toast } from "sonner"
 import connectMetamask from "@/hooks/connectMetamask"
 import { contractABI } from "@/lib/contract-abi"
 import { formatEther, parseEther } from "ethers"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import ShariahCompliantProtocols from "@/components/defi-shariah-protocols";
+
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0x8765b67425A42dD7ba3e0f350542426Ed2551c02"
+const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb"
 
 export default function StakingPage() {
   // Use the connectMetamask hook
@@ -86,17 +91,13 @@ export default function StakingPage() {
   const [donationAmount, setDonationAmount] = useState("")
   const [showMilestoneSelector, setShowMilestoneSelector] = useState(false)
 
-  // Islamic finance features
-  const [zakatPercentage, setZakatPercentage] = useState(2.5) // Default zakat percentage
-  const [autoZakat, setAutoZakat] = useState(false)
+  // Islamic finance states
+  const [zakatDue, setZakatDue] = useState("10")
   const [waqfPercentage, setWaqfPercentage] = useState(0)
+  const [selectedBeneficiary, setSelectedBeneficiary] = useState("")
   const [sadaqahAmount, setSadaqahAmount] = useState("")
-  const [zakatDue, setZakatDue] = useState("125000")
   const [zakatHistory, setZakatHistory] = useState<{ date: string; amount: string }[]>([])
-  const [selectedBeneficiary, setSelectedBeneficiary] = useState<string>("");
-const [sadaqahHistory, setSadaqahHistory] = useState<
-  { date: string; beneficiary: string; amount: string }[]
->([]);
+  const [sadaqahHistory, setSadaqahHistory] = useState<{ date: number; beneficiary: string; amount: string }[]>([])
 
   // Modal states
   const [modalOpen, setModalOpen] = useState(false)
@@ -123,48 +124,45 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
   >([])
 
   const handleSadaqahDonation = async () => {
-    if (!contract || !signer) {
-      toast("Wallet Required", {
-        description: "Please connect your wallet first.",
-      });
-      return;
+    if (!sadaqahAmount || Number(sadaqahAmount) <= 0 || !selectedBeneficiary) {
+      toast("Invalid Input", {
+        description: "Please enter a valid amount and select a beneficiary.",
+      })
+      return
     }
-  
+
     try {
-      setIsProcessing(true);
-  
-      // Simulate a transaction for the Sadaqah donation
-      const tx = await contract.donateToSadaqah(selectedBeneficiary, {
-        value: parseEther(sadaqahAmount),
-      });
-      await tx.wait();
-  
-      // Update donation history
-      setSadaqahHistory([
-        ...sadaqahHistory,
-        {
-          date: new Date().toISOString(),
-          beneficiary: selectedBeneficiary,
-          amount: sadaqahAmount,
-        },
-      ]);
-  
-      toast("Donation Successful", {
-        description: `You have donated ${sadaqahAmount} ETH to ${selectedBeneficiary}.`,
-      });
-  
+      // In a real implementation, you would call a contract method
+      // For this demo, we'll simulate a successful donation
+
+      // Add to sadaqah history
+      const newDonation = {
+        date: Date.now(),
+        beneficiary:
+          selectedBeneficiary === "orphans"
+            ? "Orphans Support Fund"
+            : selectedBeneficiary === "education"
+              ? "Education for Underprivileged Children"
+              : "Disaster Relief Fund",
+        amount: sadaqahAmount,
+      }
+
+      setSadaqahHistory([newDonation, ...sadaqahHistory])
+
       // Reset form
-      setSadaqahAmount("");
-      setSelectedBeneficiary("");
+      setSadaqahAmount("")
+      setSelectedBeneficiary("")
+
+      toast("Donation Successful", {
+        description: `You have successfully donated ${sadaqahAmount} ETH as Sadaqah.`,
+      })
     } catch (error) {
-      console.error("Sadaqah donation error:", error);
-      toast("Error", {
-        description: "Failed to process the donation. Please try again.",
-      });
-    } finally {
-      setIsProcessing(false);
+      console.error("Sadaqah donation error:", error)
+      toast("Donation Failed", {
+        description: "There was an error processing your donation. Please try again.",
+      })
     }
-  };
+  }
 
   // Initialize contract when signer is available
   useEffect(() => {
@@ -595,7 +593,7 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
   }, [demoMode, stakeInfo.active, stakeInfo.startTime, stakeInfo.amount, annualRate])
 
   return (
-    <div className="min-h-screen pt-16 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
         <motion.div
           className="text-center max-w-4xl mx-auto mb-12"
@@ -611,6 +609,19 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
           >
             Shariah-Compliant DeFi
           </motion.div>
+
+          <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.7 }}
+              className="flex justify-center mb-6"
+            >
+              <img
+                src="/icons/defi.svg"
+                alt="DeFi Icon"
+                className="h-48 w-48"
+              />
+            </motion.div>
 
           <motion.h1
             className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900 leading-16"
@@ -678,7 +689,7 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                     (gharar), and gambling (maysir). Instead, we use profit-sharing (mudarabah) and ethical investment
                     (halal) mechanisms.
                   </p>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2 mb-2">
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Riba-Free</span>
                     <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
                       Halal Investments
@@ -697,7 +708,7 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
         {/* Staking Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 mx-auto">
           <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
-            <CardContent className="pt-6">
+            <CardContent className="pt-2">
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
                   <Coins className="h-6 w-6 text-blue-600" />
@@ -754,7 +765,7 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
         </div>
 
         {/* Staking Dashboard */}
-        <div className="max-w-5xl mx-auto mb-12">
+        <div className="max-w-8xl mx-auto mb-12">
           <Tabs defaultValue="staking" className="w-full">
             <TabsList className="grid w-full grid-cols-4 mb-8">
               <TabsTrigger value="staking" className="text-sm">
@@ -777,7 +788,7 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
 
             {/* Staking Dashboard Tab */}
             <TabsContent value="staking">
-              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 py-8">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Coins className="h-6 w-6 text-blue-600 mr-2" />
@@ -959,15 +970,15 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
               </Card>
             </TabsContent>
 
-            {/* Islamic Finance Tab */}
-            <TabsContent value="islamic">
-              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+           {/* Islamic Finance Tab */}
+           <TabsContent value="islamic">
+              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 py-8">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Mosque className="h-6 w-6 text-blue-600 mr-2" />
-                    Islamic Finance Features
+                    Donate Your Rewards
                   </CardTitle>
-                  <CardDescription>Manage Zakat, Waqf, and Sadaqah contributions</CardDescription>
+                  <CardDescription>Choose how to contribute your DeFi earnings</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -989,45 +1000,169 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {/* Zakat Section */}
+                      {/* Sadaqah Section (Moved to top as recommended) */}
                       <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg">
+                        <div className="flex items-start gap-4">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <HeartHandshake className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-gray-800 mb-1">Sadaqah (General Charity)</h4>
+                              <div className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">
+                                Recommended
+                              </div>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-3">
+                              Make voluntary charitable donations to support those in need. Select a cause to donate to
+                              and track your contributions.
+                            </p>
+
+                            {/* Beneficiary Selection */}
+                            <div className="space-y-2 mb-3">
+                              <Label htmlFor="beneficiary-select" className="text-sm">
+                                Select a Beneficiary
+                              </Label>
+                              <select
+                                id="beneficiary-select"
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={selectedBeneficiary}
+                                onChange={(e) => setSelectedBeneficiary(e.target.value)}
+                              >
+                                <option value="" disabled>
+                                  Select a beneficiary
+                                </option>
+                                <option value="orphans">Orphans Support Fund</option>
+                                <option value="education">Education for Underprivileged Children</option>
+                                <option value="disaster-relief">Disaster Relief Fund</option>
+                              </select>
+                            </div>
+
+                            {/* Donation Amount */}
+                            <div className="space-y-2 mb-3">
+                              <Label htmlFor="sadaqah-amount" className="text-sm">
+                                Amount to donate as Sadaqah (ETH)
+                              </Label>
+                              <Input
+                                id="sadaqah-amount"
+                                type="number"
+                                min="0"
+                                step="0.001"
+                                placeholder="0.00"
+                                value={sadaqahAmount}
+                                onChange={(e) => setSadaqahAmount(e.target.value)}
+                              />
+                              {sadaqahAmount && Number(sadaqahAmount) > 0 && (
+                                <div className="text-xs text-gray-500">
+                                  ≈ {(Number(sadaqahAmount) * ethToMyrRate).toLocaleString()} MYR
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Donate Button */}
+                            <Button
+                              className="w-full bg-blue-600 hover:bg-blue-700"
+                              onClick={handleSadaqahDonation}
+                              disabled={!sadaqahAmount || Number(sadaqahAmount) <= 0 || !selectedBeneficiary}
+                            >
+                              Give Sadaqah
+                            </Button>
+
+                            {/* Donation History */}
+                            {sadaqahHistory.length > 0 && (
+                              <div className="mt-6">
+                                <h4 className="text-sm font-medium text-gray-700 mb-3">Sadaqah Donation History</h4>
+                                <div className="rounded-md border">
+                                  <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                      <tr>
+                                        <th
+                                          scope="col"
+                                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                          Date
+                                        </th>
+                                        <th
+                                          scope="col"
+                                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                          Beneficiary
+                                        </th>
+                                        <th
+                                          scope="col"
+                                          className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                        >
+                                          Amount
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                      {sadaqahHistory.map((donation, index) => (
+                                        <tr key={index}>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {new Date(donation.date).toLocaleString()}
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {donation.beneficiary}
+                                          </td>
+                                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
+                                            {donation.amount} ETH
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Zakat Section */}
+                      <div className="bg-white p-6 rounded-lg border border-blue-200">
                         <div className="flex items-start gap-4">
                           <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                             <Scale className="h-5 w-5 text-blue-600" />
                           </div>
                           <div className="flex-1">
-                            <h4 className="font-medium text-gray-800 mb-1">Zakat Management</h4>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-gray-800 mb-1">Zakat (If Eligible)</h4>
+                              <div className="cursor-pointer group relative">
+                                <Info className="h-4 w-4 text-blue-500" />
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-64 p-2 bg-white border border-gray-200 rounded shadow-lg text-xs text-gray-600 hidden group-hover:block z-10">
+                                  Zakat is an obligatory charity in Islam (2.5% of wealth held for one lunar year). Only
+                                  applicable if the wealth is considered zakat-eligible.
+                                </div>
+                              </div>
+                            </div>
                             <p className="text-sm text-gray-600 mb-3">
                               Zakat is an obligatory charity in Islam (2.5% of wealth held for one lunar year)
                             </p>
 
                             {Number(zakatDue) > 0 ? (
-  <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
-    <div className="flex justify-between items-center">
-      <span className="text-sm font-medium">Zakat Due</span>
-      <div className="text-right">
-        <span className="font-mono font-medium">
-          {(Number(zakatDue) * ethToMyrRate).toLocaleString()} MYR
-        </span>
-        <div className="text-xs text-gray-500">≈ {zakatDue} ETH</div>
-      </div>
-    </div>
-    <div className="text-xs text-gray-500 mt-1">
-      Based on your staked amount and rewards held for over a year
-    </div>
-  </div>
-) : (
-  <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
-    <div className="text-sm">No Zakat due yet</div>
-    <div className="text-xs text-gray-500 mt-1">
-      Zakat becomes obligatory after holding wealth for one lunar year
-    </div>
-  </div>
-)}
-
-                            <div className="flex items-center space-x-2 mb-3">
-
-                            </div>
+                              <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm font-medium">Zakat Due</span>
+                                  <div className="text-right">
+                                    <span className="font-mono font-medium">
+                                      {(Number(zakatDue) * ethToMyrRate).toLocaleString()} MYR
+                                    </span>
+                                    <div className="text-xs text-gray-500">≈ {zakatDue} ETH</div>
+                                  </div>
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Based on your staked amount and rewards held for over a year
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
+                                <div className="text-sm">No Zakat due yet</div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Zakat becomes obligatory after holding wealth for one lunar year
+                                </div>
+                              </div>
+                            )}
 
                             <Button
                               className="w-full bg-blue-600 hover:bg-blue-700"
@@ -1041,161 +1176,117 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                       </div>
 
                       {/* Waqf Section */}
-                      <div className="bg-white p-6 rounded-lg border border-blue-200">
-                        <div className="flex items-start gap-4">
-                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                            <Leaf className="h-5 w-5 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-medium text-gray-800 mb-1">Waqf (Endowment)</h4>
-                            <p className="text-sm text-gray-600 mb-3">
-                              Contribute to a permanent endowment fund that supports ongoing charitable causes
-                            </p>
-
-                            <div className="space-y-2 mb-3">
-                              <Label htmlFor="waqf-percentage" className="text-sm">
-                                Percentage of rewards to allocate to Waqf
-                              </Label>
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  id="waqf-percentage"
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  value={waqfPercentage}
-                                  onChange={(e) => setWaqfPercentage(Number(e.target.value))}
-                                  className="w-20"
-                                />
-                                <span>%</span>
-                              </div>
-                              {waqfPercentage > 0 && stakeInfo.active && (
-                                <div className="text-xs text-gray-500">
-                                  {((Number(stakeInfo.estimatedReward) * waqfPercentage) / 100).toFixed(6)} ETH will be
-                                  allocated to Waqf
-                                </div>
-                              )}
-                            </div>
-
-                            <Button
-                              className="w-full bg-blue-600 hover:bg-blue-700"
-                              onClick={() => openModal("waqf")}
-                              disabled={!stakeInfo.active || Number(stakeInfo.estimatedReward) <= 0}
-                            >
-                              Contribute to Waqf
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
-                     {/* Sadaqah Section */}
 <div className="bg-white p-6 rounded-lg border border-blue-200">
   <div className="flex items-start gap-4">
     <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-      <HeartHandshake className="h-5 w-5 text-blue-600" />
+      <Leaf className="h-5 w-5 text-blue-600" />
     </div>
     <div className="flex-1">
-      <h4 className="font-medium text-gray-800 mb-1">Sadaqah (Voluntary Charity)</h4>
+      <div className="flex items-center gap-2">
+        <h4 className="font-medium text-gray-800 mb-1">Waqf (Endowment)</h4>
+        <div className="cursor-pointer group relative">
+          <Info className="h-4 w-4 text-blue-500" />
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-64 p-2 bg-white border border-gray-200 rounded shadow-lg text-xs text-gray-600 hidden group-hover:block z-10">
+            Waqf is a permanent endowment in Islamic finance. It's more of a legacy endowment and needs proper handling to ensure compliance with Islamic principles.
+          </div>
+        </div>
+      </div>
       <p className="text-sm text-gray-600 mb-3">
-        Make voluntary charitable donations to support those in need. Select a cause to donate to and track your contributions.
+        Contribute to a permanent endowment fund that supports ongoing charitable causes.
       </p>
 
-      {/* Beneficiary Selection */}
       <div className="space-y-2 mb-3">
-        <Label htmlFor="beneficiary-select" className="text-sm">
-          Select a Beneficiary
+        <Label htmlFor="waqf-percentage" className="text-sm">
+          Percentage of rewards to allocate to Waqf
         </Label>
-        <select
-          id="beneficiary-select"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          value={selectedBeneficiary}
-          onChange={(e) => setSelectedBeneficiary(e.target.value)}
-        >
-          <option value="" disabled>
-            Select a beneficiary
-          </option>
-          <option value="orphans">Orphans Support Fund</option>
-          <option value="education">Education for Underprivileged Children</option>
-          <option value="disaster-relief">Disaster Relief Fund</option>
-        </select>
-      </div>
-
-      {/* Donation Amount */}
-      <div className="space-y-2 mb-3">
-        <Label htmlFor="sadaqah-amount" className="text-sm">
-          Amount to donate as Sadaqah (ETH)
-        </Label>
-        <Input
-          id="sadaqah-amount"
-          type="number"
-          min="0"
-          step="0.001"
-          placeholder="0.00"
-          value={sadaqahAmount}
-          onChange={(e) => setSadaqahAmount(e.target.value)}
-        />
-        {sadaqahAmount && Number(sadaqahAmount) > 0 && (
+        <div className="flex items-center gap-2">
+          <Input
+            id="waqf-percentage"
+            type="number"
+            min="0"
+            max="100"
+            value={waqfPercentage}
+            onChange={(e) => setWaqfPercentage(Number(e.target.value))}
+            className="w-20"
+          />
+          <span>%</span>
+        </div>
+        {waqfPercentage > 0 && stakeInfo.active && (
           <div className="text-xs text-gray-500">
-            ≈ {(Number(sadaqahAmount) * ethToMyrRate).toLocaleString()} MYR
+            {((Number(stakeInfo.estimatedReward) * waqfPercentage) / 100).toFixed(6)} ETH will be allocated to Waqf
           </div>
         )}
       </div>
 
-      {/* Donate Button */}
       <Button
         className="w-full bg-blue-600 hover:bg-blue-700"
-        onClick={handleSadaqahDonation}
-        disabled={!sadaqahAmount || Number(sadaqahAmount) <= 0 || !selectedBeneficiary}
+        onClick={() => openModal("waqf")}
+        disabled={!stakeInfo.active || Number(stakeInfo.estimatedReward) <= 0}
       >
-        Give Sadaqah
+        Contribute to Waqf
       </Button>
+    </div>
+  </div>
 
-      {/* Donation History */}
-      {sadaqahHistory.length > 0 && (
-        <div className="mt-6">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Sadaqah Donation History</h4>
-          <div className="rounded-md border">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Date
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Beneficiary
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Amount
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sadaqahHistory.map((donation, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(donation.date).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {donation.beneficiary}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
-                      {donation.amount} ETH
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+  {/* Waqf Projects Section */}
+  <div className="mt-6">
+    <h4 className="text-lg font-medium text-gray-800 mb-4">Examples of Waqf Projects</h4>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+        <CardHeader className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <Building className="h-6 w-6 text-blue-600" />
           </div>
-        </div>
-      )}
+          <CardTitle className="text-lg font-semibold text-blue-900">Community Mosque Construction</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription className="text-sm text-gray-600">
+            Build a mosque in underserved areas to provide a place of worship and community gathering.
+          </CardDescription>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+        <CardHeader className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <School className="h-6 w-6 text-blue-600" />
+          </div>
+          <CardTitle className="text-lg font-semibold text-blue-900">Education Endowment Fund</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription className="text-sm text-gray-600">
+            Support the construction of schools and provide scholarships for underprivileged children.
+          </CardDescription>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+        <CardHeader className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <Hospital className="h-6 w-6 text-blue-600" />
+          </div>
+          <CardTitle className="text-lg font-semibold text-blue-900">Healthcare Facilities</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription className="text-sm text-gray-600">
+            Fund the development of clinics and hospitals to improve access to healthcare in rural areas.
+          </CardDescription>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+        <CardHeader className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+            <Leaf className="h-6 w-6 text-blue-600" />
+          </div>
+          <CardTitle className="text-lg font-semibold text-blue-900">Clean Water Projects</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CardDescription className="text-sm text-gray-600">
+            Install water wells and purification systems to provide clean drinking water to communities in need.
+          </CardDescription>
+        </CardContent>
+      </Card>
     </div>
   </div>
 </div>
@@ -1244,7 +1335,7 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
 
             {/* Rewards & Donations Tab */}
             <TabsContent value="rewards">
-              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 py-8">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Gift className="h-6 w-6 text-blue-600 mr-2" />
@@ -1371,7 +1462,7 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
                                 <h5 className="font-medium text-blue-800 mb-3">Select a Charity Milestone</h5>
                                 <RadioGroup
                                   value={selectedMilestone !== null ? selectedMilestone.toString() : ""}
-                                  onValueChange={(value) => setSelectedMilestone(Number(value))}
+                                  onValueChange={(value: any) => setSelectedMilestone(Number(value))}
                                   className="space-y-3"
                                 >
                                   {milestones
@@ -1501,7 +1592,7 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
 
             {/* Analytics Tab */}
             <TabsContent value="analytics">
-              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+              <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 py-8">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <BarChart3 className="h-6 w-6 text-blue-600 mr-2" />
@@ -1643,10 +1734,13 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
           </Tabs>
         </div>
 
+        <ShariahCompliantProtocols />
+
+
         {/* Contract Information */}
-        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 max-w-5xl mx-auto mt-12">
+        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 max-w-8xl mx-auto mt-12">
           <CardHeader>
-            <CardTitle className="text-xl font-medium">Contract Information</CardTitle>
+            <CardTitle className="text-xl font-medium py-8">Contract Information</CardTitle>
             <CardDescription>Verify this staking contract on the blockchain</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1682,7 +1776,7 @@ const [sadaqahHistory, setSadaqahHistory] = useState<
           <CardFooter>
             <Button
               variant="outline"
-              className="w-full cursor-pointer"
+              className="w-full cursor-pointer mb-8 mt-4"
               onClick={() => window.open(`https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}`, "_blank")}
             >
               View on Etherscan

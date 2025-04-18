@@ -120,3 +120,25 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #receipt-card,
+  #receipt-card * {
+    visibility: visible;
+  }
+
+  #receipt-card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .print\\:hidden {
+    display: none !important;
+  }
+}

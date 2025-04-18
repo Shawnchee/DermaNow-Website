@@ -38,7 +38,6 @@ import {
   Loader2,
   Check,
   X,
-  Shield,
   Building,
   Lock,
   AlertTriangle,
@@ -46,15 +45,21 @@ import {
   BookOpen,
   Leaf,
   MoonStar,
+  Receipt,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import HalalChecker from "@/components/HalalChecker";
 import CampaignProgressCard from "@/components/campaign-process-card";
+import supabase from "@/utils/supabase/client";
+import { useParams } from "next/navigation";
+import SmartContractTransaction from "@/components/smart-contract-transaction";
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0x8765b67425A42dD7ba3e0f350542426Ed2551c02";
+// const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
 
 export default function CharityPage() {
+  const params = useParams();
+  const id = params.id;
   // Use the connectMetamask hook
   const { walletAddress, provider, signer, connectWallet } = connectMetamask();
   const [contract, setContract] = useState<ethers.Contract | null>(null);
@@ -89,6 +94,7 @@ export default function CharityPage() {
     status: "success" | "error" | null;
     message: string;
     txHash?: string;
+    amount?: string;
   }>({ status: null, message: "" });
 
   const milestonesRef = useRef<HTMLDivElement>(null);
@@ -96,13 +102,50 @@ export default function CharityPage() {
   const eventDescription =
     "This initiative aims to address the critical educational gap in rural Malaysian villages by establishing modern, well-equipped schools that provide quality education to underserved children. The project takes a holistic approach to education, focusing not only on building physical infrastructure but also on providing learning materials, training qualified teachers, and engaging the local community.";
 
+  const [projectTitle, setProjectTitle] = useState<string>("");
+  const [projectDescription, setProjectDescription] = useState<string>("");
+  const [image, setImage] = useState<string>("");
+  const [categories, setCategories] = useState<string[]>([""]);
+  const [contractAddress, setContractAddress] = useState<string>("");
+
+  useEffect(() => {
+    if (id) {
+      // Fetch project details from Supabase
+      const fetchProjectDetails = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("charity_projects")
+            .select("*")
+            .eq("id", id)
+            .single();
+          if (error) {
+            console.error("Error fetching project details:", error);
+            setProjectTitle("Unknown Project");
+          } else {
+            console.log("Successful fetching project details:", data);
+            setProjectTitle(data?.title || "Unknown Project");
+            setProjectDescription(data?.description || eventDescription);
+            setImage(data?.image || "/charity.jpg");
+            setCategories(data?.category || [""]);
+            setContractAddress(data?.smart_contract_address || "");
+          }
+          console.log("Smart Contract Address:", data?.smart_contract_address);
+        } catch (err) {
+          console.error("Error fetching project details:", err);
+          setProjectTitle("Unknown Project");
+        }
+      };
+
+      fetchProjectDetails();
+    }
+  }, [id]);
   // Initialize contract when signer is available
   useEffect(() => {
     const initialize = async () => {
-      if (signer && provider) {
+      if (signer && provider && contractAddress) {
         try {
           const charityContract = new ethers.Contract(
-            CONTRACT_ADDRESS,
+            contractAddress,
             contractABI,
             signer
           );
@@ -127,7 +170,7 @@ export default function CharityPage() {
     }, 500); // 500ms delay
 
     return () => clearTimeout(timeout); // Cleanup timeout on unmount
-  }, [signer, provider]);
+  }, [signer, provider, contractAddress]);
 
   // Auto-connect wallet if already connected
   useEffect(() => {
@@ -151,7 +194,7 @@ export default function CharityPage() {
         setVotingThreshold(threshold);
       } catch (error) {
         console.error("Error fetching voting threshold:", error);
-        setVotingThreshold(3); // Default threshold if error
+        setVotingThreshold(2); // Default threshold if error
       }
 
       // Fetch milestones
@@ -177,14 +220,15 @@ export default function CharityPage() {
               Number.parseFloat(formatEther(milestone.targetAmount))) *
             100,
           // Add project title - in a real app, this would come from the contract
-          projectTitle: "Placeholder Project",
+          projectTitle: projectTitle,
+          image: image,
           proofOfWork: {
             photos: [
-              "https://images.pexels.com/photos/933624/pexels-photo-933624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-              "https://images.pexels.com/photos/933624/pexels-photo-933624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+              "https://images.pexels.com/photos/5802822/pexels-photo-5802822.jpeg?auto=compress&cs=tinysrgb&w=600",
+              "https://images.pexels.com/photos/27269603/pexels-photo-27269603/free-photo-of-a-small-drone-laying-on-the-ground.jpeg?auto=compress&cs=tinysrgb&w=600",
             ],
             videos: [
-              "https://videos.pexels.com/video-files/6740283/6740283-uhd_2560_1440_30fps.mp4",
+              "https://videos.pexels.com/video-files/20731378/20731378-sd_640_360_30fps.mp4",
             ],
           },
         };
@@ -305,6 +349,7 @@ export default function CharityPage() {
         status: "success",
         message: `Successfully donated ${amount} ETH to milestone: ${milestones[milestoneId].description}`,
         txHash: receipt.transactionHash,
+        amount: amount,
       });
     } catch (error) {
       console.error("Donation error:", error);
@@ -411,6 +456,7 @@ export default function CharityPage() {
         status: "success",
         message: `Successfully donated ${modalDonationAmount} ETH to milestone: ${selectedMilestone.description}`,
         txHash: receipt.transactionHash,
+        amount: modalDonationAmount,
       });
     } catch (error) {
       console.error("Donation error:", error);
@@ -422,6 +468,47 @@ export default function CharityPage() {
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Navigate to tax receipt page
+  const navigateToTaxReceipt = () => {
+    try {
+      // Create a mock transaction if needed for testing
+      const mockTransaction = {
+        txHash: `0x${Math.random().toString(16).substring(2, 42)}`,
+        amount: modalDonationAmount || "1.0",
+      };
+
+      // Use either the real transaction or the mock one
+      const txData = {
+        txHash: transactionResult.txHash || mockTransaction.txHash,
+        amount: transactionResult.amount || mockTransaction.amount,
+        amountMYR:
+          Number(transactionResult.amount || mockTransaction.amount) *
+          ethToMyrRate,
+        date: new Date().toISOString(),
+        milestoneDescription:
+          selectedMilestone?.description || "General Donation",
+        projectTitle:
+          selectedMilestone?.projectTitle ||
+          "Education for Kids in Rural Areas",
+      };
+
+      console.log("Storing donation data:", txData);
+      localStorage.setItem("donationDetails", JSON.stringify(txData));
+
+      // Close the modal before navigation
+      setModalOpen(false);
+
+      // Use window.location for more reliable navigation
+      window.location.href = "/charity/tax-receipt";
+    } catch (error) {
+      console.error("Error navigating to tax receipt:", error);
+      toast("Navigation Error", {
+        description:
+          "Failed to navigate to tax receipt page. Please try again.",
+      });
     }
   };
 
@@ -446,7 +533,7 @@ export default function CharityPage() {
   }, {});
 
   return (
-    <div className="min-h-screen pt-24 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
+    <div className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
         <motion.div
           className="text-center max-w-4xl mx-auto mb-12"
@@ -463,8 +550,21 @@ export default function CharityPage() {
             Blockchain-Powered Charity
           </motion.div>
 
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="flex justify-center mb-6"
+          >
+            <img
+              src="/icons/milestonebased.svg"
+              alt="Milestone Icon"
+              className="h-56 w-h-56"
+            />
+          </motion.div>
+
           <motion.h1
-            className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900"
+            className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900 leading-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.7 }}
@@ -525,82 +625,17 @@ export default function CharityPage() {
           targetAmount={targetAmount}
           ethToMyrRate={ethToMyrRate}
           myrValues={myrValues}
+          projectTitle={projectTitle}
+          projectDescription={projectDescription}
+          projectImage={image}
+          loading={loading}
+          categories={categories}
         />
 
-        {/* Detailed Project Description Section */}
-        <div className="mb-12">
-          <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 overflow-hidden">
-            <div className="relative">
-              <img
-                src="/community.jpg"
-                alt="Campaign Banner"
-                className="h-[200px] w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent">
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <Badge className="bg-blue-600 rounded-full px-3 py-1 text-xs font-medium">
-                      Active Campaign
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="bg-black/30 text-white border-white/20 rounded-full px-3 py-1 text-xs font-medium"
-                    >
-                      Goal: {targetAmount * ethToMyrRate} MYR (
-                      {targetAmount.toFixed(2)} ETH)
-                    </Badge>
-                  </div>
-                  <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-                    Community Support Initiative
-                  </h1>
-                  <p className="text-zinc-200 text-sm max-w-3xl">
-                    A transparent, milestone-based charity project to support
-                    community development initiatives.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="p-5 border-t border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center dark:bg-blue-900/30">
-                    <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
-                      Raised so far
-                    </div>
-                    <div className="text-sm text-zinc-500 dark:text-zinc-400">
-                      {Math.min(
-                        Math.round((totalRaised / targetAmount) * 100),
-                        100
-                      )}
-                      % of goal
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-mono text-lg font-medium text-blue-700 dark:text-blue-400">
-                    {myrValues.totalRaised.toLocaleString()} MYR
-                  </div>
-                  <div className="text-xs text-zinc-500">
-                    ≈ {totalRaised.toFixed(4)} ETH
-                  </div>
-                </div>
-              </div>
-              <Progress
-                value={Math.min(
-                  Math.round((totalRaised / targetAmount) * 100),
-                  100
-                )}
-                className="h-2 mt-2 bg-zinc-100 dark:bg-zinc-800"
-              />
-            </div>
-          </Card>
-        </div>
+        <HalalChecker description={eventDescription} />
 
         {/* Sequential Milestone Information */}
-        <div className="mb-8">
+        <div className="my-8 ">
           <Alert className="bg-blue-50 border-blue-200">
             <AlertTriangle className="h-5 w-5 text-blue-600" />
             <AlertTitle>Sequential Milestone Funding</AlertTitle>
@@ -665,7 +700,7 @@ export default function CharityPage() {
                       (photo: string, index: number) => (
                         <img
                           key={index}
-                          src={photo}
+                          src={photo || "/placeholder.svg"}
                           alt={`Proof of Work Photo ${index + 1}`}
                           className="rounded-lg shadow-md"
                         />
@@ -760,7 +795,7 @@ export default function CharityPage() {
                               : milestone.released
                               ? "border-gray-200"
                               : "border-blue-100"
-                          } overflow-hidden h-full flex flex-col relative`}
+                          } overflow-hidden h-full flex flex-col relative p-2`}
                         >
                           {/* Sequential indicator */}
                           {activeMilestoneId === milestone.id && (
@@ -824,7 +859,7 @@ export default function CharityPage() {
                                 <span className="font-medium">
                                   Service Provider:
                                 </span>{" "}
-                                {milestone.serviceProviderName}
+                                {/* {milestone.serviceProviderName} */}
                               </div>
                               <div className="text-xs text-gray-500 font-mono">
                                 Address:{" "}
@@ -971,10 +1006,25 @@ export default function CharityPage() {
                                 </div>
                               )}
                             {milestone.released && (
-                              <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Funds Released Successfully
-                              </div>
+                              <>
+                                <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Funds Released Successfully
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  className="w-full border-green-600 text-green-700 hover:bg-green-50 cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedProofOfWork(
+                                      milestone.proofOfWork
+                                    ); // Set proof of work data
+                                    setProofOfWorkModalOpen(true); // Open modal
+                                  }}
+                                >
+                                  <ExternalLink className="h-4 w-4 mr-2 " />
+                                  View Proof of Work
+                                </Button>
+                              </>
                             )}
                           </CardFooter>
                         </Card>
@@ -988,96 +1038,28 @@ export default function CharityPage() {
         </div>
 
         {/* Transaction History */}
-        <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 mb-12">
-          <CardHeader>
-            <CardTitle className="text-xl font-medium">
-              Recent Transactions
-            </CardTitle>
-            <CardDescription>
-              Latest donations to charity milestones
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Transaction
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      From
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Amount
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {transactions.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-4 text-center text-sm text-gray-500"
-                      >
-                        No transactions yet
-                      </td>
-                    </tr>
-                  ) : (
-                    transactions.map((tx, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          <a
-                            href={`https://sepolia.etherscan.io/tx/${tx.hash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center hover:text-blue-600"
-                          >
-                            <span className="font-mono">{tx.hash}</span>
-                            <ExternalLink className="ml-1 h-3 w-3" />
-                          </a>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                          {tx.from}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                          <div className="font-mono font-medium">
-                            {tx.value} ETH
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            ≈{" "}
-                            {(Number(tx.value) * ethToMyrRate).toLocaleString()}{" "}
-                            MYR
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                          {tx.timestamp}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+        {contractAddress ? (
+          <SmartContractTransaction smart_contract_address={contractAddress} />
+        ) : (
+          <div className="mb-12">
+            <Card className="bg-white/80 backdrop-blur-sm border border-blue-100">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <Clock className="h-8 w-8 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-medium text-gray-800 mb-2">
+                  No Transaction History Yet
+                </h3>
+                <p className="text-gray-600 text-center max-w-md">
+                  There are currently no transaction history available. Check
+                  back later or contact the administrator.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-        <div className="bg-blue-50 border-green-900 p-4 rounded-lg">
+        <div className="bg-blue-50 border-green-900 p-4 rounded-lg mt-4">
           <h3 className="font-medium text-blue-800 mb-2">Donation Types</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-3 rounded-md border border-blue-100">
@@ -1112,31 +1094,8 @@ export default function CharityPage() {
           </div>
         </div>
 
-        <HalalChecker description={eventDescription} />
-
         {/* Security and Verification Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          {/* Wallet Security Check */}
-          <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
-            <div className="flex items-start">
-              <div className="bg-blue-50 p-3 rounded-full mr-4">
-                <Shield className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-2">
-                  Wallet Security Check
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Verify the security of service provider wallets before
-                  donating to ensure your funds go to legitimate recipients.
-                </p>
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                  Verify Wallet Security
-                </Button>
-              </div>
-            </div>
-          </div>
-
+        <div className="mb-6 mt-12">
           {/* Committee Verification */}
           <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
             <div className="flex items-start">
@@ -1158,37 +1117,47 @@ export default function CharityPage() {
             </div>
           </div>
         </div>
-        {/* Organization Banner */}
-        <div className="container mx-auto px-6 pt-5">
-          <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-blue-400 dark:border-blue-700 bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm">
-            <div className="flex items-center">
-              <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-                <Building className="h-5 w-5 text-blue-100" />
-              </div>
-              <div>
-                <div className="text-xs text-blue-100 mb-0.5 font-medium">
-                  Organization
-                </div>
-                <span className="font-semibold text-white">
-                  Charity Milestone DAO
-                </span>
+
+        {/* DAO Committee Application */}
+        <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
+          <div className="flex items-start">
+            <div className="bg-green-50 p-3 rounded-full mr-4">
+              <Vote className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">
+                Apply to be a DAO Committee Member
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Help ensure transparency and accountability by joining our DAO
+                committee. As a committee member, you'll vote on milestone
+                completions and fund releases.
+              </p>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Requirements:</span> Active
+                  wallet with at least 0.1 ETH in transactions, commitment to
+                  review project milestones, and adherence to our ethical
+                  guidelines.
+                </p>
+                <Alert className="bg-blue-50 border-blue-200">
+                  <BadgeCheck className="h-5 w-5 text-blue-600" />
+                  <AlertTitle>Community Governance</AlertTitle>
+                  <AlertDescription>
+                    Committee members participate in decentralized governance
+                    through transparent voting on the blockchain.
+                  </AlertDescription>
+                </Alert>
+                <Button className="bg-green-500 hover:bg-green-600 text-white">
+                  Apply Now
+                </Button>
               </div>
             </div>
-
-            <a
-              href="https://github.com/charity-milestone-dao"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
-            >
-              <span className="text-blue-500">View GitHub</span>
-              <ExternalLink className="h-3 w-3 ml-1.5 text-blue-500" />
-            </a>
           </div>
         </div>
 
         {/* Shariah compliance badge */}
-        <div className="container mx-auto px-6 pt-2">
+        <div className="container mx-auto px-6 pt-2 mt-4">
           <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
             <div className="flex items-center">
               <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
@@ -1392,7 +1361,15 @@ export default function CharityPage() {
                   )}
                 </AlertDescription>
               </Alert>
-              <div className="mt-6 flex justify-end">
+              <div className="mt-6 flex flex-col gap-4">
+                <Button
+                  type="button"
+                  onClick={navigateToTaxReceipt}
+                  className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2 py-6 text-lg"
+                >
+                  <Receipt className="h-5 w-5" />
+                  Generate Tax Relief Receipt
+                </Button>
                 <Button
                   type="button"
                   onClick={() => setModalOpen(false)}

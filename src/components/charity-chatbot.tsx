@@ -434,15 +434,15 @@ export function CharityChat() {
             className={cn(
               "fixed z-50",
               isExpanded
-                ? "top-30 right-6 bottom-24 md:left-auto md:w-125"
-                : "bottom-24 right-6 w-100 top-125"
+                ? "top-20 right-6 bottom-24 md:left-auto md:w-125"
+                : "bottom-24 right-6 w-100 top-40"
             )}
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className="shadow-2xl border-blue-100 h-full flex flex-col overflow-hidden">
+            <Card className="shadow-2xl h-full flex flex-col overflow-hidden py-0 gap-0 border-0">
               <CardHeader className="bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-t-lg py-4 relative">
                 <div className="flex items-center">
                   <div className="relative">
@@ -555,7 +555,7 @@ export function CharityChat() {
                 {/* Chat messages */}
                 <div
                   ref={chatContainerRef}
-                  className="flex-1 overflow-y-auto p-4 bg-white"
+                  className="flex-1 overflow-y-auto p-4 pb-0 bg-white"
                   style={{
                     height: isExpanded ? "calc(100vh - 220px)" : "450px",
                   }}
@@ -1003,7 +1003,7 @@ export function CharityChat() {
                 </div>
               </CardContent>
 
-              <CardFooter className="p-4 border-t bg-white">
+              <CardFooter className="p-4 border-t bg-white [.border-t]:pt-3">
                 <div className="w-full space-y-3">
                   {!showQuickDonations && (
                     <div className="flex justify-between">

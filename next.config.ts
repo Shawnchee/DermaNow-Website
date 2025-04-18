@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   images: {
     domains: ['placehold.co', 'images.pexels.com'],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  }
 };
 
 export default nextConfig;

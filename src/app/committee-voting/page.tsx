@@ -39,7 +39,7 @@ import { contractABI } from "@/lib/contract-abi"
 import { formatEther } from "ethers"
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0x8765b67425A42dD7ba3e0f350542426Ed2551c02"
+const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb"
 
 export default function CommitteeVotingPage() {
   // Use the connectMetamask hook
@@ -134,7 +134,7 @@ export default function CommitteeVotingPage() {
         setVotingThreshold(threshold)
       } catch (error) {
         console.error("Error fetching voting threshold:", error)
-        setVotingThreshold(3) // Default threshold if error
+        setVotingThreshold(2) // Default threshold if error
       }
 
       // Fetch milestones
@@ -288,7 +288,7 @@ export default function CommitteeVotingPage() {
 
   // Group all milestones under a single "Placeholder Project" title
   const milestonesByProject = {
-    "Placeholder Project": fundedMilestones,
+    "Education for Kids in Rural Areas": fundedMilestones,
   }
 
   return (
@@ -395,7 +395,7 @@ export default function CommitteeVotingPage() {
         {/* Voting Instructions */}
         {isCommittee && (
           <div className="mb-12">
-            <Card className="bg-blue-50 border-blue-200">
+            <Card className="bg-blue-50 border-blue-200 py-4">
               <CardHeader>
                 <CardTitle className="text-xl font-medium flex items-center">
                   <Vote className="h-6 w-6 text-blue-600 mr-2" />
