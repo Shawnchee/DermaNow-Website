@@ -56,7 +56,7 @@ class SearchResponse(BaseModel):
     funding_percentage: float
     supporters: int
     amount: int
-    category: List[str]
+    category: Optional[List[str]] = None
     in_progress: Optional[bool]
     progress_percentage: Optional[float]
     funding_complete: Optional[bool]

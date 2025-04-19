@@ -37,6 +37,16 @@ class ChatResponse(BaseModel):
     charities: list | None = None
 
 
+class DescriptionRequest(BaseModel):
+    title: str
+    user_instruction: str | None = None
+    current_description: str | None = None
+
+
+class DescriptionResponse(BaseModel):
+    generated_description: str
+
+
 # Function definition for OpenAI
 search_charities_function = {
     "name": "search_charities",
@@ -230,3 +240,49 @@ You are DermaBot, helping users learn about and donate to Shariah-compliant char
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing chat: {str(e)}")
+
+
+@chatbot_app.post("/generate-description", response_model=DescriptionResponse)
+async def generate_description_endpoint(request: DescriptionRequest):
+    try:
+        # Prepare the prompt for OpenAI
+        system_prompt = """
+You are an assistant helping users create compelling descriptions for charity projects on DermaNow, a platform for Shariah-compliant charity projects. Your task is to generate or refine a project description based on the provided title, optional user instructions, and any existing description. Follow these guidelines:
+
+1. **Tone**: Write in a professional, empathetic, and engaging tone that inspires trust and motivates donations.
+2. **Content**: 
+   - Ensure the description aligns with the project title.
+   - If a current description is provided, incorporate its key points and improve clarity, structure, or impact.
+   - Highlight the project's purpose, beneficiaries, and impact in 100-150 words.
+   - Avoid jargon and keep language simple and accessible.
+3. **Shariah Compliance**: Ensure the description reflects values consistent with Shariah-compliant charity (e.g., transparency, ethical fundraising).
+4. **User Instructions**: 
+   - If user instructions are provided, strictly follow them (e.g., "make it more emotional" or "focus on children").
+   - If no instructions are provided, enhance the description freely, focusing on clarity, emotional appeal, and alignment with the title.
+5. **Output**: Return only the generated description as plain text, without additional commentary.
+
+If no current description is provided, create a new one from scratch based on the title and optional instructions.
+"""
+
+        # Construct the user prompt
+        user_prompt = f"Project Title: {request.title}\n"
+        user_prompt += f"User Instructions: {request.user_instruction if request.user_instruction else 'None'}\n"
+        user_prompt += f"Current Description: {request.current_description if request.current_description else 'None'}\n"
+
+        # Call OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+
+        generated_description = response.choices[0].message.content.strip()
+
+        return DescriptionResponse(generated_description=generated_description)
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error generating description: {str(e)}"
+        )
