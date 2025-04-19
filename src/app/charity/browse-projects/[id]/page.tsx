@@ -1039,7 +1039,7 @@ export default function CharityPage() {
         </div>
 
         {/* Transaction History */}
-        {/* {contractAddress ? (
+        {contractAddress ? (
   <SmartContractTransaction smart_contract_address={contractAddress} />
 ) : (
   <div className="mb-12">
@@ -1060,8 +1060,8 @@ export default function CharityPage() {
                 </CardContent>
                 </Card>
                 </div>
-                )} */}
-        <MockupSmartContractTransaction />
+                )}
+        {/* <MockupSmartContractTransaction /> */}
         <div className="bg-blue-50 border-green-900 p-4 rounded-lg mt-4">
           <h3 className="font-medium text-blue-800 mb-2">Donation Types</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

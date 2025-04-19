@@ -28,15 +28,29 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EthereumLivePrice } from "@/utils/ethLivePrice";
+
 
 export default function SmartContractTransaction({ smart_contract_address }: {smart_contract_address: string}) {
   const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
   const contractAddress = smart_contract_address
-  const ETH_TO_MYR_RATE = 12500;
+  
 
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [ethToMyr, setEthToMyr] = useState(12500);
+
+  async function fetchEthToMyrRate() {
+    try {
+      const ethPriceInMyr = await EthereumLivePrice();
+      setEthToMyr(ethPriceInMyr);
+    } catch (error) {
+      console.error("Error fetching ETH to MYR rate:", error);
+      setEthToMyr(12500);
+    }
+  }
+
 
   async function fetchTransactions(contractAddress) {
     try {
@@ -65,6 +79,7 @@ export default function SmartContractTransaction({ smart_contract_address }: {sm
   
 
   useEffect(() => {
+    fetchEthToMyrRate();
     fetchTransactions(contractAddress);
   }, [contractAddress]);
 
@@ -80,7 +95,7 @@ export default function SmartContractTransaction({ smart_contract_address }: {sm
   };
 
   const convertEthToMyr = (ethValue) => {
-    return (parseFloat(ethValue) * ETH_TO_MYR_RATE).toFixed(2);
+    return (parseFloat(ethValue) * ethToMyr).toFixed(2);
   };
 
   return (

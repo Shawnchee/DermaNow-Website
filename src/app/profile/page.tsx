@@ -562,8 +562,8 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="history">
-        {/* <WalletTransaction /> */}
-        <MockupWalletAddress />
+        <WalletTransaction />
+        {/* <MockupWalletAddress /> */}
 
           <Card className="mt-6">
             <CardHeader>
