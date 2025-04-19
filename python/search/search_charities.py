@@ -30,7 +30,6 @@ def fetch_charities_from_supabase():
 
 # Charities data
 charities = fetch_charities_from_supabase()
-print(charities)
 
 # Create embeddings
 texts = [f"{c['title']} {c['description']}" for c in charities]

@@ -160,6 +160,10 @@ export function CharityChat() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [fetchingMilestoneId, setFetchingMilestoneId] = useState(false);
 
+  // Add ETH price state
+  const [ethPrice, setEthPrice] = useState<number>(12500); // Default fallback value
+  const [loadingEthPrice, setLoadingEthPrice] = useState<boolean>(true);
+
   // Blockchain related state
   const { walletAddress, provider, signer, connectWallet } = connectMetamask();
   const [contract, setContract] = useState<ethers.Contract | null>(null);
@@ -174,6 +178,32 @@ export function CharityChat() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch current ETH price
+  const fetchEthPrice = async () => {
+    try {
+      setLoadingEthPrice(true);
+      const response = await fetch("/api/eth-price");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch ETH price");
+      }
+
+      const data = await response.json();
+      console.log("Current ETH to MYR rate:", data.price);
+      setEthPrice(data.price);
+    } catch (error) {
+      console.error("Error fetching ETH price:", error);
+      // Keep using the default fallback price if fetch fails
+    } finally {
+      setLoadingEthPrice(false);
+    }
+  };
+
+  // Fetch ETH price on component mount
+  useEffect(() => {
+    fetchEthPrice();
+  }, []);
 
   // Initialize contract when signer is available
   useEffect(() => {
@@ -345,6 +375,16 @@ export function CharityChat() {
     }
   };
 
+  // Update the convertEthToMyr function to use the fetched price
+  const convertEthToMyr = (ethValue: number): string => {
+    return (ethValue * ethPrice).toFixed(2);
+  };
+
+  // Update the convertMyrToEth function
+  const convertMyrToEth = (myrValue: number): string => {
+    return (myrValue / ethPrice).toFixed(6);
+  };
+
   // Handle sending message
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -511,8 +551,8 @@ export function CharityChat() {
         setContract(charityContract);
       }
 
-      // Convert donation amount from MYR to ETH (simplified conversion)
-      const ethAmount = (donationAmount / 12500).toFixed(6); // Using a fixed rate of 1 ETH = 12,500 MYR
+      // Convert donation amount from MYR to ETH using dynamic rate
+      const ethAmount = convertMyrToEth(donationAmount);
 
       // Get milestone ID (either from fetched value or default to 0)
       const milestoneId = selectedDonation.milestoneId || 0;
@@ -1080,7 +1120,7 @@ export function CharityChat() {
                                                 : "outline"
                                             }
                                             className={cn(
-                                              "text-sm h-10",
+                                              "text-xs h-10",
                                               donationAmount === amount
                                                 ? "bg-gradient-to-r from-blue-600 to-purple-600"
                                                 : "hover:bg-blue-50"
@@ -1099,8 +1139,16 @@ export function CharityChat() {
                                           Estimated ETH Amount:
                                         </p>
                                         <p className="text-sm font-mono font-medium text-blue-800">
-                                          {(donationAmount / 12500).toFixed(6)}{" "}
-                                          ETH
+                                          {loadingEthPrice ? (
+                                            <span className="flex items-center">
+                                              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                              Loading price...
+                                            </span>
+                                          ) : (
+                                            `${convertMyrToEth(
+                                              donationAmount
+                                            )} ETH`
+                                          )}
                                         </p>
                                       </div>
                                     </div>
@@ -1181,12 +1229,12 @@ export function CharityChat() {
                                     ETH Amount:
                                   </span>
                                   <span className="text-sm font-bold text-gray-900">
-                                    {(donationAmount / 12500).toFixed(6)} ETH
+                                    {convertMyrToEth(donationAmount)} ETH
                                   </span>
                                 </div>
                                 <div className="flex justify-between mb-2">
                                   <span className="text-sm text-gray-500">
-                                    Recipient:
+                                    Recipient:&nbsp;
                                   </span>
                                   <span className="text-sm font-bold text-gray-900">
                                     {message.selectedDonation?.name}
@@ -1215,7 +1263,11 @@ export function CharityChat() {
                                     Date:
                                   </span>
                                   <span className="text-sm text-gray-900">
-                                    {new Date().toLocaleDateString()}
+                                    {new Date().toLocaleDateString("en-GB", {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                    })}
                                   </span>
                                 </div>
                               </div>
