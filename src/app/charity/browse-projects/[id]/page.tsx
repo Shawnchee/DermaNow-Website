@@ -77,8 +77,8 @@ export default function CharityPage() {
   const [totalRaised, setTotalRaised] = useState(0);
   const [targetAmount, setTargetAmount] = useState(10);
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [ethToMyrRate, setEthToMyrRate] = useState(12500);
-  const [rateLoading, setRateLoading] = useState(true);
+  const [ethToMyrRate, setEthToMyrRate] = useState(7200); // Default rate: 1 ETH = 12,500 MYR
+  const [rateLoading, setRateLoading] = useState(true); // Track if rate is still loading
   const [myrValues, setMyrValues] = useState({
     totalRaised: 0,
     targetAmount: 0,
