@@ -49,10 +49,11 @@ import { formatEther, parseEther } from "ethers"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import ShariahCompliantProtocols from "@/components/defi-shariah-protocols";
 import StakingHowItWorks from "@/components/staking-guide"
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
 
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb"
+const CONTRACT_ADDRESS = "0x158160A8825Fd5282a6CF4e9AE16313160264F9D"
 
 export default function StakingPage() {
   // Use the connectMetamask hook
@@ -60,6 +61,7 @@ export default function StakingPage() {
   const [contract, setContract] = useState<ethers.Contract | null>(null)
   const [loading, setLoading] = useState(true)
   const [stakeAmount, setStakeAmount] = useState("")
+  const [withdrawPercentage, setWithdrawPercentage] = useState(80);
   const [stakeInfo, setStakeInfo] = useState<{
     amount: string
     startTime: number
@@ -594,6 +596,7 @@ export default function StakingPage() {
   }, [demoMode, stakeInfo.active, stakeInfo.startTime, stakeInfo.amount, annualRate])
 
   return (
+    <TooltipProvider>
     <div className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
         <motion.div
@@ -1808,31 +1811,106 @@ export default function StakingPage() {
           {!isProcessing && transactionResult.status === null && (
             <>
               <div className="space-y-4 py-4">
-                {modalAction === "stake" ? (
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="modal-amount"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Amount to Stake (ETH)
-                    </label>
-                    <Input
-                      id="modal-amount"
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      placeholder="0.00"
-                      value={modalAmount}
-                      onChange={(e) => setModalAmount(e.target.value)}
-                      className="font-mono"
-                    />
-                    {modalAmount && (
-                      <div className="text-sm text-zinc-500">
-                        ≈ {(Number(modalAmount) * ethToMyrRate).toLocaleString()} MYR
-                      </div>
-                    )}
-                  </div>
-                ) : modalAction === "unstake" ? (
+              {modalAction === "stake" ? (
+  <div className="space-y-2">
+    <label
+      htmlFor="modal-amount"
+      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+    >
+      Amount to Stake (ETH)
+    </label>
+    <Input
+      id="modal-amount"
+      type="number"
+      step="0.01"
+      min="0.01"
+      placeholder="0.00"
+      value={modalAmount}
+      onChange={(e) => setModalAmount(e.target.value)}
+      className="font-mono"
+    />
+    {modalAmount && (
+      <div className="text-sm text-zinc-500">
+        ≈ {(Number(modalAmount) * ethToMyrRate).toLocaleString()} MYR
+      </div>
+    )}
+
+    {/* Percentage Settings */}
+    <div className="space-y-4 mt-4">
+      <label
+        htmlFor="withdraw-slider"
+        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+      >
+        Percentage to Withdraw to Wallet
+      </label>
+      <input
+        id="withdraw-slider"
+        type="range"
+        min="0"
+        max="80"
+        step="1"
+        value={withdrawPercentage}
+        onChange={(e) => setWithdrawPercentage(Number(e.target.value))}
+        className="w-full"
+      />
+      <div className="flex justify-between text-xs text-zinc-500">
+        <span>0%</span>
+        <span>80%</span>
+      </div>
+      <div className="flex items-center justify-between">
+    <span className="text-sm font-medium text-zinc-700">Withdraw to Wallet</span>
+    <Tooltip>
+          <TooltipTrigger>
+            <Info className="h-4 w-4 text-zinc-500 cursor-pointer" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs text-zinc-700">
+              Withdraw to your wallet for personal use. You can use this amount however you want.
+            </p>
+          </TooltipContent>
+        </Tooltip>
+    <span className="text-sm font-medium text-green-600">
+      {withdrawPercentage}% ≈{" "}
+      {((Number(modalAmount) * withdrawPercentage) / 100 * ethToMyrRate).toLocaleString()} MYR
+    </span>
+  </div>
+  <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+    <div
+      className="absolute h-full bg-green-500"
+      style={{ width: `${withdrawPercentage}%` }}
+    ></div>
+  </div>
+  
+  <div className="flex items-center justify-between">
+    <span className="text-sm font-medium text-zinc-700">Donate to Charity</span>
+    <Tooltip>
+          <TooltipTrigger>
+            <Info className="h-4 w-4 text-zinc-500 cursor-pointer" />
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="text-xs text-zinc-700">
+              This portion will be channeled to existing projects on our platform as Zakat, Sadaqah, or Waqf pools.
+            </p>
+          </TooltipContent>
+        </Tooltip>
+    <span className="text-sm font-medium text-pink-600">
+      {100 - withdrawPercentage}% ≈{" "}
+      {((Number(modalAmount) * (100 - withdrawPercentage)) / 100 * ethToMyrRate).toLocaleString()} MYR
+    </span>
+  </div>
+  <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+    <div
+      className="absolute h-full bg-pink-500"
+      style={{ width: `${100 - withdrawPercentage}%` }}
+    ></div>
+  </div>
+    </div>
+
+    <div className="text-xs text-gray-500">
+      Note: 2% of the total rewards will be taken as a fee to maintain our platform.
+    </div>
+  </div>
+) : modalAction === "unstake" ? (
                   <div className="rounded-md bg-blue-50 p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">Staked Amount</span>
@@ -2011,5 +2089,6 @@ export default function StakingPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   )
 }
