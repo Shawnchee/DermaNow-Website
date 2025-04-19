@@ -655,15 +655,17 @@ const AnalyticsPage = () => {
             transition={{ duration: 0.5, delay: 0.5 }}
           >
             <Card className="border-blue-100 shadow-md h-full">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-xl text-blue-900">
-                      Charity Demographics
-                    </CardTitle>
-                    <CardDescription>Distribution by category</CardDescription>
-                  </div>
-                  <Tabs defaultValue="pie">
+              <Tabs defaultValue="pie">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-xl text-blue-900">
+                        Charity Demographics
+                      </CardTitle>
+                      <CardDescription>
+                        Distribution by category
+                      </CardDescription>
+                    </div>
                     <TabsList className="grid w-20 grid-cols-2">
                       <TabsTrigger value="pie" className="p-1">
                         <PieChartIcon className="h-4 w-4" />
@@ -672,11 +674,9 @@ const AnalyticsPage = () => {
                         <BarChart3 className="h-4 w-4" />
                       </TabsTrigger>
                     </TabsList>
-                  </Tabs>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Tabs>
+                  </div>
+                </CardHeader>
+                <CardContent>
                   <TabsContent value="pie" className="mt-0">
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
@@ -732,43 +732,45 @@ const AnalyticsPage = () => {
                       </ResponsiveContainer>
                     </div>
                   </TabsContent>
-                </Tabs>
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-2">Top Categories</h4>
-                  <div className="space-y-2">
-                    {categoryData.slice(0, 3).map((category, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex items-center">
-                          <div
-                            className="w-3 h-3 rounded-full mr-2"
-                            style={{ backgroundColor: category.color }}
-                          />
-                          <span className="text-sm">{category.name}</span>
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium mb-2">Top Categories</h4>
+                    <div className="space-y-2">
+                      {categoryData.slice(0, 3).map((category, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex items-center">
+                            <div
+                              className="w-3 h-3 rounded-full mr-2"
+                              style={{ backgroundColor: category.color }}
+                            />
+                            <span className="text-sm">{category.name}</span>
+                          </div>
+                          <span className="text-sm font-medium">
+                            {category.value}%
+                          </span>
                         </div>
-                        <span className="text-sm font-medium">
-                          {category.value}%
-                        </span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
+                </CardContent>
+              </Tabs>
             </Card>
           </motion.div>
         </div>
 
         {/* Flagging */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-        >
-          <FlaggedTransactions />
-        </motion.div>
-        
+        <div className="mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <FlaggedTransactions />
+          </motion.div>
+        </div>
+
         {/* Milestone Tracking */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
