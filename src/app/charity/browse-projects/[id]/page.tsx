@@ -1224,7 +1224,7 @@ export default function CharityPage() {
           <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
             <div className="flex items-center">
               <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-                <MoonStar className="h-5 w-5 text-green-100" />
+                <MoonStar className="h-5 w-5 text-green-500" />
               </div>
               <div>
                 <div className="text-xs text-green-100 mb-0.5 font-medium">
