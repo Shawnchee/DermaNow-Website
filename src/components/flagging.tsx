@@ -2,15 +2,6 @@
 
 import { useState, useEffect } from "react";
 import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Card,
   CardContent,
   CardDescription,
@@ -18,7 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import supabase from "@/utils/supabase/client";
 import { toast } from "sonner";
 
@@ -66,13 +62,12 @@ export default function FlaggedTransactions() {
       );
 
       toast("Transaction removed from the flagged list successfully.", {
-        description: "The transaction has been successfully removed from the flagged list.",
+        description:
+          "The transaction has been successfully removed from the flagged list.",
       });
-
     } catch (err) {
       console.error("Error removing from flagged list:", err);
       toast.error("Failed to remove the transaction from the flagged list.");
-
     }
   }
 
@@ -89,12 +84,10 @@ export default function FlaggedTransactions() {
 
       await removeFromFlaggedList(hash);
 
-
       toast(`Wallet address ${address} has been banned successfully.`);
     } catch (err) {
       console.error("Error banning wallet address:", err);
       toast.error("Failed to ban the wallet address.");
-
     }
   }
 
@@ -103,15 +96,17 @@ export default function FlaggedTransactions() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center py-8">
-      <Card className="w-full max-w-7xl bg-white/90 backdrop-blur-sm border">
-        <CardHeader>
-          <CardTitle className="text-2xl text-black">Flagged Transactions</CardTitle>
-          <CardDescription className="text-gray-600">
-            Review and manage flagged transactions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+    <Card className="border-blue-100 shadow-md">
+      <CardHeader>
+        <CardTitle className="text-xl text-blue-900">
+          Flagged Transactions
+        </CardTitle>
+        <CardDescription>
+          Review and manage flagged transactions.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
           {loading ? (
             <p>Loading flagged transactions...</p>
           ) : error ? (
@@ -119,76 +114,92 @@ export default function FlaggedTransactions() {
           ) : flaggedTransactions.length === 0 ? (
             <p className="text-gray-500">No flagged transactions found.</p>
           ) : (
-            <div className="rounded-md border border-blue-200">
-              <Table>
-                <TableCaption className="text-blue-800 my-4">
-                  List of flagged transactions
-                </TableCaption>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-blue-900">Date</TableHead>
-                    <TableHead className="text-blue-900">Hash</TableHead>
-                    <TableHead className="text-blue-900">From</TableHead>
-                    <TableHead className="text-blue-900">To</TableHead>
-                    <TableHead className="text-right text-blue-900">Value</TableHead>
-                    <TableHead className="text-blue-900">Reason</TableHead>
-                    <TableHead className="text-center text-blue-900">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {flaggedTransactions.map((tx) => (
-                    <TableRow key={tx.hash}>
-                      <TableCell className="font-medium text-blue-800">
-                        {new Date(tx.created_at).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-blue-800">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-2">
-                              {tx.hash.slice(0, 10)}...
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="font-mono text-xs">{tx.hash}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-blue-800">
-                        {tx.from_address}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-blue-800">
-                        {tx.to_address}
-                      </TableCell>
-                      <TableCell className="text-right text-blue-800">
-                        {parseFloat(tx.value).toFixed(6)} ETH
-                      </TableCell>
-                      <TableCell className="text-blue-800">{tx.flag_reason}</TableCell>
-                      <TableCell className="flex space-x-2 justify-center">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-blue-800 border-blue-200 cursor-pointer"
-                          onClick={() => removeFromFlaggedList(tx.hash)}
-                        >
-                          Remove
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="text-white border-red-200 cursor-pointer"
-                          onClick={() => banWalletAddress(tx.from_address, tx.hash)}
-                        >
-                          Ban
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <table className="w-full table-auto">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">
+                    Date
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">
+                    Hash
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">
+                    From
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">
+                    To
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">
+                    Value
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">
+                    Reason
+                  </th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {flaggedTransactions.map((tx) => (
+                  <tr
+                    key={tx.hash}
+                    className="border-b border-gray-100 hover:bg-gray-50"
+                  >
+                    <td className="py-3 px-4">
+                      {new Date(tx.created_at).toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 font-mono text-xs text-blue-800">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-2">
+                            {tx.hash.slice(0, 10)}...
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="font-mono text-xs">{tx.hash}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </td>
+                    <td className="py-3 px-4 font-mono text-xs text-blue-800">
+                      {tx.from_address}
+                    </td>
+                    <td className="py-3 px-4 font-mono text-xs text-blue-800">
+                      {tx.to_address}
+                    </td>
+                    <td className="py-3 px-4 text-right text-blue-800">
+                      {parseFloat(tx.value).toFixed(6)} ETH
+                    </td>
+                    <td className="py-3 px-4 text-blue-800">
+                      {tx.flag_reason}
+                    </td>
+                    <td className="py-3 px-4 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-800 border-blue-200 cursor-pointer"
+                        onClick={() => removeFromFlaggedList(tx.hash)}
+                      >
+                        Remove
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="text-white border-red-200 cursor-pointer"
+                        onClick={() =>
+                          banWalletAddress(tx.from_address, tx.hash)
+                        }
+                      >
+                        Ban
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
