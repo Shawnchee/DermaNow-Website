@@ -1,13 +1,20 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { ethers } from "ethers"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect } from "react";
+import { ethers } from "ethers";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -15,8 +22,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { motion } from "framer-motion"
+} from "@/components/ui/dialog";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   CheckCircle,
@@ -32,130 +39,144 @@ import {
   ThumbsDown,
   AlertTriangle,
   Info,
-} from "lucide-react"
-import { toast } from "sonner"
-import connectMetamask from "@/hooks/connectMetamask"
-import { contractABI } from "@/lib/contract-abi"
-import { formatEther } from "ethers"
+} from "lucide-react";
+import { toast } from "sonner";
+import connectMetamask from "@/hooks/connectMetamask";
+import { contractABI } from "@/lib/contract-abi";
+import { formatEther } from "ethers";
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb"
+const CONTRACT_ADDRESS = "0x158160A8825Fd5282a6CF4e9AE16313160264F9D";
 
 export default function CommitteeVotingPage() {
   // Use the connectMetamask hook
-  const { walletAddress, provider, signer, connectWallet } = connectMetamask()
-  const [contract, setContract] = useState<ethers.Contract | null>(null)
-  const [isCommittee, setIsCommittee] = useState(false)
-  const [milestones, setMilestones] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [votingThreshold, setVotingThreshold] = useState(3)
-  const [hasVoted, setHasVoted] = useState<{ [key: number]: boolean }>({})
-  const [ethToMyrRate, setEthToMyrRate] = useState(12500) // Default rate: 1 ETH = 12,500 MYR
-
+  const { walletAddress, provider, signer, connectWallet } = connectMetamask();
+  const [contract, setContract] = useState<ethers.Contract | null>(null);
+  const [isCommittee, setIsCommittee] = useState(false);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [votingThreshold, setVotingThreshold] = useState(3);
+  const [hasVoted, setHasVoted] = useState<{ [key: number]: boolean }>({});
+  const [ethToMyrRate, setEthToMyrRate] = useState(12500); // Default rate: 1 ETH = 12,500 MYR
 
   // Modal states
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectedMilestone, setSelectedMilestone] = useState<any>(null)
-  const [voteType, setVoteType] = useState<"yes" | "no">("yes")
-  const [isProcessing, setIsProcessing] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
+  const [voteType, setVoteType] = useState<"yes" | "no">("yes");
+  const [isProcessing, setIsProcessing] = useState(false);
   const [transactionResult, setTransactionResult] = useState<{
-    status: "success" | "error" | null
-    message: string
-    txHash?: string
-  }>({ status: null, message: "" })
+    status: "success" | "error" | null;
+    message: string;
+    txHash?: string;
+  }>({ status: null, message: "" });
 
   // Initialize contract when signer is available
   useEffect(() => {
     const initialize = async () => {
-      console.log("Contract address:", CONTRACT_ADDRESS)
-      console.log("Signer and provider:", signer, provider)
-      console.log("Wallet address:", walletAddress)
+      console.log("Contract address:", CONTRACT_ADDRESS);
+      console.log("Signer and provider:", signer, provider);
+      console.log("Wallet address:", walletAddress);
       if (signer && provider) {
         try {
-          const votingContract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer)
-          setContract(votingContract)
-          console.log("Contract initialized:", votingContract.address)
+          const votingContract = new ethers.Contract(
+            CONTRACT_ADDRESS,
+            contractABI,
+            signer
+          );
+          setContract(votingContract);
+          console.log("Contract initialized:", votingContract.address);
 
           // Check if user is committee member
           if (walletAddress) {
-            const isCommitteeMember = await votingContract.committee(walletAddress)
-            setIsCommittee(isCommitteeMember)
-            console.log("Wallet address:", walletAddress)
-            console.log("Committee address:", votingContract.committee(walletAddress))
-            console.log("Is committee member:", isCommitteeMember)
+            const isCommitteeMember = await votingContract.committee(
+              walletAddress
+            );
+            setIsCommittee(isCommitteeMember);
+            console.log("Wallet address:", walletAddress);
+            console.log(
+              "Committee address:",
+              votingContract.committee(walletAddress)
+            );
+            console.log("Is committee member:", isCommitteeMember);
 
             if (!isCommitteeMember) {
               toast("Access Denied", {
                 description: "Only committee members can access this page.",
-              })
+              });
             } else {
               toast("Wallet Connected", {
-                description: `Connected as committee member: ${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`,
-              })
-              await fetchContractData(votingContract, walletAddress)
+                description: `Connected as committee member: ${walletAddress.substring(
+                  0,
+                  6
+                )}...${walletAddress.substring(38)}`,
+              });
+              await fetchContractData(votingContract, walletAddress);
             }
           }
         } catch (error) {
-          console.error("Error initializing contract:", error)
+          console.error("Error initializing contract:", error);
           toast("Contract Error", {
             description: "Failed to initialize the voting contract.",
-          })
+          });
         }
       }
-    }
+    };
 
     // Add a small delay to ensure signer and provider are loaded
     const timeout = setTimeout(() => {
-      initialize()
-    }, 1000) 
+      initialize();
+    }, 1000);
 
-    return () => clearTimeout(timeout) // Cleanup timeout on unmount
-  }, [signer, provider])
+    return () => clearTimeout(timeout); // Cleanup timeout on unmount
+  }, [signer, provider]);
 
   // Auto-connect wallet if already connected
   useEffect(() => {
     if (!walletAddress) {
-      const savedAddress = localStorage.getItem("walletAddress")
+      const savedAddress = localStorage.getItem("walletAddress");
       if (savedAddress) {
-        console.log("Auto-connecting wallet...")
-        connectWallet() // Trigger wallet connection  
-        console.log("Saved address:", savedAddress)
+        console.log("Auto-connecting wallet...");
+        connectWallet(); // Trigger wallet connection
+        console.log("Saved address:", savedAddress);
       }
     }
-  }, [walletAddress, connectWallet])
+  }, [walletAddress, connectWallet]);
 
-  const fetchContractData = async (contractInstance: ethers.Contract, userAccount: string) => {
+  const fetchContractData = async (
+    contractInstance: ethers.Contract,
+    userAccount: string
+  ) => {
     try {
-      setLoading(true)
+      setLoading(true);
 
       // Fetch voting threshold
       try {
-        const threshold = await contractInstance.votingThreshold()
-        setVotingThreshold(threshold)
+        const threshold = await contractInstance.votingThreshold();
+        setVotingThreshold(threshold);
       } catch (error) {
-        console.error("Error fetching voting threshold:", error)
-        setVotingThreshold(2) // Default threshold if error
+        console.error("Error fetching voting threshold:", error);
+        setVotingThreshold(2); // Default threshold if error
       }
 
       // Fetch milestones
-      const milestoneCount = await contractInstance.milestoneCount()
-      const milestonePromises = []
-      const votingStatusPromises = []
+      const milestoneCount = await contractInstance.milestoneCount();
+      const milestonePromises = [];
+      const votingStatusPromises = [];
 
       for (let i = 0; i < milestoneCount; i++) {
-        milestonePromises.push(contractInstance.getMilestone(i))
-        votingStatusPromises.push(contractInstance.hasVoted(i, userAccount))
+        milestonePromises.push(contractInstance.getMilestone(i));
+        votingStatusPromises.push(contractInstance.hasVoted(i, userAccount));
       }
 
-      const milestoneData = await Promise.all(milestonePromises)
-      const votingStatusData = await Promise.all(votingStatusPromises)
+      const milestoneData = await Promise.all(milestonePromises);
+      const votingStatusData = await Promise.all(votingStatusPromises);
 
       // Update hasVoted state
-      const votedStatus: { [key: number]: boolean } = {}
+      const votedStatus: { [key: number]: boolean } = {};
       votingStatusData.forEach((status, index) => {
-        votedStatus[index] = status
-      })
-      setHasVoted(votedStatus)
+        votedStatus[index] = status;
+      });
+      setHasVoted(votedStatus);
 
       const formattedMilestones = milestoneData.map((milestone, index) => {
         return {
@@ -172,124 +193,126 @@ export default function CommitteeVotingPage() {
             100,
           // Add project title - in a real app, this would come from the contract
           projectTitle: `Project ${Math.floor(index / 3) + 1}`,
-        }
-      })
+        };
+      });
 
-      setMilestones(formattedMilestones)
-      setLoading(false)
+      setMilestones(formattedMilestones);
+      setLoading(false);
     } catch (error) {
-      console.error("Error fetching contract data:", error)
+      console.error("Error fetching contract data:", error);
       toast("Error", {
         description: "Failed to load milestone data. Please try again.",
-      })
-      setLoading(false)
+      });
+      setLoading(false);
     }
-  }
-
-  
-
+  };
 
   // Fetch all data from the contract
-  
 
   // Vote to release funds for a milestone
   const voteToRelease = async (milestoneId: number) => {
-    if (!contract || !signer || !isCommittee) return
+    if (!contract || !signer || !isCommittee) return;
 
     try {
-      setIsProcessing(true)
+      setIsProcessing(true);
 
-      const tx = await contract.voteToRelease(milestoneId)
+      const tx = await contract.voteToRelease(milestoneId);
 
       toast("Vote Processing", {
-        description: "Your vote is being processed. Please wait for confirmation.",
-      })
+        description:
+          "Your vote is being processed. Please wait for confirmation.",
+      });
 
-      const receipt = await tx.wait()
+      const receipt = await tx.wait();
 
       toast("Vote Successful", {
         description: `Successfully voted to release funds for milestone: ${milestones[milestoneId].description}`,
-      })
+      });
 
       // Update hasVoted state
       setHasVoted({
         ...hasVoted,
         [milestoneId]: true,
-      })
+      });
 
       if (walletAddress) {
-        await fetchContractData(contract, walletAddress)
+        await fetchContractData(contract, walletAddress);
       }
 
       setTransactionResult({
         status: "success",
         message: `Successfully voted to release funds for milestone: ${milestones[milestoneId].description}`,
         txHash: receipt.transactionHash,
-      })
+      });
     } catch (error) {
-      console.error("Voting error:", error)
+      console.error("Voting error:", error);
       toast("Vote Failed", {
         description: "Failed to process your vote. Please try again.",
-      })
+      });
 
       setTransactionResult({
         status: "error",
-        message: (error as any).reason || "Transaction failed. Please try again.",
-      })
+        message:
+          (error as any).reason || "Transaction failed. Please try again.",
+      });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   // Open voting modal
   const openVotingModal = (milestone: any, vote: "yes" | "no") => {
-    setSelectedMilestone(milestone)
-    setVoteType(vote)
-    setTransactionResult({ status: null, message: "" })
-    setModalOpen(true)
-  }
+    setSelectedMilestone(milestone);
+    setVoteType(vote);
+    setTransactionResult({ status: null, message: "" });
+    setModalOpen(true);
+  };
 
   // Handle modal vote
   const handleModalVote = async () => {
     if (!selectedMilestone) {
-      return
+      return;
     }
 
     if (!contract || !signer) {
       setTransactionResult({
         status: "error",
         message: "Wallet not connected. Please connect your wallet first.",
-      })
-      return
+      });
+      return;
     }
 
     if (voteType === "yes") {
-      await voteToRelease(selectedMilestone.id)
+      await voteToRelease(selectedMilestone.id);
     } else {
       // In a real implementation, you would have a "no" vote function
       // For this demo, we'll just show a message
       setTransactionResult({
         status: "success",
         message: `Your "No" vote has been recorded. Note: The current contract only supports "Yes" votes.`,
-      })
+      });
 
       setTimeout(() => {
-        setModalOpen(false)
-      }, 3000)
+        setModalOpen(false);
+      }, 3000);
     }
-  }
+  };
 
   // Group milestones by project title
-  const unreleasedMilestones = milestones.filter((milestone) => !milestone.released)
+  const unreleasedMilestones = milestones.filter(
+    (milestone) => !milestone.released
+  );
 
   const fundedMilestones = milestones.filter(
-    (milestone) => !milestone.released && Number(milestone.currentAmount) >= Number(milestone.targetAmount),
-  )
+    (milestone) =>
+      !milestone.released &&
+      Number(milestone.currentAmount) >= Number(milestone.targetAmount)
+  );
 
   // Group all milestones under a single "Placeholder Project" title
   const milestonesByProject = {
     "Education for Kids in Rural Areas": fundedMilestones,
-  }
+  };
 
   return (
     <div className="min-h-screen pt-16 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
@@ -300,8 +323,12 @@ export default function CommitteeVotingPage() {
               <Vote className="h-5 w-5 text-blue-500" />
             </div>
             <div>
-              <div className="text-xs text-blue-100 mb-0.5 font-medium">Committee</div>
-              <span className="font-semibold text-white">Milestone Voting Panel</span>
+              <div className="text-xs text-blue-100 mb-0.5 font-medium">
+                Committee
+              </div>
+              <span className="font-semibold text-white">
+                Milestone Voting Panel
+              </span>
             </div>
           </div>
 
@@ -337,8 +364,8 @@ export default function CommitteeVotingPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.7 }}
           >
-            As a committee member, you can vote on milestone releases. Each milestone requires {votingThreshold} votes
-            to be released.
+            As a committee member, you can vote on milestone releases. Each
+            milestone requires {votingThreshold} votes to be released.
           </motion.p>
 
           {!walletAddress && (
@@ -369,7 +396,8 @@ export default function CommitteeVotingPage() {
                 <AlertTriangle className="h-5 w-5 text-red-600" />
                 <AlertTitle>Access Denied</AlertTitle>
                 <AlertDescription>
-                  Only committee members can access this voting panel. Please connect with a committee wallet.
+                  Only committee members can access this voting panel. Please
+                  connect with a committee wallet.
                 </AlertDescription>
               </Alert>
             </motion.div>
@@ -385,7 +413,8 @@ export default function CommitteeVotingPage() {
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 bg-green-500 rounded-full"></div>
                 <span className="text-gray-800 font-medium">
-                  Connected as Committee Member: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                  Connected as Committee Member: {walletAddress.slice(0, 6)}...
+                  {walletAddress.slice(-4)}
                 </span>
               </div>
             </motion.div>
@@ -405,8 +434,9 @@ export default function CommitteeVotingPage() {
               <CardContent>
                 <div className="space-y-4">
                   <p className="text-gray-700">
-                    As a committee member, your vote is crucial for the transparent and secure release of funds to
-                    charity milestones.
+                    As a committee member, your vote is crucial for the
+                    transparent and secure release of funds to charity
+                    milestones.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -416,8 +446,9 @@ export default function CommitteeVotingPage() {
                         Voting "Yes"
                       </h3>
                       <p className="text-sm text-gray-600">
-                        A "Yes" vote indicates you approve the milestone and believe the funds should be released to the
-                        service provider.
+                        A "Yes" vote indicates you approve the milestone and
+                        believe the funds should be released to the service
+                        provider.
                       </p>
                     </div>
 
@@ -427,8 +458,8 @@ export default function CommitteeVotingPage() {
                         Voting "No"
                       </h3>
                       <p className="text-sm text-gray-600">
-                        A "No" vote indicates you do not approve the milestone and believe the funds should not be
-                        released.
+                        A "No" vote indicates you do not approve the milestone
+                        and believe the funds should not be released.
                       </p>
                     </div>
                   </div>
@@ -437,8 +468,9 @@ export default function CommitteeVotingPage() {
                     <Info className="h-5 w-5 text-blue-600" />
                     <AlertTitle>Voting Threshold</AlertTitle>
                     <AlertDescription>
-                      Each milestone requires {votingThreshold} "Yes" votes to be released. Once a milestone is
-                      released, the next milestone becomes active for donations.
+                      Each milestone requires {votingThreshold} "Yes" votes to
+                      be released. Once a milestone is released, the next
+                      milestone becomes active for donations.
                     </AlertDescription>
                   </Alert>
                 </div>
@@ -450,14 +482,20 @@ export default function CommitteeVotingPage() {
         {/* Milestones for Voting */}
         {isCommittee && (
           <div className="mb-16">
-            <h2 className="text-2xl font-bold text-gray-800 mb-8">Pending Milestones Awaiting Votes</h2>
+            <h2 className="text-2xl font-bold text-gray-800 mb-8">
+              Pending Milestones Awaiting Votes
+            </h2>
 
             {loading ? (
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
               </div>
             ) : (
-              <Tabs defaultValue={Object.keys(milestonesByProject)[0] || "no-projects"}>
+              <Tabs
+                defaultValue={
+                  Object.keys(milestonesByProject)[0] || "no-projects"
+                }
+              >
                 <TabsList className="mb-8">
                   {Object.keys(milestonesByProject).map((projectTitle) => (
                     <TabsTrigger key={projectTitle} value={projectTitle}>
@@ -476,9 +514,12 @@ export default function CommitteeVotingPage() {
                         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                           <Clock className="h-8 w-8 text-blue-600" />
                         </div>
-                        <h3 className="text-xl font-medium text-gray-800 mb-2">No Milestones Available</h3>
+                        <h3 className="text-xl font-medium text-gray-800 mb-2">
+                          No Milestones Available
+                        </h3>
                         <p className="text-gray-600 text-center max-w-md">
-                          There are currently no milestones available for voting. Check back later.
+                          There are currently no milestones available for
+                          voting. Check back later.
                         </p>
                       </CardContent>
                     </Card>
@@ -492,134 +533,190 @@ export default function CommitteeVotingPage() {
                         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                           <Clock className="h-8 w-8 text-blue-600" />
                         </div>
-                        <h3 className="text-xl font-medium text-gray-800 mb-2">No Milestones Available</h3>
+                        <h3 className="text-xl font-medium text-gray-800 mb-2">
+                          No Milestones Available
+                        </h3>
                         <p className="text-gray-600 text-center max-w-md">
-                          There are currently no milestones available for voting. Check back later.
+                          There are currently no milestones available for
+                          voting. Check back later.
                         </p>
                       </CardContent>
                     </Card>
                   </TabsContent>
                 )}
 
-{Object.entries(milestonesByProject).map(([projectTitle, projectMilestones]: [string, any[]]) => (
-                  <TabsContent key={projectTitle} value={projectTitle}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {(projectMilestones as any[]).map((milestone) => (
-                        <Card
-                          key={milestone.id}
-                          className={`bg-white/90 backdrop-blur-sm ${
-                            milestone.released
-                              ? "border-gray-200"
-                              : hasVoted[milestone.id]
+                {Object.entries(milestonesByProject).map(
+                  ([projectTitle, projectMilestones]: [string, any[]]) => (
+                    <TabsContent key={projectTitle} value={projectTitle}>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {(projectMilestones as any[]).map((milestone) => (
+                          <Card
+                            key={milestone.id}
+                            className={`bg-white/90 backdrop-blur-sm ${
+                              milestone.released
+                                ? "border-gray-200"
+                                : hasVoted[milestone.id]
                                 ? "border-yellow-200"
                                 : "border-blue-100"
-                          } overflow-hidden h-full flex flex-col`}
-                        >
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-start">
-                              <CardTitle className="text-xl">{milestone.description}</CardTitle>
-                              {milestone.released ? (
-                                <Badge className="bg-green-500">Completed</Badge>
-                              ) : hasVoted[milestone.id] ? (
-                                <Badge className="bg-yellow-500">Already Voted</Badge>
-                              ) : (
-                                <Badge className="bg-blue-500">Needs Vote</Badge>
+                            } overflow-hidden h-full flex flex-col`}
+                          >
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between items-start">
+                                <CardTitle className="text-xl">
+                                  {milestone.description}
+                                </CardTitle>
+                                {milestone.released ? (
+                                  <Badge className="bg-green-500">
+                                    Completed
+                                  </Badge>
+                                ) : hasVoted[milestone.id] ? (
+                                  <Badge className="bg-yellow-500">
+                                    Already Voted
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-blue-500">
+                                    Needs Vote
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 mt-1 mb-2">
+                                <Badge
+                                  variant="outline"
+                                  className="bg-blue-50 text-blue-700 border-blue-200"
+                                >
+                                  {milestone.category}
+                                </Badge>
+                              </div>
+                              <CardDescription className="space-y-2">
+                                <div>
+                                  <span className="font-medium">
+                                    Service Provider:
+                                  </span>{" "}
+                                  {milestone.serviceProviderName}
+                                </div>
+                                <div className="text-xs text-gray-500 font-mono">
+                                  Address:{" "}
+                                  {milestone.serviceProvider.substring(0, 6)}...
+                                  {milestone.serviceProvider.substring(38)}
+                                </div>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="mt-2 text-xs"
+                                >
+                                  <Users className="h-3 w-3 mr-1" />
+                                  View Provider Profile
+                                </Button>
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                              <div className="mb-4">
+                                <div className="flex justify-between text-sm mb-1">
+                                  <span>Progress</span>
+                                  <span>{milestone.progress.toFixed(0)}%</span>
+                                </div>
+                                <Progress
+                                  value={milestone.progress}
+                                  className="h-2"
+                                />
+                              </div>
+                              <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div className="bg-blue-50 p-3 rounded-lg">
+                                  <div className="text-xs text-gray-500">
+                                    Target
+                                  </div>
+                                  <div className="font-semibold flex items-center">
+                                    <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
+                                    {(
+                                      Number(milestone.targetAmount) *
+                                      ethToMyrRate
+                                    ).toLocaleString()}{" "}
+                                    MYR
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    ≈ {milestone.targetAmount} ETH
+                                  </div>
+                                </div>
+                                <div className="bg-blue-50 p-3 rounded-lg">
+                                  <div className="text-xs text-gray-500">
+                                    Raised
+                                  </div>
+                                  <div className="font-semibold flex items-center">
+                                    <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
+                                    {(
+                                      Number(milestone.currentAmount) *
+                                      ethToMyrRate
+                                    ).toLocaleString()}{" "}
+                                    MYR
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    ≈ {milestone.currentAmount} ETH
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="bg-blue-50 p-3 rounded-lg mb-4">
+                                <div className="text-xs text-gray-500">
+                                  Committee Votes
+                                </div>
+                                <div className="font-semibold flex items-center">
+                                  <Users className="h-4 w-4 text-blue-600 mr-1" />
+                                  {milestone.voteCount} of {votingThreshold}{" "}
+                                  vote(s)
+                                </div>
+                                <Progress
+                                  value={
+                                    (Number(milestone.voteCount) /
+                                      Number(votingThreshold)) *
+                                    100
+                                  }
+                                  className="h-1 mt-2"
+                                />
+                              </div>
+                            </CardContent>
+                            <CardFooter className="flex flex-col gap-3 pt-0">
+                              {!milestone.released &&
+                                !hasVoted[milestone.id] && (
+                                  <div className="grid grid-cols-2 gap-3 w-full">
+                                    <Button
+                                      className="w-full bg-green-600 hover:bg-green-700"
+                                      onClick={() =>
+                                        openVotingModal(milestone, "yes")
+                                      }
+                                    >
+                                      <ThumbsUp className="h-4 w-4 mr-2" />
+                                      Vote Yes
+                                    </Button>
+                                    <Button
+                                      className="w-full bg-red-600 hover:bg-red-700"
+                                      onClick={() =>
+                                        openVotingModal(milestone, "no")
+                                      }
+                                    >
+                                      <ThumbsDown className="h-4 w-4 mr-2" />
+                                      Vote No
+                                    </Button>
+                                  </div>
+                                )}
+                              {!milestone.released &&
+                                hasVoted[milestone.id] && (
+                                  <div className="flex items-center justify-center w-full p-2 bg-yellow-50 rounded-lg text-yellow-700">
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    You have already voted on this milestone
+                                  </div>
+                                )}
+                              {milestone.released && (
+                                <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Funds Released Successfully
+                                </div>
                               )}
-                            </div>
-                            <div className="flex items-center gap-1 mt-1 mb-2">
-                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                {milestone.category}
-                              </Badge>
-                            </div>
-                            <CardDescription className="space-y-2">
-                              <div>
-                                <span className="font-medium">Service Provider:</span> {milestone.serviceProviderName}
-                              </div>
-                              <div className="text-xs text-gray-500 font-mono">
-                                Address: {milestone.serviceProvider.substring(0, 6)}...
-                                {milestone.serviceProvider.substring(38)}
-                              </div>
-                              <Button variant="outline" size="sm" className="mt-2 text-xs">
-                                <Users className="h-3 w-3 mr-1" />
-                                View Provider Profile
-                              </Button>
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent className="flex-grow">
-                            <div className="mb-4">
-                              <div className="flex justify-between text-sm mb-1">
-                                <span>Progress</span>
-                                <span>{milestone.progress.toFixed(0)}%</span>
-                              </div>
-                              <Progress value={milestone.progress} className="h-2" />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                              <div className="bg-blue-50 p-3 rounded-lg">
-                                <div className="text-xs text-gray-500">Target</div>
-                                <div className="font-semibold flex items-center">
-                                  <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
-                                  {(Number(milestone.targetAmount) * ethToMyrRate).toLocaleString()} MYR
-                                </div>
-                                <div className="text-xs text-gray-500">≈ {milestone.targetAmount} ETH</div>
-                              </div>
-                              <div className="bg-blue-50 p-3 rounded-lg">
-                                <div className="text-xs text-gray-500">Raised</div>
-                                <div className="font-semibold flex items-center">
-                                  <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
-                                  {(Number(milestone.currentAmount) * ethToMyrRate).toLocaleString()} MYR
-                                </div>
-                                <div className="text-xs text-gray-500">≈ {milestone.currentAmount} ETH</div>
-                              </div>
-                            </div>
-                            <div className="bg-blue-50 p-3 rounded-lg mb-4">
-                              <div className="text-xs text-gray-500">Committee Votes</div>
-                              <div className="font-semibold flex items-center">
-                                <Users className="h-4 w-4 text-blue-600 mr-1" />
-                                {milestone.voteCount} of {votingThreshold} vote(s)
-                              </div>
-                              <Progress
-                                    value={(Number(milestone.voteCount) / Number(votingThreshold)) * 100}
-                                    className="h-1 mt-2"
-                                  />
-                            </div>
-                          </CardContent>
-                          <CardFooter className="flex flex-col gap-3 pt-0">
-                            {!milestone.released && !hasVoted[milestone.id] && (
-                              <div className="grid grid-cols-2 gap-3 w-full">
-                                <Button
-                                  className="w-full bg-green-600 hover:bg-green-700"
-                                  onClick={() => openVotingModal(milestone, "yes")}
-                                >
-                                  <ThumbsUp className="h-4 w-4 mr-2" />
-                                  Vote Yes
-                                </Button>
-                                <Button
-                                  className="w-full bg-red-600 hover:bg-red-700"
-                                  onClick={() => openVotingModal(milestone, "no")}
-                                >
-                                  <ThumbsDown className="h-4 w-4 mr-2" />
-                                  Vote No
-                                </Button>
-                              </div>
-                            )}
-                            {!milestone.released && hasVoted[milestone.id] && (
-                              <div className="flex items-center justify-center w-full p-2 bg-yellow-50 rounded-lg text-yellow-700">
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                You have already voted on this milestone
-                              </div>
-                            )}
-                            {milestone.released && (
-                              <div className="flex items-center justify-center w-full p-2 bg-green-50 rounded-lg text-green-700">
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Funds Released Successfully
-                              </div>
-                            )}
-                          </CardFooter>
-                        </Card>
-                      ))}
-                    </div>
-                  </TabsContent>
-                ))}
+                            </CardFooter>
+                          </Card>
+                        ))}
+                      </div>
+                    </TabsContent>
+                  )
+                )}
               </Tabs>
             )}
           </div>
@@ -631,7 +728,10 @@ export default function CommitteeVotingPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Confirm Your Vote</DialogTitle>
-            <DialogDescription>{selectedMilestone && `Milestone: ${selectedMilestone.description}`}</DialogDescription>
+            <DialogDescription>
+              {selectedMilestone &&
+                `Milestone: ${selectedMilestone.description}`}
+            </DialogDescription>
           </DialogHeader>
 
           {!isProcessing && transactionResult.status === null && (
@@ -641,7 +741,9 @@ export default function CommitteeVotingPage() {
                   <div className="rounded-md bg-blue-50 p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">Project</span>
-                      <span className="font-medium">{selectedMilestone.projectTitle}</span>
+                      <span className="font-medium">
+                        {selectedMilestone.projectTitle}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">Current Votes</span>
@@ -652,7 +754,9 @@ export default function CommitteeVotingPage() {
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">Your Vote</span>
                       <span
-                        className={`font-medium flex items-center ${voteType === "yes" ? "text-green-600" : "text-red-600"}`}
+                        className={`font-medium flex items-center ${
+                          voteType === "yes" ? "text-green-600" : "text-red-600"
+                        }`}
                       >
                         {voteType === "yes" ? (
                           <>
@@ -674,19 +778,28 @@ export default function CommitteeVotingPage() {
                   <AlertTriangle className="h-5 w-5 text-yellow-600" />
                   <AlertTitle>Important</AlertTitle>
                   <AlertDescription>
-                    Your vote is permanent and cannot be changed once submitted. Please review your decision carefully.
+                    Your vote is permanent and cannot be changed once submitted.
+                    Please review your decision carefully.
                   </AlertDescription>
                 </Alert>
               </div>
 
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setModalOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button
                   type="button"
                   onClick={handleModalVote}
-                  className={voteType === "yes" ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700"}
+                  className={
+                    voteType === "yes"
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-red-600 hover:bg-red-700"
+                  }
                 >
                   Confirm Vote
                 </Button>
@@ -699,7 +812,8 @@ export default function CommitteeVotingPage() {
               <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
               <p className="text-center font-medium">Processing your vote...</p>
               <p className="text-center text-sm text-muted-foreground mt-2">
-                Please confirm the transaction in your wallet and wait for it to be processed.
+                Please confirm the transaction in your wallet and wait for it to
+                be processed.
               </p>
             </div>
           )}
@@ -727,7 +841,11 @@ export default function CommitteeVotingPage() {
                 </AlertDescription>
               </Alert>
               <div className="mt-6 flex justify-end">
-                <Button type="button" onClick={() => setModalOpen(false)} className="bg-blue-600 hover:bg-blue-700">
+                <Button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
                   Close
                 </Button>
               </div>
@@ -745,11 +863,17 @@ export default function CommitteeVotingPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setTransactionResult({ status: null, message: "" })}
+                  onClick={() =>
+                    setTransactionResult({ status: null, message: "" })
+                  }
                 >
                   Try Again
                 </Button>
-                <Button type="button" onClick={() => setModalOpen(false)} variant="destructive">
+                <Button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  variant="destructive"
+                >
                   Close
                 </Button>
               </div>
@@ -758,5 +882,5 @@ export default function CommitteeVotingPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
