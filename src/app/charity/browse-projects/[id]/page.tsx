@@ -55,6 +55,7 @@ import supabase from "@/utils/supabase/client";
 import { useParams } from "next/navigation";
 import SmartContractTransaction from "@/components/smart-contract-transaction";
 import { EthereumLivePrice } from "@/utils/ethLivePrice";
+import DiscussionSection from "@/components/discussion-section";
 
 export default function CharityPage() {
   const params = useParams();
@@ -1112,7 +1113,9 @@ export default function CharityPage() {
             )
           )}
         </div>
-
+        
+        <DiscussionSection walletAddress={walletAddress || ""} projectId={id as string} />
+        
         {contractAddress ? (
           <SmartContractTransaction smart_contract_address={contractAddress} />
         ) : (

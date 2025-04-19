@@ -355,7 +355,7 @@ const AnalyticsPage = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-blue-900">
-                Securities Commission Malaysia
+                Admin Dashboard
               </h1>
               <p className="text-gray-600 mt-1">
                 Charity Fundraising Analytics Dashboard
