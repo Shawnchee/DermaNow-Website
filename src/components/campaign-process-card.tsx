@@ -3,7 +3,15 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, DollarSign, Leaf, Users, Droplet, PersonStanding, Apple } from "lucide-react";
+import {
+  BookOpen,
+  DollarSign,
+  Leaf,
+  Users,
+  Droplet,
+  PersonStanding,
+  Apple,
+} from "lucide-react";
 
 interface CampaignProgressCardProps {
   totalRaised: number;
@@ -61,7 +69,7 @@ export default function CampaignProgressCard({
 
   const categoryIcons: Record<Category, React.ReactNode> = {
     "Food & Nutrition": <Apple className="h-3 w-3 mr-1" />,
-    "Education": <BookOpen className="h-3 w-3 mr-1" />,
+    Education: <BookOpen className="h-3 w-3 mr-1" />,
     "Community Involvement": <Users className="h-3 w-3 mr-1" />,
     "Disaster Relief": <Leaf className="h-3 w-3 mr-1" />,
     "Community Development": <PersonStanding className="h-3 w-3 mr-1" />,
@@ -100,8 +108,12 @@ export default function CampaignProgressCard({
                   variant="outline"
                   className="bg-black/30 text-white border-white/20 rounded-full px-3 py-1 text-xs font-medium"
                 >
-                  Goal: {(targetAmount * ethToMyrRate).toLocaleString()} MYR (
-                  {targetAmount.toFixed(2)} ETH)
+                  Goal:{" "}
+                  {(targetAmount * ethToMyrRate).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  MYR ({targetAmount.toFixed(2)} ETH)
                 </Badge>
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
@@ -175,8 +187,16 @@ export default function CampaignProgressCard({
                 </div>
                 <div className="text-right">
                   <div className="font-mono text-lg font-medium text-blue-700 dark:text-blue-400">
-                    {myrValues.totalRaised.toLocaleString()} MYR /{" "}
-                    {myrValues.targetAmount.toLocaleString()}.00 MYR
+                    {myrValues.totalRaised.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    MYR /{" "}
+                    {myrValues.targetAmount.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    MYR
                   </div>
                   <div className="text-xs text-zinc-500">
                     ≈ {totalRaised.toFixed(4)} ETH
@@ -188,7 +208,11 @@ export default function CampaignProgressCard({
                   <div className="text-xs text-gray-500">Raised</div>
                   <div className="font-semibold flex items-center">
                     <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
-                    {myrValues.totalRaised.toLocaleString()} MYR
+                    {myrValues.totalRaised.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    MYR
                   </div>
                   <div className="text-xs text-gray-500">
                     ≈ {totalRaised.toFixed(4)} ETH
@@ -198,7 +222,11 @@ export default function CampaignProgressCard({
                   <div className="text-xs text-gray-500">Remaining</div>
                   <div className="font-semibold flex items-center">
                     <DollarSign className="h-4 w-4 text-slate-600 mr-1" />
-                    {myrValues.remainingAmount.toLocaleString()} MYR
+                    {myrValues.remainingAmount.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    MYR
                   </div>
                   <div className="text-xs text-gray-500">
                     ≈ {remainingAmount.toFixed(4)} ETH

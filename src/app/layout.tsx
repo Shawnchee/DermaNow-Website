@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { WalletProvider } from "@/context/wallet-context"
+import { WalletProvider } from "@/context/wallet-context";
 import { CharityChat } from "@/components/charity-chatbot";
 
 const geistSans = Geist({
@@ -19,9 +19,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DermaNow",
   description: "Malaysia's BlockChain Charity Platform",
-  icons: {  
+  icons: {
     icon: "/icons/Dermanow.svg",
-  }
+  },
 };
 
 export default function RootLayout({
@@ -31,7 +31,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <WalletProvider>
           <Header />
           {children}
@@ -40,5 +42,5 @@ export default function RootLayout({
         </WalletProvider>
       </body>
     </html>
-  )
+  );
 }

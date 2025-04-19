@@ -54,9 +54,7 @@ import CampaignProgressCard from "@/components/campaign-process-card";
 import supabase from "@/utils/supabase/client";
 import { useParams } from "next/navigation";
 import SmartContractTransaction from "@/components/smart-contract-transaction";
-import MockupSmartContractTransaction from "@/components/mockupsmartcontract";
-import DiscussionSection from "@/components/discussion-section"
-
+import { EthereumLivePrice } from "@/utils/ethLivePrice";
 
 // Contract address from deployment
 // const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
@@ -78,7 +76,8 @@ export default function CharityPage() {
   const [totalRaised, setTotalRaised] = useState(0);
   const [targetAmount, setTargetAmount] = useState(10); // Default to 10 ETH
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [ethToMyrRate, setEthToMyrRate] = useState(12500); // Default rate: 1 ETH = 12,500 MYR
+  const [ethToMyrRate, setEthToMyrRate] = useState(7200); // Default rate: 1 ETH = 12,500 MYR
+  const [rateLoading, setRateLoading] = useState(true); // Track if rate is still loading
   const [myrValues, setMyrValues] = useState({
     totalRaised: 0,
     targetAmount: 0,
@@ -103,9 +102,6 @@ export default function CharityPage() {
 
   const milestonesRef = useRef<HTMLDivElement>(null);
 
-  const eventDescription =
-    "This initiative aims to address the critical educational gap in rural Malaysian villages by establishing modern, well-equipped schools that provide quality education to underserved children. The project takes a holistic approach to education, focusing not only on building physical infrastructure but also on providing learning materials, training qualified teachers, and engaging the local community.";
-
   const [projectTitle, setProjectTitle] = useState<string>("");
   const [projectDescription, setProjectDescription] = useState<string>("");
   const [image, setImage] = useState<string>("");
@@ -119,6 +115,11 @@ export default function CharityPage() {
   const [timeline, setTimeline] = useState<
     { step: number; color: string; title: string; desc: string }[]
   >([]);
+
+  // Create a consistent function for ETH to MYR conversion
+  const convertEthToMyr = (ethAmount) => {
+    return Number(ethAmount) * ethToMyrRate;
+  };
 
   useEffect(() => {
     if (id) {
@@ -136,7 +137,7 @@ export default function CharityPage() {
           } else {
             console.log("Successful fetching project details:", data);
             setProjectTitle(data?.title || "Unknown Project");
-            setProjectDescription(data?.description || eventDescription);
+            setProjectDescription(data?.description || "");
             setImage(data?.image || "/charity.jpg");
             setCategories(data?.category || [""]);
             setContractAddress(data?.smart_contract_address || "");
@@ -155,6 +156,46 @@ export default function CharityPage() {
       fetchProjectDetails();
     }
   }, [id]);
+
+  // Fetch ETH to MYR rate with proper error handling and consistent updates
+  async function fetchEthToMyrRate() {
+    try {
+      setRateLoading(true);
+      const ethPriceInMyr = await EthereumLivePrice();
+      setEthToMyrRate(ethPriceInMyr);
+      console.log("Current ETH to MYR rate:", ethPriceInMyr);
+
+      // Update MYR values whenever the exchange rate changes
+      if (totalRaised && targetAmount) {
+        updateMyrValues(totalRaised, targetAmount);
+      }
+    } catch (error) {
+      console.error("Error fetching ETH to MYR rate:", error);
+      // Keep the default value if there's an error
+    } finally {
+      setRateLoading(false);
+    }
+  }
+
+  // Update MYR values consistently
+  const updateMyrValues = (raised, target) => {
+    const remainingAmount = Math.max(target - raised, 0);
+
+    setMyrValues({
+      totalRaised: convertEthToMyr(raised),
+      targetAmount: convertEthToMyr(target),
+      remainingAmount: convertEthToMyr(remainingAmount),
+    });
+  };
+
+  useEffect(() => {
+    fetchEthToMyrRate();
+    // Set up periodic refresh of exchange rate (every 5 minutes)
+    const intervalId = setInterval(fetchEthToMyrRate, 300000);
+
+    return () => clearInterval(intervalId); // Clean up on unmount
+  }, []);
+
   // Initialize contract when signer is available
   useEffect(() => {
     const initialize = async () => {
@@ -272,11 +313,11 @@ export default function CharityPage() {
       setTargetAmount(totalTarget);
       setTotalRaised(totalRaised);
 
+      // Update MYR values consistently
+      updateMyrValues(totalRaised, totalTarget);
+
       // Fetch recent transactions
       await fetchTransactionHistory(contractInstance);
-
-      // Update MYR values
-      updateMyrValues(totalRaised, totalTarget);
 
       setLoading(false);
     } catch (error) {
@@ -314,17 +355,6 @@ export default function CharityPage() {
     } catch (error) {
       console.error("Error fetching transaction history:", error);
     }
-  };
-
-  // Update MYR values
-  const updateMyrValues = (raised: number, target: number) => {
-    const remainingAmount = Math.max(target - raised, 0);
-
-    setMyrValues({
-      totalRaised: raised * ethToMyrRate,
-      targetAmount: target * ethToMyrRate,
-      remainingAmount: remainingAmount * ethToMyrRate,
-    });
   };
 
   // Donate to a milestone
@@ -500,9 +530,9 @@ export default function CharityPage() {
       const txData = {
         txHash: transactionResult.txHash || mockTransaction.txHash,
         amount: transactionResult.amount || mockTransaction.amount,
-        amountMYR:
-          Number(transactionResult.amount || mockTransaction.amount) *
-          ethToMyrRate,
+        amountMYR: convertEthToMyr(
+          transactionResult.amount || mockTransaction.amount
+        ),
         date: new Date().toISOString(),
         milestoneDescription:
           selectedMilestone?.description || "General Donation",
@@ -547,59 +577,6 @@ export default function CharityPage() {
     acc[milestone.projectTitle].push(milestone);
     return acc;
   }, {});
-
-  const exampleOverview = [
-    "This initiative aims to address the critical educational gap in rural Malaysian villages by establishing modern, well-equipped schools that provide quality education to underserved children.",
-    "The project takes a holistic approach, focusing on infrastructure, teaching quality, and community engagement.",
-  ];
-
-  const exampleObjectives = [
-    "Construct 5 modern school buildings in strategic rural locations",
-    "Equip schools with materials, tech, and resources",
-    "Recruit and train 25 local teachers",
-    "Balance academic and practical curriculum",
-    "Create community involvement programs",
-    "Ensure clean water and sanitation at each school",
-  ];
-
-  const exampleImpact = [
-    {
-      icon: <Users className="h-5 w-5 text-blue-600" />,
-      title: "1,200+ Students",
-      subtitle: "Will gain access to education",
-    },
-    {
-      icon: <Building className="h-5 w-5 text-blue-600" />,
-      title: "5 Schools",
-      subtitle: "Built in strategic locations",
-    },
-    {
-      icon: <BookOpen className="h-5 w-5 text-blue-600" />,
-      title: "25 Teachers",
-      subtitle: "Trained and employed",
-    },
-  ];
-
-  const exampleTimeline = [
-    {
-      step: 1,
-      color: "bg-blue-600",
-      title: "Providing Nutritious Breakfast Meals for Children",
-      desc: "To provide breakfast meals for children on a daily basis",
-    },
-    {
-      step: 2,
-      color: "bg-blue-500",
-      title: "Delivering Healthy Lunch Meals to Schools",
-      desc: "A nutritious lunch will be provided on every schooling day to students on campus",
-    },
-    {
-      step: 3,
-      color: "bg-blue-400",
-      title: "Providing Snacks and Drinks During After-School Programs",
-      desc: "Nutrition snacks and drinks will be provided to students before after-school programs",
-    },
-  ];
 
   return (
     <div className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
@@ -757,7 +734,6 @@ export default function CharityPage() {
             </Card>
           </div>
         )}
-
         <Dialog
           open={proofOfWorkModalOpen}
           onOpenChange={setProofOfWorkModalOpen}
@@ -890,7 +866,7 @@ export default function CharityPage() {
                             )}
 
                           <CardHeader
-                            className={`pb-2 pt-3 ${
+                            className={`pb-2 ${
                               activeMilestoneId !== -1 &&
                               activeMilestoneId === milestone.id
                                 ? "pt-8"
@@ -982,11 +958,15 @@ export default function CharityPage() {
                                   {(
                                     Number(milestone.targetAmount) *
                                     ethToMyrRate
-                                  ).toLocaleString()}{" "}
+                                  ).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}{" "}
                                   MYR
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  ≈ {milestone.targetAmount} ETH
+                                  ≈ {Number(milestone.targetAmount).toFixed(2)}{" "}
+                                  ETH
                                 </div>
                               </div>
                               <div className="bg-blue-50 p-3 rounded-lg">
@@ -998,11 +978,15 @@ export default function CharityPage() {
                                   {(
                                     Number(milestone.currentAmount) *
                                     ethToMyrRate
-                                  ).toLocaleString()}{" "}
+                                  ).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}{" "}
                                   MYR
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  ≈ {milestone.currentAmount} ETH
+                                  ≈ {Number(milestone.currentAmount).toFixed(2)}{" "}
+                                  ETH
                                 </div>
                               </div>
                             </div>
@@ -1028,7 +1012,7 @@ export default function CharityPage() {
                                 )}
                             </div>
                           </CardContent>
-                          <CardFooter className="flex flex-col gap-3 pt-0 pb-3">
+                          <CardFooter className="flex flex-col gap-3 pt-0">
                             {!milestone.released &&
                               activeMilestoneId === milestone.id && (
                                 <>
@@ -1116,33 +1100,28 @@ export default function CharityPage() {
           )}
         </div>
 
-        {/*Discussion Section */}
-        <DiscussionSection walletAddress={walletAddress || ""} projectId={id as string} />
-
         {/* Transaction History */}
         {contractAddress ? (
-  <SmartContractTransaction smart_contract_address={contractAddress} />
-) : (
-  <div className="mb-12">
-    <Card className="bg-white/80 backdrop-blur-sm border border-blue-100">
-      
-      <CardContent className="flex flex-col items-center justify-center py-12">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-          <Clock className="h-8 w-8 text-blue-600" />
-          </div>
-          <h3 className="text-xl font-medium text-gray-800 mb-2">
-            No Transaction History Yet
-            </h3>
-            <p className="text-gray-600 text-center max-w-md">
-              There are currently no transaction history available. Check back
-                
-                later or contact the administrator.
-                </p>
-                </CardContent>
-                </Card>
+          <SmartContractTransaction smart_contract_address={contractAddress} />
+        ) : (
+          <div className="mb-12">
+            <Card className="bg-white/80 backdrop-blur-sm border border-blue-100">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                  <Clock className="h-8 w-8 text-blue-600" />
                 </div>
-                )}
-        {/* <MockupSmartContractTransaction /> */}
+                <h3 className="text-xl font-medium text-gray-800 mb-2">
+                  No Transaction History Yet
+                </h3>
+                <p className="text-gray-600 text-center max-w-md">
+                  There are currently no transaction history available. Check
+                  back later or contact the administrator.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <div className="bg-blue-50 border-green-900 p-4 rounded-lg mt-4">
           <h3 className="font-medium text-blue-800 mb-2">Donation Types</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1288,14 +1267,18 @@ export default function CharityPage() {
                       <span className="text-sm font-medium">Target Amount</span>
                       <div className="text-right">
                         <span className="font-mono text-sm">
-                          {selectedMilestone.targetAmount} ETH
+                          {Number(selectedMilestone.targetAmount).toFixed(2)}{" "}
+                          ETH
                         </span>
                         <div className="text-xs text-zinc-500">
                           ≈{" "}
                           {(
                             Number(selectedMilestone.targetAmount) *
                             ethToMyrRate
-                          ).toLocaleString()}{" "}
+                          ).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{" "}
                           MYR
                         </div>
                       </div>
@@ -1306,14 +1289,18 @@ export default function CharityPage() {
                       </span>
                       <div className="text-right">
                         <span className="font-mono text-sm">
-                          {selectedMilestone.currentAmount} ETH
+                          {Number(selectedMilestone.currentAmount).toFixed(2)}{" "}
+                          ETH
                         </span>
                         <div className="text-xs text-zinc-500">
                           ≈{" "}
                           {(
                             Number(selectedMilestone.currentAmount) *
                             ethToMyrRate
-                          ).toLocaleString()}{" "}
+                          ).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{" "}
                           MYR
                         </div>
                       </div>

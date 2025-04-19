@@ -18,6 +18,13 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Check, Download, ArrowLeft, Printer } from "lucide-react";
 import { format } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function TaxReceiptPage() {
   const router = useRouter();
@@ -28,6 +35,7 @@ export default function TaxReceiptPage() {
     address: "",
     email: "",
     phoneNumber: "",
+    donorType: "Individual",
   });
   const [receiptGenerated, setReceiptGenerated] = useState(false);
   const [receiptNumber, setReceiptNumber] = useState("");
@@ -215,22 +223,43 @@ export default function TaxReceiptPage() {
                     <Input
                       id="fullName"
                       name="fullName"
-                      placeholder="Enter your full name"
+                      placeholder="Enter name"
                       value={formData.fullName}
                       onChange={handleInputChange}
                       required
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="donorType">Donor Type</Label>
+                    <Select
+                      value={formData.donorType}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, donorType: value }))
+                      }
+                    >
+                      <SelectTrigger id="donorType">
+                        <SelectValue placeholder="Select Donor Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Individual">Individual</SelectItem>
+                        <SelectItem value="Corporate">Corporate</SelectItem>
+                        <SelectItem value="Organisation">
+                          Organisation
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="identificationNumber">
-                        Identification Number
+                        IC Number / SSM / Organization Registration
                       </Label>
                       <Input
                         id="identificationNumber"
                         name="identificationNumber"
-                        placeholder="Enter your ID number"
+                        placeholder="Enter identification number"
                         value={formData.identificationNumber}
                         onChange={handleInputChange}
                         required
@@ -241,7 +270,7 @@ export default function TaxReceiptPage() {
                       <Input
                         id="phoneNumber"
                         name="phoneNumber"
-                        placeholder="Enter your phone number"
+                        placeholder="Enter phone number"
                         value={formData.phoneNumber}
                         onChange={handleInputChange}
                       />
@@ -254,7 +283,7 @@ export default function TaxReceiptPage() {
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="Enter your email address"
+                      placeholder="Enter email address"
                       value={formData.email}
                       onChange={handleInputChange}
                       required
@@ -266,7 +295,7 @@ export default function TaxReceiptPage() {
                     <Textarea
                       id="address"
                       name="address"
-                      placeholder="Enter your full address"
+                      placeholder="Enter full address"
                       value={formData.address}
                       onChange={handleInputChange}
                       required
@@ -335,6 +364,11 @@ export default function TaxReceiptPage() {
                     <p className="font-medium">{formData.fullName}</p>
                   </div>
                   <div>
+                    <p className="text-gray-600">Donor Type:</p>
+                    <p className="font-medium">{formData.donorType}</p>
+                  </div>
+
+                  <div>
                     <p className="text-gray-600">ID Number:</p>
                     <p className="font-medium">
                       {formData.identificationNumber}
@@ -344,16 +378,17 @@ export default function TaxReceiptPage() {
                     <p className="text-gray-600">Email:</p>
                     <p className="font-medium">{formData.email}</p>
                   </div>
+
                   <div>
                     <p className="text-gray-600">Phone:</p>
                     <p className="font-medium">
                       {formData.phoneNumber || "N/A"}
                     </p>
                   </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-gray-600">Address:</p>
-                  <p className="font-medium">{formData.address}</p>
+                  <div>
+                    <p className="text-gray-600">Address:</p>
+                    <p className="font-medium">{formData.address}</p>
+                  </div>
                 </div>
               </div>
 

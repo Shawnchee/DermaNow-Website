@@ -33,6 +33,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import supabase from "@/utils/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Sparkles, Wand2 } from "lucide-react";
 
 interface ServiceProvider {
   id: string;
@@ -79,6 +88,14 @@ const StartProjectPage = () => {
       estimated_completion_date: "",
     },
   ]);
+
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiInstruction, setAiInstruction] = useState("");
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<number | null>(
+    null
+  );
 
   // Fetch service providers from Supabase
   useEffect(() => {
@@ -190,6 +207,62 @@ const StartProjectPage = () => {
     setProgress(prevStepNumber * 25);
   };
 
+  // Generate AI description
+  const generateAIDescription = async () => {
+    setGeneratingDescription(true);
+    try {
+      const response = await fetch(
+        "http://localhost:8000/chatbot/generate-description",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: formData.title,
+            user_instruction: aiInstruction,
+            current_description: formData.description,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate description");
+      }
+
+      const data = await response.json();
+
+      // Split the response by paragraphs to create multiple suggestions
+      const paragraphs = data.generated_description
+        .split("\n\n")
+        .filter((p: string) => p.trim().length > 0);
+
+      // If there are no clear paragraphs, use the whole text as one suggestion
+      setAiSuggestions(
+        paragraphs.length > 1 ? paragraphs : [data.generated_description]
+      );
+      setSelectedSuggestion(null);
+    } catch (error) {
+      console.error("Error generating description:", error);
+      alert("Failed to generate description. Please try again.");
+    } finally {
+      setGeneratingDescription(false);
+    }
+  };
+
+  // Apply the selected AI suggestion
+  const applyAISuggestion = () => {
+    if (selectedSuggestion !== null) {
+      setFormData((prev) => ({
+        ...prev,
+        description: aiSuggestions[selectedSuggestion],
+      }));
+      setShowAIModal(false);
+      setAiSuggestions([]);
+      setAiInstruction("");
+    }
+  };
+
   // Submit the form
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -238,7 +311,7 @@ const StartProjectPage = () => {
         .insert({
           title: formData.title,
           description: formData.description,
-          goal_amount: parseFloat(formData.goal_amount),
+          goal_amount: Number.parseFloat(formData.goal_amount),
           location: formData.location,
           organization_name: formData.organization_name,
           image: coverImageUrl,
@@ -360,15 +433,34 @@ const StartProjectPage = () => {
                   <Label htmlFor="description" className="text-gray-700">
                     Project Description
                   </Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="Describe your project, its goals, and impact"
-                    className="mt-1 min-h-[150px]"
-                    required
-                  />
+                  <div className="mt-1 relative">
+                    <Textarea
+                      id="description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      placeholder="Describe your project, its goals, and impact"
+                      className="min-h-[150px]"
+                      required
+                    />
+                    <div className="mt-2 flex items-center justify-between">
+                      <p className="text-xs text-gray-500">
+                        {formData.description.length > 0
+                          ? `${formData.description.length} characters`
+                          : "Need inspiration? Try our AI description generator"}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                        onClick={() => setShowAIModal(true)}
+                      >
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                        Generate with AI
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
@@ -413,6 +505,7 @@ const StartProjectPage = () => {
                           <img
                             src={
                               URL.createObjectURL(formData.coverImage) ||
+                              "/placeholder.svg" ||
                               "/placeholder.svg"
                             }
                             alt="Cover preview"
@@ -825,6 +918,7 @@ const StartProjectPage = () => {
                           <img
                             src={
                               URL.createObjectURL(formData.coverImage) ||
+                              "/placeholder.svg" ||
                               "/placeholder.svg"
                             }
                             alt="Cover preview"
@@ -935,6 +1029,104 @@ const StartProjectPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* AI Description Generator Modal */}
+      <Dialog open={showAIModal} onOpenChange={setShowAIModal}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-blue-700">
+              <Wand2 className="h-5 w-5 mr-2" />
+              AI Description Generator
+            </DialogTitle>
+            <DialogDescription>
+              Let AI help you craft the perfect project description
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 my-2">
+            <div>
+              <Label htmlFor="ai-instruction" className="text-gray-700">
+                What would you like the AI to focus on?
+              </Label>
+              <Textarea
+                id="ai-instruction"
+                value={aiInstruction}
+                onChange={(e) => setAiInstruction(e.target.value)}
+                placeholder="E.g., 'Create a compelling description for a clean water project that emphasizes community impact' or 'Write a description for an educational initiative focusing on sustainability'"
+                className="mt-1 min-h-[80px]"
+              />
+            </div>
+
+            {aiSuggestions.length > 0 && (
+              <div className="space-y-3">
+                <Label className="text-gray-700">AI Suggestions</Label>
+                <div className="max-h-[300px] overflow-y-auto space-y-3 pr-1">
+                  {aiSuggestions.map((suggestion, index) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "p-3 border rounded-md cursor-pointer transition-all",
+                        selectedSuggestion === index
+                          ? "border-blue-400 bg-blue-50"
+                          : "border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
+                      )}
+                      onClick={() => setSelectedSuggestion(index)}
+                    >
+                      <p className="text-sm text-gray-700 whitespace-pre-line">
+                        {suggestion}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowAIModal(false);
+                setAiSuggestions([]);
+                setAiInstruction("");
+              }}
+            >
+              Cancel
+            </Button>
+
+            {aiSuggestions.length > 0 ? (
+              <Button
+                type="button"
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={applyAISuggestion}
+                disabled={selectedSuggestion === null}
+              >
+                Apply Selected
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={generateAIDescription}
+                disabled={generatingDescription}
+              >
+                {generatingDescription ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generate
+                  </>
+                )}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -5,10 +5,25 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import {
-  User, History, Bell, Heart, Edit, ChevronRight, Wallet, ExternalLink, Copy, ArrowUpRight, Save, Camera, X, Award, Sparkles, Gem, ChevronUp,
+  User,
+  History,
+  Bell,
+  Heart,
+  Edit,
+  Wallet,
+  Copy,
+  ArrowUpRight,
+  Save,
+  Camera,
+  X,
+  Award,
+  Sparkles,
+  Gem,
+  ChevronUp,
   Droplet,
   LibraryBig,
-  Apple,} from "lucide-react"
+  Apple,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -33,12 +48,12 @@ export default function ProfilePage() {
 
   // User level data - in a real app, this would come from the backend
   const [userLevel, setUserLevel] = useState({
-      level: 2,
-      title: "Community Leader",
-      progress: 87.5, // percentage to next level
-      totalDonated: 1750, // in RM
-      projectsSupported: 3,
-      nextLevelRequirement: 2000, // in RM
+    level: 2,
+    title: "Community Leader",
+    progress: 87.5, // percentage to next level
+    totalDonated: 1750, // in RM
+    projectsSupported: 3,
+    nextLevelRequirement: 2000, // in RM
   })
 
   // Mock data
@@ -228,7 +243,7 @@ export default function ProfilePage() {
         <div className="flex items-center gap-4">
           <div className="relative group">
             <Avatar className="h-16 w-16 cursor-pointer" onClick={handleAvatarEdit}>
-              <AvatarImage src={profile.avatar} alt={profile.name} />
+              <AvatarImage src={profile.avatar || "/placeholder.svg"} alt={profile.name} />
               <AvatarFallback className="bg-emerald-100 text-emerald-800 text-xl">
                 {profile.name
                   .split(" ")
@@ -258,7 +273,7 @@ export default function ProfilePage() {
 
                   <div className="flex flex-col items-center gap-4 mb-6">
                     <Avatar className="h-24 w-24">
-                      <AvatarImage src={profile.avatar} alt={profile.name} />
+                      <AvatarImage src={profile.avatar || "/placeholder.svg"} alt={profile.name} />
                       <AvatarFallback className="bg-emerald-100 text-emerald-800 text-2xl">
                         {profile.name
                           .split(" ")
@@ -367,7 +382,7 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-          <Link href="/deposit"></Link>
+            <Link href="/deposit"></Link>
             <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleDepositFunds}>
               <ArrowUpRight className="mr-2 h-4 w-4" /> Deposit Funds
             </Button>
@@ -376,7 +391,7 @@ export default function ProfilePage() {
       </Card>
 
       <Tabs defaultValue="wallet" className="w-full">
-        <TabsList className="grid grid-cols-4 mb-8">
+        <TabsList className="grid grid-cols-5 mb-8">
           <TabsTrigger value="wallet" className="flex items-center gap-2">
             <Wallet className="h-4 w-4" /> Wallet
           </TabsTrigger>
@@ -385,6 +400,9 @@ export default function ProfilePage() {
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" /> History
+          </TabsTrigger>
+          <TabsTrigger value="impact" className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4" /> Impact
           </TabsTrigger>
           <TabsTrigger value="preferences" className="flex items-center gap-2">
             <Bell className="h-4 w-4" /> Preferences
@@ -395,7 +413,7 @@ export default function ProfilePage() {
           <Card className="py-8">
             <CardHeader>
               <CardTitle>Token Balance</CardTitle>
-              <CardDescription>Your available  ETH for donations</CardDescription>
+              <CardDescription>Your available ETH for donations</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 mt-2">
@@ -438,8 +456,7 @@ export default function ProfilePage() {
                     <Progress value={project.progress} className="h-2" />
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>
-                        {project.raised.replace("ETH", " ETH")} raised of{" "}
-                        {project.goal.replace("ETH", " ETH")}
+                        {project.raised.replace("ETH", " ETH")} raised of {project.goal.replace("ETH", " ETH")}
                       </span>
                       <span>{project.contributors} contributors</span>
                     </div>
@@ -449,9 +466,9 @@ export default function ProfilePage() {
             </CardContent>
             <CardFooter>
               <Link href="/charity/browse-projects">
-              <Button variant="outline" className="w-full mt-4 cursor-pointer">
-                Explore More Projects
-              </Button>
+                <Button variant="outline" className="w-full mt-4 cursor-pointer">
+                  Explore More Projects
+                </Button>
               </Link>
             </CardFooter>
           </Card>
@@ -465,24 +482,24 @@ export default function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="border rounded-lg p-4 flex flex-col items-center text-center">
                   <div className="w-full aspect-square bg-gradient-to-br from-blue-100 to-emerald-100 rounded-lg mb-3 flex items-center justify-center hover:scale-105 transition-transform duration-200">
-                    <Droplet className="h-20 w-20 text-emerald-500" />
+                    <img src="waternft.jpg" alt="Clean Water Supporter" className="w-full h-full object-contain" />
                   </div>
                   <h3 className="font-medium">Clean Water Supporter</h3>
-                  <p className="text-sm text-muted-foreground">Issued Apr 2023</p>
+                  <p className="text-sm text-muted-foreground">Issued Apr 2025</p>
                 </div>
                 <div className="border rounded-lg p-4 flex flex-col items-center text-center">
                   <div className="w-full aspect-square bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 flex items-center justify-center hover:scale-105 transition-transform duration-200">
-                    <LibraryBig className="h-20 w-20 text-purple-500" />
+                    <img src="edunft.jpg" alt="Education Advocate" className="w-full h-full object-contain" />
                   </div>
                   <h3 className="font-medium">Education Advocate</h3>
-                  <p className="text-sm text-muted-foreground">Issued Mar 2023</p>
+                  <p className="text-sm text-muted-foreground">Issued Mar 2025</p>
                 </div>
                 <div className="border rounded-lg p-4 flex flex-col items-center text-center">
                   <div className="w-full aspect-square bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg mb-3 flex items-center justify-center hover:scale-105 transition-transform duration-200">
-                    <Apple className="h-20 w-20 text-amber-500" />
+                    <img src="foodnft.jpg" alt="Food Security Champion" className="w-full h-full object-contain" />
                   </div>
                   <h3 className="font-medium">Food Security Champion</h3>
-                  <p className="text-sm text-muted-foreground">Issued Feb 2023</p>
+                  <p className="text-sm text-muted-foreground">Issued Feb 2025</p>
                 </div>
               </div>
             </CardContent>
@@ -562,10 +579,11 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="history">
-        <WalletTransaction />
-        {/* <MockupWalletAddress /> */}
+          <WalletTransaction />
+        </TabsContent>
 
-          <Card className="mt-6">
+        <TabsContent value="impact">
+          <Card>
             <CardHeader>
               <CardTitle>Impact Summary</CardTitle>
               <CardDescription>See the difference your donations have made</CardDescription>
@@ -573,7 +591,7 @@ export default function ProfilePage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-blue-50 p-4 rounded-lg text-center">
-                  <h3 className="text-2xl font-bold text-blue-700">0.25  ETH</h3>
+                  <h3 className="text-2xl font-bold text-blue-700">0.25 ETH</h3>
                   <p className="text-sm text-blue-600">Total Donated</p>
                 </div>
                 <div className="bg-emerald-50 p-4 rounded-lg text-center">
@@ -586,6 +604,67 @@ export default function ProfilePage() {
                 </div>
               </div>
             </CardContent>
+          </Card>
+
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Impact Stories</CardTitle>
+              <CardDescription>Real stories of how your donations are making a difference</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-blue-100 p-2 rounded-full">
+                      <LibraryBig className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                    <h3 className="font-medium">Education for Kids in Rural Areas</h3> 
+                    <p className="text-sm text-muted-foreground mt-1"> 
+                    Your contribution helped fund essential electrical and plumbing materials for the site developer.
+                    Thanks to your support, 50 children will soon have access to electricity and clean water once the work is completed. 🌟
+                    </p>
+                      <div className="mt-3 flex items-center gap-2">
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 hover:bg-purple-50">
+                          Education
+                        </Badge>
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 hover:bg-purple-50">
+                          Children
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-green-100 p-2 rounded-full">
+                      <Apple className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Nutrition for Academic Success</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                      Your support helped provide nutritious breakfast meals to children, ensuring they start their day with the 
+                      energy and focus they need to learn and grow. 🎉
+                      </p>
+                      <div className="mt-3 flex items-center gap-2">
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 hover:bg-purple-50">
+                          Education
+                        </Badge>
+                        <Badge variant="outline" className="bg-purple-50 text-purple-700 hover:bg-purple-50">
+                          Children
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button variant="outline" className="w-full">
+                View All Impact Stories
+              </Button>
+            </CardFooter>
           </Card>
         </TabsContent>
 
