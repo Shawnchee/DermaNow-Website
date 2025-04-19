@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from api.chatbot import chatbot_app
 from search.search_charities import search_charities
 from dotenv import load_dotenv
@@ -34,19 +34,43 @@ class SearchRequest(BaseModel):
     query: str
 
 
+class ImpactStat(BaseModel):
+    icon: str
+    title: str
+    subtitle: str
+
+
+class TimelineStep(BaseModel):
+    desc: str
+    step: int
+    color: str
+    title: str
+
+
 class SearchResponse(BaseModel):
     id: int
+    created_at: str
     title: str
-    description: str
-    image: str
+    description: Optional[str]
+    image: Optional[str]
     funding_percentage: float
     supporters: int
     amount: int
     category: List[str]
+    in_progress: Optional[bool]
+    progress_percentage: Optional[float]
+    funding_complete: Optional[bool]
+    smart_contract_address: Optional[str]
+    verified: Optional[bool]
+    goal_amount: Optional[int]
+    location: Optional[str]
+    organization_name: Optional[str]
+    document_urls: Optional[List[str]]
+    overview: Optional[List[str]]
+    objective: Optional[List[str]]
+    impact_stats: Optional[List[ImpactStat]]
+    timeline: Optional[List[TimelineStep]]
     confidence: float
-    funding_complete: bool | None = None
-    in_progress: bool | None = None
-    progress_percentage: float | None = None
 
 
 @app.post("/search", response_model=List[SearchResponse])

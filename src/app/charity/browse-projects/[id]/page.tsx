@@ -950,7 +950,7 @@ export default function CharityPage() {
                                 )}
                             </div>
                           </CardContent>
-                          <CardFooter className="flex flex-col gap-3 pt-0 pb-1">
+                          <CardFooter className="flex flex-col gap-3 pt-0 pb-3">
                             {!milestone.released &&
                               activeMilestoneId === milestone.id && (
                                 <>
