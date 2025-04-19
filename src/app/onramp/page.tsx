@@ -210,6 +210,7 @@ export default function OnrampPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
             className="inline-block mb-4 px-4 py-1 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full text-white text-sm font-medium"
+            whileHover={{ scale: 1.05, y: -2 }}
           >
             Powered by MoonPay
           </motion.div>
@@ -241,7 +242,7 @@ export default function OnrampPage() {
             <motion.div
               className="absolute top-1/2 w-40 h-40 bg-blue-400/20 rounded-full blur-xl -z-10"
               animate={{
-                scale: [1, 1.1, 1],
+                scale: [1, 1, 1],
                 opacity: [0.5, 0.7, 0.5],
                 transition: {
                   repeat: Infinity,

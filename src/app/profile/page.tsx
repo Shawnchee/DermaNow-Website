@@ -38,6 +38,7 @@ import { toast } from "@/components/ui/use-toast"
 import { useWallet } from "@/context/wallet-context"
 import WalletTransaction from "@/components/wallet-address-transaction"
 import MockupWalletAddress from "@/components/mockupwalletaddress"
+import CompletedMilestones from "@/components/completed-milestone"
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
@@ -583,6 +584,7 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="impact">
+          <CompletedMilestones />
           <Card>
             <CardHeader>
               <CardTitle>Impact Summary</CardTitle>
