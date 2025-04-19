@@ -7,6 +7,11 @@
 🤖 Jin Khye — *AI/ML Engineer*  
 🧑‍💻 Melvin Lee — *Full-stack Developer*
 
+**Documentation**
+📚 For full details on the DermaNow project—including project overview, user guide, charity organization guide, admin panel, and developer setup—please refer to our official documentation:
+👉 [DermaNow Onboarding Documentation](https://dermanow.gitbook.io/dermanow-docs/)
+
+
 **Presentation Slide:**  
 🎞️ [View our Google Drive Link](https://drive.google.com/file/d/1glmER9PzY-VC7BEyiFT_V998fyDrLVvm/view?usp=sharing)
 
