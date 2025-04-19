@@ -49,8 +49,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import FlaggedTransactions from "@/components/flagging";
+import supabase from "@/utils/supabase/client";
 
-// Define types for our data
 interface Project {
   id: number;
   title: string;
@@ -62,6 +62,17 @@ interface Project {
   total_milestones: number;
   category: string;
   created_at: string;
+}
+
+interface ActualProject {
+  id: number;
+  title: string;
+  description: string;
+  location: string;
+  organization_name: string;
+  verified: boolean;
+  document_urls: string[];
+  image: string;
 }
 
 interface DailyDonation {
@@ -87,6 +98,7 @@ interface MilestoneData {
 
 const AnalyticsPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [actualProjects, setActualProjects] = useState<ActualProject[]>([]);
   const [dailyDonations, setDailyDonations] = useState<DailyDonation[]>([]);
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [milestones, setMilestones] = useState<MilestoneData[]>([]);
@@ -100,9 +112,6 @@ const AnalyticsPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-
-      // In a real application, you would fetch this data from your API
-      // For now, we'll use mock data
 
       // Mock projects data
       const mockProjects: Project[] = [
@@ -281,7 +290,32 @@ const AnalyticsPage = () => {
       setLoading(false);
     };
 
+    // Fetch projects from Supabase
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+
+        const { data, error } = await supabase
+          .from("charity_projects")
+          .select("*")
+          .eq("verified", false);
+
+        if (error) {
+          console.error("Failed to fetch projects:", error.message);
+          return;
+        }
+
+        setActualProjects(data);
+        console.log("Projects fetched:", data);
+      } catch (err) {
+        console.error("Unexpected error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchData();
+    fetchProjects();
   }, []);
 
   // Format currency
@@ -772,95 +806,264 @@ const AnalyticsPage = () => {
         </div>
 
         {/* Milestone Tracking */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-        >
-          <Card className="border-blue-100 shadow-md">
-            <CardHeader>
-              <CardTitle className="text-xl text-blue-900">
-                Milestone Tracking
-              </CardTitle>
-              <CardDescription>
-                Track fund disbursement and milestone completion
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">
-                        Project
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">
-                        Milestone
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">
-                        Amount
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">
-                        Due Date
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-600">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {milestones.map((milestone) => (
-                      <tr
-                        key={milestone.milestone_id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
-                      >
-                        <td className="py-3 px-4">
-                          <div className="font-medium">
-                            {milestone.project_title}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            ID: {milestone.project_id}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">{milestone.title}</td>
-                        <td className="py-3 px-4 font-medium">
-                          {formatCurrency(milestone.amount)}
-                        </td>
-                        <td className="py-3 px-4">
-                          {new Date(milestone.due_date).toLocaleDateString()}
-                        </td>
-                        <td className="py-3 px-4">
-                          <Badge
-                            variant="outline"
-                            className={`
-                              ${
-                                milestone.status === "completed"
-                                  ? "border-green-200 text-green-700 bg-green-50"
-                                  : milestone.status === "pending"
-                                  ? "border-yellow-200 text-yellow-700 bg-yellow-50"
-                                  : "border-red-200 text-red-700 bg-red-50"
-                              }
-                            `}
-                          >
-                            {milestone.status === "completed" ? (
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                            ) : milestone.status === "pending" ? (
-                              <Clock className="h-3 w-3 mr-1" />
-                            ) : (
-                              <AlertCircle className="h-3 w-3 mr-1" />
-                            )}
-                            {milestone.status.charAt(0).toUpperCase() +
-                              milestone.status.slice(1)}
-                          </Badge>
-                        </td>
+        <div className="mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <Card className="border-blue-100 shadow-md">
+              <CardHeader>
+                <CardTitle className="text-xl text-blue-900">
+                  Milestone Tracking
+                </CardTitle>
+                <CardDescription>
+                  Track fund disbursement and milestone completion
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">
+                          Project
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">
+                          Milestone
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">
+                          Amount
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">
+                          Due Date
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">
+                          Status
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+                    </thead>
+                    <tbody>
+                      {milestones.map((milestone) => (
+                        <tr
+                          key={milestone.milestone_id}
+                          className="border-b border-gray-100 hover:bg-gray-50"
+                        >
+                          <td className="py-3 px-4">
+                            <div className="font-medium">
+                              {milestone.project_title}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              ID: {milestone.project_id}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">{milestone.title}</td>
+                          <td className="py-3 px-4 font-medium">
+                            {formatCurrency(milestone.amount)}
+                          </td>
+                          <td className="py-3 px-4">
+                            {new Date(milestone.due_date).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 px-4">
+                            <Badge
+                              variant="outline"
+                              className={`
+                                ${
+                                  milestone.status === "completed"
+                                    ? "border-green-200 text-green-700 bg-green-50"
+                                    : milestone.status === "pending"
+                                    ? "border-yellow-200 text-yellow-700 bg-yellow-50"
+                                    : "border-red-200 text-red-700 bg-red-50"
+                                }
+                              `}
+                            >
+                              {milestone.status === "completed" ? (
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                              ) : milestone.status === "pending" ? (
+                                <Clock className="h-3 w-3 mr-1" />
+                              ) : (
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                              )}
+                              {milestone.status.charAt(0).toUpperCase() +
+                                milestone.status.slice(1)}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Verifying unverified charity projects */}
+        <div className="mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+          >
+            <Card className="border-blue-100 shadow-md">
+              <CardHeader>
+                <CardTitle className="text-xl text-blue-900">
+                  Verify Projects
+                </CardTitle>
+                <CardDescription>
+                  Verify unverified charity projects
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  {loading ? (
+                    <div className="space-y-4">
+                      <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                      <div className="h-6 bg-gray-200 rounded w-2/3"></div>
+                      <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                  ) : (
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">
+                            Title
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">
+                            Description
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">
+                            Project Location
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">
+                            Organization Name
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">
+                            Organization Supporting Documents
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">
+                            Image
+                          </th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-600">
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {actualProjects.length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan={7}
+                              className="py-4 text-center text-gray-500 italic"
+                            >
+                              No unverified projects
+                            </td>
+                          </tr>
+                        ) : (
+                          actualProjects.map((project) => (
+                            <tr
+                              key={project.id}
+                              className="border-b border-gray-100 hover:bg-gray-50"
+                            >
+                              <td className="py-3 px-4">
+                                <div className="font-medium">
+                                  {project.title}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                {project.description}
+                              </td>
+                              <td className="py-3 px-4">{project.location}</td>
+                              <td className="py-3 px-4">
+                                {project.organization_name}
+                              </td>
+                              <td className="py-3 px-4 space-y-1">
+                                {project.document_urls.length === 0 ? (
+                                  <span className="text-gray-400 italic">
+                                    No documents
+                                  </span>
+                                ) : project.document_urls.length === 1 ? (
+                                  <a
+                                    href={project.document_urls[0]}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-500 hover:underline"
+                                  >
+                                    Document
+                                  </a>
+                                ) : (
+                                  project.document_urls.map((doc, index) => (
+                                    <div key={index}>
+                                      <a
+                                        href={doc}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-500 hover:underline"
+                                      >
+                                        Document {index + 1}
+                                      </a>
+                                    </div>
+                                  ))
+                                )}
+                              </td>
+                              <td className="py-3 px-4">
+                                <a
+                                  href={project.image}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  <img
+                                    src={project.image}
+                                    alt={project.title}
+                                    className="w-16 h-16 object-cover rounded-md"
+                                  />
+                                </a>
+                              </td>
+                              <td className="py-3 px-4">
+                                {project.verified === false && (
+                                  <Button
+                                    onClick={async () => {
+                                      try {
+                                        const { error } = await supabase
+                                          .from("charity_projects")
+                                          .update({ verified: true })
+                                          .eq("id", project.id);
+                                        console.log("Verified");
+
+                                        if (error) {
+                                          console.error(
+                                            "Failed to update project:",
+                                            error.message
+                                          );
+                                          return;
+                                        }
+
+                                        setActualProjects((prev) =>
+                                          prev.filter(
+                                            (p) => p.id !== project.id
+                                          )
+                                        );
+                                      } catch (err) {
+                                        console.error("Unexpected error:", err);
+                                      }
+                                    }}
+                                    className="ml-2 px-2 py-1 text-sm text-white bg-blue-500 rounded hover:bg-blue-600"
+                                  >
+                                    Verify
+                                  </Button>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
