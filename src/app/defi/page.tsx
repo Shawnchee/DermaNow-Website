@@ -1,11 +1,18 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { ethers } from "ethers"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useState, useEffect, useRef } from "react";
+import { ethers } from "ethers";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -13,12 +20,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Progress } from "@/components/ui/progress"
-import { motion } from "framer-motion"
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import {
   ArrowRight,
   Clock,
@@ -41,95 +48,119 @@ import {
   Hospital,
   School,
   Building,
-} from "lucide-react"
-import { toast } from "sonner"
-import connectMetamask from "@/hooks/connectMetamask"
-import { contractABI } from "@/lib/contract-abi"
-import { formatEther, parseEther } from "ethers"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+} from "lucide-react";
+import { toast } from "sonner";
+import connectMetamask from "@/hooks/connectMetamask";
+import { contractABI } from "@/lib/contract-abi";
+import { formatEther, parseEther } from "ethers";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import ShariahCompliantProtocols from "@/components/defi-shariah-protocols";
-import StakingHowItWorks from "@/components/staking-guide"
-
+import StakingHowItWorks from "@/components/staking-guide";
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb"
+const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
 
 export default function StakingPage() {
   // Use the connectMetamask hook
-  const { walletAddress, provider, signer, connectWallet } = connectMetamask()
-  const [contract, setContract] = useState<ethers.Contract | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [stakeAmount, setStakeAmount] = useState("")
+  const { walletAddress, provider, signer, connectWallet } = connectMetamask();
+  const [contract, setContract] = useState<ethers.Contract | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [stakeAmount, setStakeAmount] = useState("");
   const [stakeInfo, setStakeInfo] = useState<{
-    amount: string
-    startTime: number
-    active: boolean
-    estimatedReward: string
-    duration: string
+    amount: string;
+    startTime: number;
+    active: boolean;
+    estimatedReward: string;
+    duration: string;
   }>({
     amount: "0",
     startTime: 0,
     active: false,
     estimatedReward: "0",
     duration: "0",
-  })
-  const [annualRate, setAnnualRate] = useState(3) // Default 3%
-  const [ethToMyrRate, setEthToMyrRate] = useState(12500) // Default rate: 1 ETH = 12,500 MYR
+  });
+  const [annualRate, setAnnualRate] = useState(3); // Default 3%
+  const [ethToMyrRate, setEthToMyrRate] = useState(12500); // Default rate: 1 ETH = 12,500 MYR
   const [myrValues, setMyrValues] = useState({
     stakedAmount: 0,
     estimatedReward: 0,
     totalValue: 0,
-  })
+  });
 
   // Demo mode state
-  const [demoMode, setDemoMode] = useState(false)
-  const [demoStartTime, setDemoStartTime] = useState<number | null>(null)
-  const [demoMultiplier, setDemoMultiplier] = useState(31536000) // 1 year in seconds
+  const [demoMode, setDemoMode] = useState(false);
+  const [demoStartTime, setDemoStartTime] = useState<number | null>(null);
+  const [demoMultiplier, setDemoMultiplier] = useState(31536000); // 1 year in seconds
 
   // Milestones for donation
-  const [milestones, setMilestones] = useState<any[]>([])
-  const [selectedMilestone, setSelectedMilestone] = useState<number | null>(null)
-  const [donationAmount, setDonationAmount] = useState("")
-  const [showMilestoneSelector, setShowMilestoneSelector] = useState(false)
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [selectedMilestone, setSelectedMilestone] = useState<number | null>(
+    null
+  );
+  const [donationAmount, setDonationAmount] = useState("");
+  const [showMilestoneSelector, setShowMilestoneSelector] = useState(false);
 
   // Islamic finance states
-  const [zakatDue, setZakatDue] = useState("10")
-  const [waqfPercentage, setWaqfPercentage] = useState(0)
-  const [selectedBeneficiary, setSelectedBeneficiary] = useState("")
-  const [sadaqahAmount, setSadaqahAmount] = useState("")
-  const [zakatHistory, setZakatHistory] = useState<{ date: string; amount: string }[]>([])
-  const [sadaqahHistory, setSadaqahHistory] = useState<{ date: number; beneficiary: string; amount: string }[]>([])
+  const [zakatDue, setZakatDue] = useState("10");
+  const [waqfPercentage, setWaqfPercentage] = useState(0);
+  const [selectedBeneficiary, setSelectedBeneficiary] = useState("");
+  const [sadaqahAmount, setSadaqahAmount] = useState("");
+  const [zakatHistory, setZakatHistory] = useState<
+    { date: string; amount: string }[]
+  >([]);
+  const [sadaqahHistory, setSadaqahHistory] = useState<
+    { date: number; beneficiary: string; amount: string }[]
+  >([]);
 
   // Modal states
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalAction, setModalAction] = useState<"stake" | "unstake" | "donate" | "zakat" | "waqf" | "sadaqah">("stake")
-  const [modalAmount, setModalAmount] = useState("")
-  const [isProcessing, setIsProcessing] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalAction, setModalAction] = useState<
+    "stake" | "unstake" | "donate" | "zakat" | "waqf" | "sadaqah"
+  >("stake");
+  const [modalAmount, setModalAmount] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
   const [transactionResult, setTransactionResult] = useState<{
-    status: "success" | "error" | null
-    message: string
-    txHash?: string
-  }>({ status: null, message: "" })
+    status: "success" | "error" | null;
+    message: string;
+    txHash?: string;
+  }>({ status: null, message: "" });
 
   // Stats
-  const [totalStaked, setTotalStaked] = useState("0")
-  const [totalStakers, setTotalStakers] = useState(0)
-  const [totalRewardsDistributed, setTotalRewardsDistributed] = useState("0")
+  const [totalStaked, setTotalStaked] = useState("0");
+  const [totalStakers, setTotalStakers] = useState(0);
+  const [totalRewardsDistributed, setTotalRewardsDistributed] = useState("0");
 
   // Reward history
   const [rewardHistory, setRewardHistory] = useState<
     {
-      timestamp: number
-      amount: string
+      timestamp: number;
+      amount: string;
     }[]
-  >([])
+  >([]);
+
+  // Add parallax effect refs and animations
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"],
+  });
+
+  const smoothScrollY = useSpring(scrollYProgress, {
+    damping: 50,
+    stiffness: 400,
+  });
+  const y1 = useTransform(smoothScrollY, [0, 1], [0, -100]);
+  const y2 = useTransform(smoothScrollY, [0, 1], [0, -200]);
+  const y3 = useTransform(smoothScrollY, [0, 1], [0, -50]);
+  const scale = useTransform(smoothScrollY, [0, 0.5], [1, 0.5]);
+  const opacity = useTransform(smoothScrollY, [0, 0.8], [1, 0.6]);
 
   const handleSadaqahDonation = async () => {
     if (!sadaqahAmount || Number(sadaqahAmount) <= 0 || !selectedBeneficiary) {
       toast("Invalid Input", {
         description: "Please enter a valid amount and select a beneficiary.",
-      })
-      return
+      });
+      return;
     }
 
     try {
@@ -143,71 +174,76 @@ export default function StakingPage() {
           selectedBeneficiary === "orphans"
             ? "Orphans Support Fund"
             : selectedBeneficiary === "education"
-              ? "Education for Underprivileged Children"
-              : "Disaster Relief Fund",
+            ? "Education for Underprivileged Children"
+            : "Disaster Relief Fund",
         amount: sadaqahAmount,
-      }
+      };
 
-      setSadaqahHistory([newDonation, ...sadaqahHistory])
+      setSadaqahHistory([newDonation, ...sadaqahHistory]);
 
       // Reset form
-      setSadaqahAmount("")
-      setSelectedBeneficiary("")
+      setSadaqahAmount("");
+      setSelectedBeneficiary("");
 
       toast("Donation Successful", {
         description: `You have successfully donated ${sadaqahAmount} ETH as Sadaqah.`,
-      })
+      });
     } catch (error) {
-      console.error("Sadaqah donation error:", error)
+      console.error("Sadaqah donation error:", error);
       toast("Donation Failed", {
-        description: "There was an error processing your donation. Please try again.",
-      })
+        description:
+          "There was an error processing your donation. Please try again.",
+      });
     }
-  }
+  };
 
   // Initialize contract when signer is available
   useEffect(() => {
-    console.log("Contract address:", CONTRACT_ADDRESS)
-    console.log("Signer and provider available:", signer, provider)
+    console.log("Contract address:", CONTRACT_ADDRESS);
+    console.log("Signer and provider available:", signer, provider);
     const initialize = async () => {
       if (signer && provider) {
         try {
-          const stakingContract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer)
-          setContract(stakingContract)
+          const stakingContract = new ethers.Contract(
+            CONTRACT_ADDRESS,
+            contractABI,
+            signer
+          );
+          setContract(stakingContract);
           // Initialize contract data
-          initializeContractData(stakingContract)
-          console.log("Contract data initialized")
-          console.log("Contract initialized:", stakingContract.address)
+          initializeContractData(stakingContract);
+          console.log("Contract data initialized");
+          console.log("Contract initialized:", stakingContract.address);
         } catch (error) {
-          console.error("Error initializing contract:", error)
+          console.error("Error initializing contract:", error);
           toast("Contract Error", {
             description: "Failed to initialize the staking contract.",
-          })
+          });
         }
       }
-    }
+    };
     // Add a small delay to ensure signer and provider are loaded
     const timeout = setTimeout(() => {
-      initialize()
-    }, 1000) // 1 second delay
+      initialize();
+    }, 1000); // 1 second delay
 
-    return () => clearTimeout(timeout) // Cleanup timeout on unmount
-  }, [signer, provider])
+    return () => clearTimeout(timeout); // Cleanup timeout on unmount
+  }, [signer, provider]);
 
   useEffect(() => {
     if (!walletAddress) {
-      const savedAddress = localStorage.getItem("walletAddress")
+      const savedAddress = localStorage.getItem("walletAddress");
       if (savedAddress) {
-        console.log("Auto-connecting wallet...")
-        connectWallet() // Trigger wallet connection
+        console.log("Auto-connecting wallet...");
+        connectWallet(); // Trigger wallet connection
       }
     }
-  }, [walletAddress, connectWallet])
+  }, [walletAddress, connectWallet]);
 
   // Initialize contract data
   const initializeContractData = async (contractInstance: ethers.Contract) => {
     try {
-      setLoading(true)
+      setLoading(true);
 
       // Get annual rate from contract
       // try {
@@ -220,45 +256,49 @@ export default function StakingPage() {
 
       // Fetch stake info if wallet is connected
       if (walletAddress) {
-        await fetchStakeInfo(contractInstance, walletAddress)
+        await fetchStakeInfo(contractInstance, walletAddress);
       }
 
       // Fetch milestones for donation
-      await fetchMilestones(contractInstance)
+      await fetchMilestones(contractInstance);
 
       // Fetch general staking stats
-      await fetchStakingStats(contractInstance)
-      console.log("Staking stats fetched successfully")
-      setLoading(false)
+      await fetchStakingStats(contractInstance);
+      console.log("Staking stats fetched successfully");
+      setLoading(false);
     } catch (error) {
-      console.error("Error initializing contract data:", error)
-      setLoading(false)
+      console.error("Error initializing contract data:", error);
+      setLoading(false);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Fetch stake info for the connected account
-  const fetchStakeInfo = async (contractInstance: ethers.Contract, userAccount: string) => {
+  const fetchStakeInfo = async (
+    contractInstance: ethers.Contract,
+    userAccount: string
+  ) => {
     try {
-      const userStakeInfo = await contractInstance.stakes(userAccount)
+      const userStakeInfo = await contractInstance.stakes(userAccount);
 
-      const amount = formatEther(userStakeInfo.amount)
-      const startTime = Number(userStakeInfo.startTime)
-      const active = userStakeInfo.active
+      const amount = formatEther(userStakeInfo.amount);
+      const startTime = Number(userStakeInfo.startTime);
+      const active = userStakeInfo.active;
 
-      let estimatedReward = "0"
-      let duration = "0"
+      let estimatedReward = "0";
+      let duration = "0";
 
       if (active) {
-        const currentTime = Math.floor(Date.now() / 1000)
-        const stakeDuration = currentTime - startTime
-        const durationInDays = stakeDuration / (60 * 60 * 24)
+        const currentTime = Math.floor(Date.now() / 1000);
+        const stakeDuration = currentTime - startTime;
+        const durationInDays = stakeDuration / (60 * 60 * 24);
 
         // Calculate estimated reward based on contract formula
-        const reward = (Number(amount) * annualRate * durationInDays) / (365 * 100)
-        estimatedReward = reward.toFixed(6)
-        duration = durationInDays.toFixed(2)
+        const reward =
+          (Number(amount) * annualRate * durationInDays) / (365 * 100);
+        estimatedReward = reward.toFixed(6);
+        duration = durationInDays.toFixed(2);
       }
 
       setStakeInfo({
@@ -267,29 +307,29 @@ export default function StakingPage() {
         active,
         estimatedReward,
         duration,
-      })
+      });
 
       // Update MYR values
-      updateMyrValues(Number(amount), Number(estimatedReward))
+      updateMyrValues(Number(amount), Number(estimatedReward));
     } catch (error) {
-      console.error("Error fetching stake info:", error)
+      console.error("Error fetching stake info:", error);
       toast("Error", {
         description: "Failed to load staking information. Please try again.",
-      })
+      });
     }
-  }
+  };
 
   // Fetch milestones for donation
   const fetchMilestones = async (contractInstance: ethers.Contract) => {
     try {
-      const milestoneCount = await contractInstance.milestoneCount()
-      const milestonePromises = []
+      const milestoneCount = await contractInstance.milestoneCount();
+      const milestonePromises = [];
 
       for (let i = 0; i < milestoneCount; i++) {
-        milestonePromises.push(contractInstance.getMilestone(i))
+        milestonePromises.push(contractInstance.getMilestone(i));
       }
 
-      const milestoneData = await Promise.all(milestonePromises)
+      const milestoneData = await Promise.all(milestonePromises);
       const formattedMilestones = milestoneData.map((milestone, index) => {
         return {
           id: index,
@@ -303,64 +343,66 @@ export default function StakingPage() {
             (Number.parseFloat(formatEther(milestone.currentAmount)) /
               Number.parseFloat(formatEther(milestone.targetAmount))) *
             100,
-        }
-      })
+        };
+      });
 
-      setMilestones(formattedMilestones)
+      setMilestones(formattedMilestones);
     } catch (error) {
-      console.error("Error fetching milestones:", error)
+      console.error("Error fetching milestones:", error);
     }
-  }
+  };
 
   // Fetch staking stats
   const fetchStakingStats = async (contractInstance: ethers.Contract) => {
     try {
       // In a real implementation, you would fetch these from the contract
       // For this example, we'll use mock data
-      setTotalStaked("125.75")
-      setTotalStakers(42)
-      setTotalRewardsDistributed("3.76")
+      setTotalStaked("125.75");
+      setTotalStakers(42);
+      setTotalRewardsDistributed("3.76");
     } catch (error) {
-      console.error("Error fetching staking stats:", error)
+      console.error("Error fetching staking stats:", error);
     }
-  }
+  };
 
   // Update MYR values
   const updateMyrValues = (stakedAmount: number, estimatedReward: number) => {
-    const totalValue = stakedAmount + estimatedReward
+    const totalValue = stakedAmount + estimatedReward;
 
     setMyrValues({
       stakedAmount: stakedAmount * ethToMyrRate,
       estimatedReward: estimatedReward * ethToMyrRate,
       totalValue: totalValue * ethToMyrRate,
-    })
-  }
+    });
+  };
 
   // Open modal for staking, unstaking, or donating
-  const openModal = (action: "stake" | "unstake" | "donate" | "zakat" | "waqf" | "sadaqah") => {
+  const openModal = (
+    action: "stake" | "unstake" | "donate" | "zakat" | "waqf" | "sadaqah"
+  ) => {
     if (!walletAddress) {
       toast("Wallet Required", {
         description: "Please connect your wallet first.",
-      })
-      return
+      });
+      return;
     }
 
-    setModalAction(action)
-    setModalAmount(action === "unstake" ? stakeInfo.amount : "")
-    setTransactionResult({ status: null, message: "" })
-    setModalOpen(true)
-  }
+    setModalAction(action);
+    setModalAmount(action === "unstake" ? stakeInfo.amount : "");
+    setTransactionResult({ status: null, message: "" });
+    setModalOpen(true);
+  };
 
   // Handle modal action (stake, unstake, or donate)
   const handleModalAction = async () => {
     if (modalAction === "stake") {
-      await handleStake()
+      await handleStake();
     } else if (modalAction === "unstake") {
-      await handleUnstake()
+      await handleUnstake();
     } else if (modalAction === "donate") {
-      await handleDonation()
+      await handleDonation();
     }
-  }
+  };
 
   // Handle staking
   const handleStake = async () => {
@@ -368,54 +410,55 @@ export default function StakingPage() {
       setTransactionResult({
         status: "error",
         message: "Please enter a valid stake amount.",
-      })
-      return
+      });
+      return;
     }
 
     if (!contract || !signer) {
       setTransactionResult({
         status: "error",
         message: "Wallet not connected. Please connect your wallet first.",
-      })
-      return
+      });
+      return;
     }
 
     try {
-      setIsProcessing(true)
+      setIsProcessing(true);
 
       const tx = await contract.stake({
         value: parseEther(modalAmount),
-      })
+      });
 
-      const receipt = await tx.wait()
+      const receipt = await tx.wait();
 
       // Refresh stake info
       if (walletAddress) {
-        await fetchStakeInfo(contract, walletAddress)
+        await fetchStakeInfo(contract, walletAddress);
       }
-      await fetchStakingStats(contract)
+      await fetchStakingStats(contract);
 
       // If demo mode is enabled, set the demo start time
       if (demoMode) {
-        setDemoStartTime(Math.floor(Date.now() / 1000))
+        setDemoStartTime(Math.floor(Date.now() / 1000));
       }
 
       setTransactionResult({
         status: "success",
         message: `Successfully staked ${modalAmount} ETH.`,
         txHash: receipt.hash,
-      })
+      });
     } catch (error) {
-      console.error("Staking error:", error)
+      console.error("Staking error:", error);
 
       setTransactionResult({
         status: "error",
-        message: (error as any)?.reason || "Transaction failed. Please try again.",
-      })
+        message:
+          (error as any)?.reason || "Transaction failed. Please try again.",
+      });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   // Handle unstaking
   const handleUnstake = async () => {
@@ -423,184 +466,223 @@ export default function StakingPage() {
       setTransactionResult({
         status: "error",
         message: "Wallet not connected. Please connect your wallet first.",
-      })
-      return
+      });
+      return;
     }
 
     try {
-      setIsProcessing(true)
+      setIsProcessing(true);
 
-      const tx = await contract.unstake()
+      const tx = await contract.unstake();
 
-      const receipt = await tx.wait()
+      const receipt = await tx.wait();
 
       // Add to reward history
       const newRewardEntry = {
         timestamp: Math.floor(Date.now() / 1000),
         amount: stakeInfo.estimatedReward,
-      }
-      setRewardHistory([newRewardEntry, ...rewardHistory])
+      };
+      setRewardHistory([newRewardEntry, ...rewardHistory]);
 
       // Reset demo start time
-      setDemoStartTime(null)
+      setDemoStartTime(null);
 
-      if (walletAddress) await fetchStakeInfo(contract, walletAddress)
-      await fetchStakingStats(contract)
+      if (walletAddress) await fetchStakeInfo(contract, walletAddress);
+      await fetchStakingStats(contract);
 
       setTransactionResult({
         status: "success",
         message: `Successfully unstaked ${stakeInfo.amount} ETH with a reward of ${stakeInfo.estimatedReward} ETH.`,
         txHash: receipt.hash,
-      })
+      });
     } catch (error) {
-      console.error("Unstaking error:", error)
+      console.error("Unstaking error:", error);
 
       setTransactionResult({
         status: "error",
-        message: (error as any)?.reason || "Transaction failed. Please try again.",
-      })
+        message:
+          (error as any)?.reason || "Transaction failed. Please try again.",
+      });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   // Handle donation to milestone
   const handleDonation = async () => {
-    if (!donationAmount || Number(donationAmount) <= 0 || selectedMilestone === null) {
+    if (
+      !donationAmount ||
+      Number(donationAmount) <= 0 ||
+      selectedMilestone === null
+    ) {
       setTransactionResult({
         status: "error",
         message: "Please enter a valid donation amount and select a milestone.",
-      })
-      return
+      });
+      return;
     }
 
     if (Number(donationAmount) > Number(stakeInfo.estimatedReward)) {
       setTransactionResult({
         status: "error",
         message: "Donation amount cannot exceed your available rewards.",
-      })
-      return
+      });
+      return;
     }
 
     if (!contract || !signer) {
       setTransactionResult({
         status: "error",
         message: "Wallet not connected. Please connect your wallet first.",
-      })
-      return
+      });
+      return;
     }
 
     try {
-      setIsProcessing(true)
+      setIsProcessing(true);
 
       // In a real implementation, you would need a contract function to donate rewards
       // For this demo, we'll simulate unstaking and then donating
-      const unstakeTx = await contract.unstake()
-      await unstakeTx.wait()
+      const unstakeTx = await contract.unstake();
+      await unstakeTx.wait();
 
       // Now donate to the milestone
       const donateTx = await contract.donateToMilestone(selectedMilestone, {
         value: parseEther(donationAmount),
-      })
+      });
 
-      const receipt = await donateTx.wait()
+      const receipt = await donateTx.wait();
 
       // Refresh data
-      if (walletAddress) await fetchStakeInfo(contract, walletAddress)
-      await fetchMilestones(contract)
-      await fetchStakingStats(contract)
+      if (walletAddress) await fetchStakeInfo(contract, walletAddress);
+      await fetchMilestones(contract);
+      await fetchStakingStats(contract);
 
       setTransactionResult({
         status: "success",
         message: `Successfully donated ${donationAmount} ETH to ${milestones[selectedMilestone].description}.`,
         txHash: receipt.hash,
-      })
+      });
     } catch (error) {
-      console.error("Donation error:", error)
+      console.error("Donation error:", error);
 
       setTransactionResult({
         status: "error",
-        message: (error as any)?.reason || "Transaction failed. Please try again.",
-      })
+        message:
+          (error as any)?.reason || "Transaction failed. Please try again.",
+      });
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   // Toggle demo mode
   const toggleDemoMode = (enabled: boolean) => {
-    setDemoMode(enabled)
+    setDemoMode(enabled);
     if (enabled && stakeInfo.active) {
-      setDemoStartTime(Math.floor(Date.now() / 1000))
+      setDemoStartTime(Math.floor(Date.now() / 1000));
     } else {
-      setDemoStartTime(null)
+      setDemoStartTime(null);
     }
-  }
+  };
 
   // Update estimated rewards in demo mode
   useEffect(() => {
-    if (!demoMode || !stakeInfo.active || !demoStartTime) return
+    if (!demoMode || !stakeInfo.active || !demoStartTime) return;
 
     const interval = setInterval(() => {
-      const currentTime = Math.floor(Date.now() / 1000)
-      const demoElapsedTime = currentTime - demoStartTime
+      const currentTime = Math.floor(Date.now() / 1000);
+      const demoElapsedTime = currentTime - demoStartTime;
 
       // In demo mode, 1 second = 1 year for reward calculation
-      const demoYears = demoElapsedTime / demoMultiplier
+      const demoYears = demoElapsedTime / demoMultiplier;
 
       // Calculate demo reward
-      const demoReward = (Number(stakeInfo.amount) * annualRate * demoYears) / 100
-      const newEstimatedReward = demoReward.toFixed(6)
+      const demoReward =
+        (Number(stakeInfo.amount) * annualRate * demoYears) / 100;
+      const newEstimatedReward = demoReward.toFixed(6);
 
       setStakeInfo({
         ...stakeInfo,
         estimatedReward: newEstimatedReward,
         duration: (demoYears * 365).toFixed(2), // Convert years to days
-      })
+      });
 
       // Update MYR values
-      updateMyrValues(Number(stakeInfo.amount), demoReward)
-    }, 1000) // Update every second
+      updateMyrValues(Number(stakeInfo.amount), demoReward);
+    }, 1000); // Update every second
 
-    return () => clearInterval(interval)
-  }, [demoMode, stakeInfo.active, demoStartTime, stakeInfo.amount, annualRate, demoMultiplier])
+    return () => clearInterval(interval);
+  }, [
+    demoMode,
+    stakeInfo.active,
+    demoStartTime,
+    stakeInfo.amount,
+    annualRate,
+    demoMultiplier,
+  ]);
 
   // Update estimated rewards in normal mode
   useEffect(() => {
-    if (demoMode || !stakeInfo.active) return
+    if (demoMode || !stakeInfo.active) return;
 
     const interval = setInterval(() => {
       if (stakeInfo.active) {
-        const currentTime = Math.floor(Date.now() / 1000)
-        const stakeDuration = currentTime - stakeInfo.startTime
-        const durationInDays = stakeDuration / (60 * 60 * 24)
+        const currentTime = Math.floor(Date.now() / 1000);
+        const stakeDuration = currentTime - stakeInfo.startTime;
+        const durationInDays = stakeDuration / (60 * 60 * 24);
 
         // Calculate estimated reward based on contract formula
-        const reward = (Number(stakeInfo.amount) * annualRate * durationInDays) / (365 * 100)
-        const newEstimatedReward = reward.toFixed(6)
+        const reward =
+          (Number(stakeInfo.amount) * annualRate * durationInDays) /
+          (365 * 100);
+        const newEstimatedReward = reward.toFixed(6);
 
         setStakeInfo({
           ...stakeInfo,
           estimatedReward: newEstimatedReward,
           duration: durationInDays.toFixed(2),
-        })
+        });
 
         // Update MYR values
-        updateMyrValues(Number(stakeInfo.amount), reward)
+        updateMyrValues(Number(stakeInfo.amount), reward);
       }
-    }, 10000) // Update every 10 seconds in normal mode
+    }, 10000); // Update every 10 seconds in normal mode
 
-    return () => clearInterval(interval)
-  }, [demoMode, stakeInfo.active, stakeInfo.startTime, stakeInfo.amount, annualRate])
+    return () => clearInterval(interval);
+  }, [
+    demoMode,
+    stakeInfo.active,
+    stakeInfo.startTime,
+    stakeInfo.amount,
+    annualRate,
+  ]);
 
   return (
-    <div className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
-      <div className="container mx-auto px-4 py-12">
+    <div
+      className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950 overflow-hidden relative"
+      ref={containerRef}
+    >
+      <motion.div
+        className="absolute top-20 left-[10%] w-64 h-64 bg-blue-300/10 rounded-full blur-3xl -z-10"
+        style={{ y: y1 }}
+      />
+      <motion.div
+        className="absolute top-40 right-[15%] w-96 h-96 bg-green-300/10 rounded-full blur-3xl -z-10"
+        style={{ y: y2 }}
+      />
+      <motion.div
+        className="absolute bottom-20 left-[25%] w-80 h-80 bg-purple-300/10 rounded-full blur-3xl -z-10"
+        style={{ y: y3 }}
+      />
+
+      <div className="container mx-auto px-4 py-12 relative z-10">
         <motion.div
           className="text-center max-w-4xl mx-auto mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
+          style={{ scale, opacity }}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -612,23 +694,50 @@ export default function StakingPage() {
           </motion.div>
 
           <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.7 }}
-              className="flex justify-center mb-6"
-            >
-              <img
-                src="/icons/defi.svg"
-                alt="DeFi Icon"
-                className="h-48 w-48"
-              />
-            </motion.div>
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="flex justify-center mb-6 relative"
+            style={{ y: useTransform(smoothScrollY, [0, 1], [0, -30]) }}
+          >
+            <motion.img
+              src="/icons/defi.svg"
+              alt="DeFi Icon"
+              className="h-48 w-48 relative z-10"
+              whileHover={{
+                y: -5,
+                scale: 1.03,
+                transition: { duration: 0.2, type: "spring", stiffness: 300 },
+              }}
+              animate={{
+                y: [0, -10, 0],
+                transition: {
+                  repeat: Infinity,
+                  duration: 3,
+                  ease: "easeInOut",
+                },
+              }}
+            />
+            <motion.div
+              className="absolute top-1/2 w-40 h-40 bg-blue-400/20 rounded-full blur-xl -z-10"
+              animate={{
+                scale: [1, 1.1, 1],
+                opacity: [0.5, 0.7, 0.5],
+                transition: {
+                  repeat: Infinity,
+                  duration: 4,
+                  ease: "easeInOut",
+                },
+              }}
+            />
+          </motion.div>
 
           <motion.h1
             className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-blue-800 to-blue-900 leading-16"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.7 }}
+            style={{ y: useTransform(smoothScrollY, [0, 1], [0, -20]) }}
           >
             Islamic Finance Staking Platform
           </motion.h1>
@@ -638,8 +747,10 @@ export default function StakingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.7 }}
+            style={{ y: useTransform(smoothScrollY, [0, 1], [0, -10]) }}
           >
-            Stake your ETH in our Shariah-compliant pool to earn 2-5% annual halal rewards while supporting our charity platform.
+            Stake your ETH in our Shariah-compliant pool to earn 2-5% annual
+            halal rewards while supporting our charity platform.
           </motion.p>
 
           {walletAddress ? (
@@ -648,11 +759,22 @@ export default function StakingPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.5 }}
+              whileHover={{
+                y: -5,
+                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+              }}
             >
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 bg-green-500 rounded-full"></div>
+                <motion.div
+                  className="h-3 w-3 bg-green-500 rounded-full"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    transition: { repeat: Infinity, duration: 2 },
+                  }}
+                ></motion.div>
                 <span className="text-gray-800 font-medium">
-                  Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                  Connected: {walletAddress.slice(0, 6)}...
+                  {walletAddress.slice(-4)}
                 </span>
               </div>
             </motion.div>
@@ -677,7 +799,7 @@ export default function StakingPage() {
 
         <StakingHowItWorks />
 
-         {/* Shariah Compliance Banner
+        {/* Shariah Compliance Banner
          <div className="max-w-5xl mx-auto mb-8">
           <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200">
             <CardContent className="pt-6">
@@ -719,10 +841,12 @@ export default function StakingPage() {
                 <div>
                   <p className="text-sm text-gray-500">Total Staked</p>
                   <div className="flex items-baseline gap-1">
-                    <p className="text-2xl font-bold">{(Number(totalStaked) * ethToMyrRate).toLocaleString()}</p>
+                    <p className="text-2xl font-bold">
+                      {(Number(totalStaked) * ethToMyrRate).toLocaleString()}
+                    </p>
                     <p className="text-sm text-gray-500">MYR</p>
                   </div>
-                  <p className="text-xs text-gray-500">≈  {totalStaked} ETH</p>
+                  <p className="text-xs text-gray-500">≈ {totalStaked} ETH</p>
                 </div>
               </div>
             </CardContent>
@@ -755,7 +879,11 @@ export default function StakingPage() {
                 <div>
                   <p className="text-sm text-gray-500">Total Halal Rewards</p>
                   <div className="flex items-baseline gap-1">
-                    <p className="text-2xl font-bold">{(Number(totalRewardsDistributed) * ethToMyrRate).toLocaleString()}</p>
+                    <p className="text-2xl font-bold">
+                      {(
+                        Number(totalRewardsDistributed) * ethToMyrRate
+                      ).toLocaleString()}
+                    </p>
                     <p className="text-sm text-gray-500">MYR</p>
                   </div>
                   <p className="text-xs text-gray-500">
@@ -797,7 +925,9 @@ export default function StakingPage() {
                     <Coins className="h-6 w-6 text-blue-600 mr-2" />
                     Your Shariah-Compliant Staking
                   </CardTitle>
-                  <CardDescription>Manage your halal ETH staking and rewards</CardDescription>
+                  <CardDescription>
+                    Manage your halal ETH staking and rewards
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -809,11 +939,17 @@ export default function StakingPage() {
                       <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                         <Coins className="h-8 w-8 text-blue-600" />
                       </div>
-                      <h3 className="text-xl font-medium text-gray-800 mb-2">Wallet Not Connected</h3>
+                      <h3 className="text-xl font-medium text-gray-800 mb-2">
+                        Wallet Not Connected
+                      </h3>
                       <p className="text-gray-600 text-center max-w-md mb-6">
-                       Connect your wallet to view your staking information and start earning halal rewards.
+                        Connect your wallet to view your staking information and
+                        start earning halal rewards.
                       </p>
-                      <Button className="bg-blue-600 hover:bg-blue-700" onClick={connectWallet}>
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={connectWallet}
+                      >
                         Connect Wallet
                       </Button>
                     </div>
@@ -821,53 +957,77 @@ export default function StakingPage() {
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="bg-blue-50 p-4 rounded-lg">
-                          <div className="text-xs text-gray-500">Staked Amount</div>
+                          <div className="text-xs text-gray-500">
+                            Staked Amount
+                          </div>
                           <div className="font-semibold flex items-center text-lg">
                             <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
                             {myrValues.stakedAmount.toLocaleString()} MYR
                           </div>
-                          <div className="text-xs text-gray-500">≈ {stakeInfo.amount} ETH</div>
+                          <div className="text-xs text-gray-500">
+                            ≈ {stakeInfo.amount} ETH
+                          </div>
                         </div>
                         <div className="bg-blue-50 p-4 rounded-lg">
-                          <div className="text-xs text-gray-500">Staking Duration</div>
+                          <div className="text-xs text-gray-500">
+                            Staking Duration
+                          </div>
                           <div className="font-semibold flex items-center text-lg">
                             <Clock className="h-4 w-4 text-blue-600 mr-1" />
                             {stakeInfo.duration} days {demoMode && "(Demo)"}
                           </div>
                           <div className="text-xs text-gray-500">
-                            Started: {new Date(stakeInfo.startTime * 1000).toLocaleString()}
+                            Started:{" "}
+                            {new Date(
+                              stakeInfo.startTime * 1000
+                            ).toLocaleString()}
                           </div>
                         </div>
                       </div>
 
                       <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Current Halal Rewards</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">
+                          Current Halal Rewards
+                        </h4>
                         <div className="flex items-center">
                           <Coins className="h-6 w-6 text-blue-600 mr-2" />
-                          <span className="text-2xl font-bold text-blue-700">{stakeInfo.estimatedReward} ETH</span>
+                          <span className="text-2xl font-bold text-blue-700">
+                            {stakeInfo.estimatedReward} ETH
+                          </span>
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
                           ≈ {myrValues.estimatedReward.toLocaleString()} MYR
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
-                        Rewards are calculated based on 2-5% APR using Shariah-compliant profit-sharing
+                          Rewards are calculated based on 2-5% APR using
+                          Shariah-compliant profit-sharing
                           {demoMode && " (accelerated in demo mode)"}
                         </p>
                       </div>
 
                       <div className="bg-blue-50 p-4 rounded-lg">
-                        <div className="text-xs text-gray-500">Total Value (Stake + Rewards)</div>
+                        <div className="text-xs text-gray-500">
+                          Total Value (Stake + Rewards)
+                        </div>
                         <div className="font-semibold flex items-center text-lg">
                           <DollarSign className="h-4 w-4 text-blue-600 mr-1" />
                           {myrValues.totalValue.toLocaleString()} MYR
                         </div>
                         <div className="text-xs text-gray-500">
-                          ≈ {(Number(stakeInfo.amount) + Number(stakeInfo.estimatedReward)).toFixed(6)} ETH
-                        </div>                      
+                          ≈{" "}
+                          {(
+                            Number(stakeInfo.amount) +
+                            Number(stakeInfo.estimatedReward)
+                          ).toFixed(6)}{" "}
+                          ETH
                         </div>
+                      </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => openModal("unstake")}>
+                        <Button
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                          onClick={() => openModal("unstake")}
+                        >
                           <ArrowRight className="h-4 w-4 mr-2" />
                           Unstake ETH + Claim Halal Rewards
                         </Button>
@@ -884,19 +1044,27 @@ export default function StakingPage() {
                   ) : (
                     <div className="space-y-6">
                       <div className="bg-blue-50 p-4 rounded-lg">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Annual HalalReward Rate</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">
+                          Annual HalalReward Rate
+                        </h4>
                         <div className="flex items-center">
                           <TrendingUp className="h-6 w-6 text-blue-600 mr-2" />
-                          <span className="text-2xl font-bold text-blue-700">2-5%</span>
+                          <span className="text-2xl font-bold text-blue-700">
+                            2-5%
+                          </span>
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
-                          Stake your ETH to earn 2-5% annual Shariah-compliant rewards
+                          Stake your ETH to earn 2-5% annual Shariah-compliant
+                          rewards
                           {demoMode && " (accelerated in demo mode)"}
                         </p>
                       </div>
 
                       <div className="space-y-2">
-                        <label htmlFor="stake-amount" className="block text-sm font-medium text-gray-700 mb-1">
+                        <label
+                          htmlFor="stake-amount"
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
                           Amount to Stake (ETH)
                         </label>
                         <Input
@@ -909,48 +1077,89 @@ export default function StakingPage() {
                         />
                         {stakeAmount && (
                           <div className="text-sm text-gray-500">
-                            ≈ {(Number(stakeAmount) * ethToMyrRate).toLocaleString()} MYR
+                            ≈{" "}
+                            {(
+                              Number(stakeAmount) * ethToMyrRate
+                            ).toLocaleString()}{" "}
+                            MYR
                           </div>
                         )}
                       </div>
 
                       {stakeAmount && Number(stakeAmount) > 0 && (
-  <div className="bg-blue-50 p-4 rounded-lg space-y-2">
-    <h4 className="font-medium flex items-center gap-1 text-blue-800">
-      <Info className="h-4 w-4" />
-      Estimated Halal Annual Rewards
-    </h4>
-    <div className="grid grid-cols-3 gap-2 text-sm">
-      <div>
-        <p className="text-gray-500">Daily</p>
-        <p className="font-medium">
-          {(Number(stakeAmount) * annualRate * ethToMyrRate / 365 / 100).toLocaleString()} MYR
-        </p>
-        <p className="text-xs text-gray-500">
-          ≈ {((Number(stakeAmount) * annualRate) / 365 / 100).toFixed(6)} ETH
-        </p>
-      </div>
-      <div>
-        <p className="text-gray-500">Monthly</p>
-        <p className="font-medium">
-          {(Number(stakeAmount) * annualRate * ethToMyrRate / 12 / 100).toLocaleString()} MYR
-        </p>
-        <p className="text-xs text-gray-500">
-          ≈ {((Number(stakeAmount) * annualRate) / 12 / 100).toFixed(4)} ETH
-        </p>
-      </div>
-      <div>
-        <p className="text-gray-500">Annual</p>
-        <p className="font-medium">
-          {(Number(stakeAmount) * annualRate * ethToMyrRate / 100).toLocaleString()} MYR
-        </p>
-        <p className="text-xs text-gray-500">
-          ≈ {((Number(stakeAmount) * annualRate) / 100).toFixed(4)} ETH
-        </p>
-      </div>
-    </div>
-  </div>
-)}
+                        <div className="bg-blue-50 p-4 rounded-lg space-y-2">
+                          <h4 className="font-medium flex items-center gap-1 text-blue-800">
+                            <Info className="h-4 w-4" />
+                            Estimated Halal Annual Rewards
+                          </h4>
+                          <div className="grid grid-cols-3 gap-2 text-sm">
+                            <div>
+                              <p className="text-gray-500">Daily</p>
+                              <p className="font-medium">
+                                {(
+                                  (Number(stakeAmount) *
+                                    annualRate *
+                                    ethToMyrRate) /
+                                  365 /
+                                  100
+                                ).toLocaleString()}{" "}
+                                MYR
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                ≈{" "}
+                                {(
+                                  (Number(stakeAmount) * annualRate) /
+                                  365 /
+                                  100
+                                ).toFixed(6)}{" "}
+                                ETH
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-500">Monthly</p>
+                              <p className="font-medium">
+                                {(
+                                  (Number(stakeAmount) *
+                                    annualRate *
+                                    ethToMyrRate) /
+                                  12 /
+                                  100
+                                ).toLocaleString()}{" "}
+                                MYR
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                ≈{" "}
+                                {(
+                                  (Number(stakeAmount) * annualRate) /
+                                  12 /
+                                  100
+                                ).toFixed(4)}{" "}
+                                ETH
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-500">Annual</p>
+                              <p className="font-medium">
+                                {(
+                                  (Number(stakeAmount) *
+                                    annualRate *
+                                    ethToMyrRate) /
+                                  100
+                                ).toLocaleString()}{" "}
+                                MYR
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                ≈{" "}
+                                {(
+                                  (Number(stakeAmount) * annualRate) /
+                                  100
+                                ).toFixed(4)}{" "}
+                                ETH
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       <Button
                         className="w-full bg-blue-600 hover:bg-blue-700"
@@ -966,22 +1175,25 @@ export default function StakingPage() {
                 <CardFooter>
                   {stakeInfo.active && (
                     <div className="w-full text-center text-sm text-gray-500">
-                      Rewards are continuously calculated using Shariah-compliant profit-sharing (Mudarabah)
+                      Rewards are continuously calculated using
+                      Shariah-compliant profit-sharing (Mudarabah)
                     </div>
                   )}
                 </CardFooter>
               </Card>
             </TabsContent>
 
-           {/* Islamic Finance Tab */}
-           <TabsContent value="islamic">
+            {/* Islamic Finance Tab */}
+            <TabsContent value="islamic">
               <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 py-8">
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Mosque className="h-6 w-6 text-blue-600 mr-2" />
                     Donate Your Rewards
                   </CardTitle>
-                  <CardDescription>Choose how to contribute your DeFi earnings</CardDescription>
+                  <CardDescription>
+                    Choose how to contribute your DeFi earnings
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -993,11 +1205,16 @@ export default function StakingPage() {
                       <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                         <Mosque className="h-8 w-8 text-blue-600" />
                       </div>
-                      <h3 className="text-xl font-medium text-gray-800 mb-2">Wallet Not Connected</h3>
+                      <h3 className="text-xl font-medium text-gray-800 mb-2">
+                        Wallet Not Connected
+                      </h3>
                       <p className="text-gray-600 text-center max-w-md mb-6">
                         Connect your wallet to access Islamic finance features.
                       </p>
-                      <Button className="bg-blue-600 hover:bg-blue-700" onClick={connectWallet}>
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={connectWallet}
+                      >
                         Connect Wallet
                       </Button>
                     </div>
@@ -1011,39 +1228,56 @@ export default function StakingPage() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-medium text-gray-800 mb-1">Sadaqah (General Charity)</h4>
+                              <h4 className="font-medium text-gray-800 mb-1">
+                                Sadaqah (General Charity)
+                              </h4>
                               <div className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">
                                 Recommended
                               </div>
                             </div>
                             <p className="text-sm text-gray-600 mb-3">
-                              Make voluntary charitable donations to support those in need. Select a cause to donate to
-                              and track your contributions.
+                              Make voluntary charitable donations to support
+                              those in need. Select a cause to donate to and
+                              track your contributions.
                             </p>
 
                             {/* Beneficiary Selection */}
                             <div className="space-y-2 mb-3">
-                              <Label htmlFor="beneficiary-select" className="text-sm">
+                              <Label
+                                htmlFor="beneficiary-select"
+                                className="text-sm"
+                              >
                                 Select a Beneficiary
                               </Label>
                               <select
                                 id="beneficiary-select"
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 value={selectedBeneficiary}
-                                onChange={(e) => setSelectedBeneficiary(e.target.value)}
+                                onChange={(e) =>
+                                  setSelectedBeneficiary(e.target.value)
+                                }
                               >
                                 <option value="" disabled>
                                   Select a beneficiary
                                 </option>
-                                <option value="orphans">Orphans Support Fund</option>
-                                <option value="education">Education for Underprivileged Children</option>
-                                <option value="disaster-relief">Disaster Relief Fund</option>
+                                <option value="orphans">
+                                  Orphans Support Fund
+                                </option>
+                                <option value="education">
+                                  Education for Underprivileged Children
+                                </option>
+                                <option value="disaster-relief">
+                                  Disaster Relief Fund
+                                </option>
                               </select>
                             </div>
 
                             {/* Donation Amount */}
                             <div className="space-y-2 mb-3">
-                              <Label htmlFor="sadaqah-amount" className="text-sm">
+                              <Label
+                                htmlFor="sadaqah-amount"
+                                className="text-sm"
+                              >
                                 Amount to donate as Sadaqah (ETH)
                               </Label>
                               <Input
@@ -1053,11 +1287,17 @@ export default function StakingPage() {
                                 step="0.001"
                                 placeholder="0.00"
                                 value={sadaqahAmount}
-                                onChange={(e) => setSadaqahAmount(e.target.value)}
+                                onChange={(e) =>
+                                  setSadaqahAmount(e.target.value)
+                                }
                               />
                               {sadaqahAmount && Number(sadaqahAmount) > 0 && (
                                 <div className="text-xs text-gray-500">
-                                  ≈ {(Number(sadaqahAmount) * ethToMyrRate).toLocaleString()} MYR
+                                  ≈{" "}
+                                  {(
+                                    Number(sadaqahAmount) * ethToMyrRate
+                                  ).toLocaleString()}{" "}
+                                  MYR
                                 </div>
                               )}
                             </div>
@@ -1066,7 +1306,11 @@ export default function StakingPage() {
                             <Button
                               className="w-full bg-blue-600 hover:bg-blue-700"
                               onClick={handleSadaqahDonation}
-                              disabled={!sadaqahAmount || Number(sadaqahAmount) <= 0 || !selectedBeneficiary}
+                              disabled={
+                                !sadaqahAmount ||
+                                Number(sadaqahAmount) <= 0 ||
+                                !selectedBeneficiary
+                              }
                             >
                               Give Sadaqah
                             </Button>
@@ -1074,7 +1318,9 @@ export default function StakingPage() {
                             {/* Donation History */}
                             {sadaqahHistory.length > 0 && (
                               <div className="mt-6">
-                                <h4 className="text-sm font-medium text-gray-700 mb-3">Sadaqah Donation History</h4>
+                                <h4 className="text-sm font-medium text-gray-700 mb-3">
+                                  Sadaqah Donation History
+                                </h4>
                                 <div className="rounded-md border">
                                   <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50">
@@ -1103,7 +1349,9 @@ export default function StakingPage() {
                                       {sadaqahHistory.map((donation, index) => (
                                         <tr key={index}>
                                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {new Date(donation.date).toLocaleString()}
+                                            {new Date(
+                                              donation.date
+                                            ).toLocaleString()}
                                           </td>
                                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {donation.beneficiary}
@@ -1130,39 +1378,53 @@ export default function StakingPage() {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-medium text-gray-800 mb-1">Zakat (If Eligible)</h4>
+                              <h4 className="font-medium text-gray-800 mb-1">
+                                Zakat (If Eligible)
+                              </h4>
                               <div className="cursor-pointer group relative">
                                 <Info className="h-4 w-4 text-blue-500" />
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-64 p-2 bg-white border border-gray-200 rounded shadow-lg text-xs text-gray-600 hidden group-hover:block z-10">
-                                  Zakat is an obligatory charity in Islam (2.5% of wealth held for one lunar year). Only
-                                  applicable if the wealth is considered zakat-eligible.
+                                  Zakat is an obligatory charity in Islam (2.5%
+                                  of wealth held for one lunar year). Only
+                                  applicable if the wealth is considered
+                                  zakat-eligible.
                                 </div>
                               </div>
                             </div>
                             <p className="text-sm text-gray-600 mb-3">
-                              Zakat is an obligatory charity in Islam (2.5% of wealth held for one lunar year)
+                              Zakat is an obligatory charity in Islam (2.5% of
+                              wealth held for one lunar year)
                             </p>
 
                             {Number(zakatDue) > 0 ? (
                               <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
                                 <div className="flex justify-between items-center">
-                                  <span className="text-sm font-medium">Zakat Due</span>
+                                  <span className="text-sm font-medium">
+                                    Zakat Due
+                                  </span>
                                   <div className="text-right">
                                     <span className="font-mono font-medium">
-                                      {(Number(zakatDue) * ethToMyrRate).toLocaleString()} MYR
+                                      {(
+                                        Number(zakatDue) * ethToMyrRate
+                                      ).toLocaleString()}{" "}
+                                      MYR
                                     </span>
-                                    <div className="text-xs text-gray-500">≈ {zakatDue} ETH</div>
+                                    <div className="text-xs text-gray-500">
+                                      ≈ {zakatDue} ETH
+                                    </div>
                                   </div>
                                 </div>
                                 <div className="text-xs text-gray-500 mt-1">
-                                  Based on your staked amount and rewards held for over a year
+                                  Based on your staked amount and rewards held
+                                  for over a year
                                 </div>
                               </div>
                             ) : (
                               <div className="bg-white bg-opacity-50 p-3 rounded-md mb-3">
                                 <div className="text-sm">No Zakat due yet</div>
                                 <div className="text-xs text-gray-500 mt-1">
-                                  Zakat becomes obligatory after holding wealth for one lunar year
+                                  Zakat becomes obligatory after holding wealth
+                                  for one lunar year
                                 </div>
                               </div>
                             )}
@@ -1179,125 +1441,163 @@ export default function StakingPage() {
                       </div>
 
                       {/* Waqf Section */}
-<div className="bg-white p-6 rounded-lg border border-blue-200">
-  <div className="flex items-start gap-4">
-    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-      <Leaf className="h-5 w-5 text-blue-600" />
-    </div>
-    <div className="flex-1">
-      <div className="flex items-center gap-2">
-        <h4 className="font-medium text-gray-800 mb-1">Waqf (Endowment)</h4>
-        <div className="cursor-pointer group relative">
-          <Info className="h-4 w-4 text-blue-500" />
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-64 p-2 bg-white border border-gray-200 rounded shadow-lg text-xs text-gray-600 hidden group-hover:block z-10">
-            Waqf is a permanent endowment in Islamic finance. It's more of a legacy endowment and needs proper handling to ensure compliance with Islamic principles.
-          </div>
-        </div>
-      </div>
-      <p className="text-sm text-gray-600 mb-3">
-        Contribute to a permanent endowment fund that supports ongoing charitable causes.
-      </p>
+                      <div className="bg-white p-6 rounded-lg border border-blue-200">
+                        <div className="flex items-start gap-4">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <Leaf className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-medium text-gray-800 mb-1">
+                                Waqf (Endowment)
+                              </h4>
+                              <div className="cursor-pointer group relative">
+                                <Info className="h-4 w-4 text-blue-500" />
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-64 p-2 bg-white border border-gray-200 rounded shadow-lg text-xs text-gray-600 hidden group-hover:block z-10">
+                                  Waqf is a permanent endowment in Islamic
+                                  finance. It's more of a legacy endowment and
+                                  needs proper handling to ensure compliance
+                                  with Islamic principles.
+                                </div>
+                              </div>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-3">
+                              Contribute to a permanent endowment fund that
+                              supports ongoing charitable causes.
+                            </p>
 
-      <div className="space-y-2 mb-3">
-        <Label htmlFor="waqf-percentage" className="text-sm">
-          Percentage of rewards to allocate to Waqf
-        </Label>
-        <div className="flex items-center gap-2">
-          <Input
-            id="waqf-percentage"
-            type="number"
-            min="0"
-            max="100"
-            value={waqfPercentage}
-            onChange={(e) => setWaqfPercentage(Number(e.target.value))}
-            className="w-20"
-          />
-          <span>%</span>
-        </div>
-        {waqfPercentage > 0 && stakeInfo.active && (
-          <div className="text-xs text-gray-500">
-            {((Number(stakeInfo.estimatedReward) * waqfPercentage) / 100).toFixed(6)} ETH will be allocated to Waqf
-          </div>
-        )}
-      </div>
+                            <div className="space-y-2 mb-3">
+                              <Label
+                                htmlFor="waqf-percentage"
+                                className="text-sm"
+                              >
+                                Percentage of rewards to allocate to Waqf
+                              </Label>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  id="waqf-percentage"
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={waqfPercentage}
+                                  onChange={(e) =>
+                                    setWaqfPercentage(Number(e.target.value))
+                                  }
+                                  className="w-20"
+                                />
+                                <span>%</span>
+                              </div>
+                              {waqfPercentage > 0 && stakeInfo.active && (
+                                <div className="text-xs text-gray-500">
+                                  {(
+                                    (Number(stakeInfo.estimatedReward) *
+                                      waqfPercentage) /
+                                    100
+                                  ).toFixed(6)}{" "}
+                                  ETH will be allocated to Waqf
+                                </div>
+                              )}
+                            </div>
 
-      <Button
-        className="w-full bg-blue-600 hover:bg-blue-700"
-        onClick={() => openModal("waqf")}
-        disabled={!stakeInfo.active || Number(stakeInfo.estimatedReward) <= 0}
-      >
-        Contribute to Waqf
-      </Button>
-    </div>
-  </div>
+                            <Button
+                              className="w-full bg-blue-600 hover:bg-blue-700"
+                              onClick={() => openModal("waqf")}
+                              disabled={
+                                !stakeInfo.active ||
+                                Number(stakeInfo.estimatedReward) <= 0
+                              }
+                            >
+                              Contribute to Waqf
+                            </Button>
+                          </div>
+                        </div>
 
-  {/* Waqf Projects Section */}
-  <div className="mt-6">
-    <h4 className="text-lg font-medium text-gray-800 mb-4">Examples of Waqf Projects</h4>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
-        <CardHeader className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-            <Building className="h-6 w-6 text-blue-600" />
-          </div>
-          <CardTitle className="text-lg font-semibold text-blue-900">Community Mosque Construction</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CardDescription className="text-sm text-gray-600">
-            Build a mosque in underserved areas to provide a place of worship and community gathering.
-          </CardDescription>
-        </CardContent>
-      </Card>
+                        {/* Waqf Projects Section */}
+                        <div className="mt-6">
+                          <h4 className="text-lg font-medium text-gray-800 mb-4">
+                            Examples of Waqf Projects
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+                              <CardHeader className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                  <Building className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <CardTitle className="text-lg font-semibold text-blue-900">
+                                  Community Mosque Construction
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <CardDescription className="text-sm text-gray-600">
+                                  Build a mosque in underserved areas to provide
+                                  a place of worship and community gathering.
+                                </CardDescription>
+                              </CardContent>
+                            </Card>
 
-      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
-        <CardHeader className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-            <School className="h-6 w-6 text-blue-600" />
-          </div>
-          <CardTitle className="text-lg font-semibold text-blue-900">Education Endowment Fund</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CardDescription className="text-sm text-gray-600">
-            Support the construction of schools and provide scholarships for underprivileged children.
-          </CardDescription>
-        </CardContent>
-      </Card>
+                            <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+                              <CardHeader className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                  <School className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <CardTitle className="text-lg font-semibold text-blue-900">
+                                  Education Endowment Fund
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <CardDescription className="text-sm text-gray-600">
+                                  Support the construction of schools and
+                                  provide scholarships for underprivileged
+                                  children.
+                                </CardDescription>
+                              </CardContent>
+                            </Card>
 
-      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
-        <CardHeader className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-            <Hospital className="h-6 w-6 text-blue-600" />
-          </div>
-          <CardTitle className="text-lg font-semibold text-blue-900">Healthcare Facilities</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CardDescription className="text-sm text-gray-600">
-            Fund the development of clinics and hospitals to improve access to healthcare in rural areas.
-          </CardDescription>
-        </CardContent>
-      </Card>
+                            <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+                              <CardHeader className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                  <Hospital className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <CardTitle className="text-lg font-semibold text-blue-900">
+                                  Healthcare Facilities
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <CardDescription className="text-sm text-gray-600">
+                                  Fund the development of clinics and hospitals
+                                  to improve access to healthcare in rural
+                                  areas.
+                                </CardDescription>
+                              </CardContent>
+                            </Card>
 
-      <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
-        <CardHeader className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-            <Leaf className="h-6 w-6 text-blue-600" />
-          </div>
-          <CardTitle className="text-lg font-semibold text-blue-900">Clean Water Projects</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <CardDescription className="text-sm text-gray-600">
-            Install water wells and purification systems to provide clean drinking water to communities in need.
-          </CardDescription>
-        </CardContent>
-      </Card>
-    </div>
-  </div>
-</div>
+                            <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
+                              <CardHeader className="flex items-center gap-4">
+                                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                  <Leaf className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <CardTitle className="text-lg font-semibold text-blue-900">
+                                  Clean Water Projects
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <CardDescription className="text-sm text-gray-600">
+                                  Install water wells and purification systems
+                                  to provide clean drinking water to communities
+                                  in need.
+                                </CardDescription>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </div>
+                      </div>
 
                       {/* Zakat History */}
                       {zakatHistory.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-3">Zakat Payment History</h4>
+                          <h4 className="text-sm font-medium text-gray-700 mb-3">
+                            Zakat Payment History
+                          </h4>
                           <div className="rounded-md border">
                             <table className="min-w-full divide-y divide-gray-200">
                               <thead className="bg-gray-50">
@@ -1319,7 +1619,9 @@ export default function StakingPage() {
                               <tbody className="bg-white divide-y divide-gray-200">
                                 {zakatHistory.map((zakat, index) => (
                                   <tr key={index}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{zakat.date}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                      {zakat.date}
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
                                       {zakat.amount} ETH
                                     </td>
@@ -1344,7 +1646,9 @@ export default function StakingPage() {
                     <Gift className="h-6 w-6 text-blue-600 mr-2" />
                     Rewards & Donations
                   </CardTitle>
-                  <CardDescription>Track your halal rewards and donate to charity milestones</CardDescription>
+                  <CardDescription>
+                    Track your halal rewards and donate to charity milestones
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -1356,11 +1660,17 @@ export default function StakingPage() {
                       <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                         <Gift className="h-8 w-8 text-blue-600" />
                       </div>
-                      <h3 className="text-xl font-medium text-gray-800 mb-2">Wallet Not Connected</h3>
+                      <h3 className="text-xl font-medium text-gray-800 mb-2">
+                        Wallet Not Connected
+                      </h3>
                       <p className="text-gray-600 text-center max-w-md mb-6">
-                        Connect your wallet to view your rewards and make donations.
+                        Connect your wallet to view your rewards and make
+                        donations.
                       </p>
-                      <Button className="bg-blue-600 hover:bg-blue-700" onClick={connectWallet}>
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={connectWallet}
+                      >
                         Connect Wallet
                       </Button>
                     </div>
@@ -1368,33 +1678,47 @@ export default function StakingPage() {
                     <div className="space-y-6">
                       {/* Current Rewards */}
                       <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg">
-                        <h4 className="text-sm font-medium text-gray-700 mb-2">Available Halal Rewards</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-2">
+                          Available Halal Rewards
+                        </h4>
                         <div className="flex items-center">
                           <Coins className="h-6 w-6 text-blue-600 mr-2" />
                           <span className="text-2xl font-bold text-blue-700">
-                          {stakeInfo.active ? myrValues.estimatedReward.toLocaleString() : "0.000000"}                          </span>
+                            {stakeInfo.active
+                              ? myrValues.estimatedReward.toLocaleString()
+                              : "0.000000"}{" "}
+                          </span>
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          ≈ {stakeInfo.active ? stakeInfo.estimatedReward : "0"} ETH
+                          ≈ {stakeInfo.active ? stakeInfo.estimatedReward : "0"}{" "}
+                          ETH
                         </div>
                         {stakeInfo.active ? (
                           <p className="text-xs text-gray-500 mt-2">
-                            You can donate your rewards to charity milestones as Sadaqah
+                            You can donate your rewards to charity milestones as
+                            Sadaqah
                           </p>
                         ) : (
                           <p className="text-xs text-gray-500 mt-2">
-                            Stake ETH to start earning Shariah-compliant rewards that you can donate
+                            Stake ETH to start earning Shariah-compliant rewards
+                            that you can donate
                           </p>
                         )}
                       </div>
 
                       {/* Reward History */}
                       <div>
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">Reward History</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">
+                          Reward History
+                        </h4>
                         {rewardHistory.length === 0 ? (
                           <div className="bg-gray-50 p-6 rounded-lg text-center">
-                            <p className="text-gray-500">No reward history yet</p>
-                            <p className="text-sm text-gray-400 mt-1">Your claimed rewards will appear here</p>
+                            <p className="text-gray-500">
+                              No reward history yet
+                            </p>
+                            <p className="text-sm text-gray-400 mt-1">
+                              Your claimed rewards will appear here
+                            </p>
                           </div>
                         ) : (
                           <div className="rounded-md border">
@@ -1419,7 +1743,9 @@ export default function StakingPage() {
                                 {rewardHistory.map((reward, index) => (
                                   <tr key={index}>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                      {new Date(reward.timestamp * 1000).toLocaleString()}
+                                      {new Date(
+                                        reward.timestamp * 1000
+                                      ).toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
                                       {reward.amount} ETH
@@ -1432,12 +1758,16 @@ export default function StakingPage() {
                         )}
                       </div>
 
-{/* Available Charity Milestones - Enhanced UI */}
-<div>
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">Available Charity Milestones</h4>
+                      {/* Available Charity Milestones - Enhanced UI */}
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-700 mb-3">
+                          Available Charity Milestones
+                        </h4>
                         {milestones.length === 0 ? (
                           <div className="bg-gray-50 p-6 rounded-lg text-center">
-                            <p className="text-gray-500">No charity milestones available</p>
+                            <p className="text-gray-500">
+                              No charity milestones available
+                            </p>
                             <p className="text-sm text-gray-400 mt-1">
                               Check back later for available charity projects
                             </p>
@@ -1448,12 +1778,20 @@ export default function StakingPage() {
                               <Button
                                 className="w-full bg-blue-600 hover:bg-blue-700"
                                 onClick={() => {
-                                  if (stakeInfo.active && Number(stakeInfo.estimatedReward) > 0) {
-                                    setDonationAmount(stakeInfo.estimatedReward)
-                                    setShowMilestoneSelector(true)
+                                  if (
+                                    stakeInfo.active &&
+                                    Number(stakeInfo.estimatedReward) > 0
+                                  ) {
+                                    setDonationAmount(
+                                      stakeInfo.estimatedReward
+                                    );
+                                    setShowMilestoneSelector(true);
                                   }
                                 }}
-                                disabled={!stakeInfo.active || Number(stakeInfo.estimatedReward) <= 0}
+                                disabled={
+                                  !stakeInfo.active ||
+                                  Number(stakeInfo.estimatedReward) <= 0
+                                }
                               >
                                 <HeartHandshake className="h-4 w-4 mr-2" />
                                 Donate Rewards to Charity
@@ -1462,10 +1800,18 @@ export default function StakingPage() {
 
                             {showMilestoneSelector && (
                               <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                                <h5 className="font-medium text-blue-800 mb-3">Select a Charity Milestone</h5>
+                                <h5 className="font-medium text-blue-800 mb-3">
+                                  Select a Charity Milestone
+                                </h5>
                                 <RadioGroup
-                                  value={selectedMilestone !== null ? selectedMilestone.toString() : ""}
-                                  onValueChange={(value: any) => setSelectedMilestone(Number(value))}
+                                  value={
+                                    selectedMilestone !== null
+                                      ? selectedMilestone.toString()
+                                      : ""
+                                  }
+                                  onValueChange={(value: any) =>
+                                    setSelectedMilestone(Number(value))
+                                  }
                                   className="space-y-3"
                                 >
                                   {milestones
@@ -1489,12 +1835,19 @@ export default function StakingPage() {
                                           </Label>
                                           <div className="mb-2">
                                             <div className="flex justify-between text-xs mb-1">
-                                              <span>Progress: {milestone.progress.toFixed(0)}%</span>
                                               <span>
-                                                {milestone.currentAmount} / {milestone.targetAmount} ETH
+                                                Progress:{" "}
+                                                {milestone.progress.toFixed(0)}%
+                                              </span>
+                                              <span>
+                                                {milestone.currentAmount} /{" "}
+                                                {milestone.targetAmount} ETH
                                               </span>
                                             </div>
-                                            <Progress value={milestone.progress} className="h-2" />
+                                            <Progress
+                                              value={milestone.progress}
+                                              className="h-2"
+                                            />
                                           </div>
                                         </div>
                                       </div>
@@ -1502,7 +1855,10 @@ export default function StakingPage() {
                                 </RadioGroup>
 
                                 <div className="mt-4 space-y-2">
-                                  <Label htmlFor="donation-amount" className="text-sm font-medium">
+                                  <Label
+                                    htmlFor="donation-amount"
+                                    className="text-sm font-medium"
+                                  >
                                     Donation Amount (ETH)
                                   </Label>
                                   <Input
@@ -1512,12 +1868,18 @@ export default function StakingPage() {
                                     min="0.000001"
                                     max={stakeInfo.estimatedReward}
                                     value={donationAmount}
-                                    onChange={(e) => setDonationAmount(e.target.value)}
+                                    onChange={(e) =>
+                                      setDonationAmount(e.target.value)
+                                    }
                                     className="font-mono"
                                   />
                                   {donationAmount && (
                                     <div className="text-xs text-gray-500">
-                                      ≈ {(Number(donationAmount) * ethToMyrRate).toLocaleString()} MYR
+                                      ≈{" "}
+                                      {(
+                                        Number(donationAmount) * ethToMyrRate
+                                      ).toLocaleString()}{" "}
+                                      MYR
                                     </div>
                                   )}
                                 </div>
@@ -1526,7 +1888,9 @@ export default function StakingPage() {
                                   <Button
                                     variant="outline"
                                     className="flex-1"
-                                    onClick={() => setShowMilestoneSelector(false)}
+                                    onClick={() =>
+                                      setShowMilestoneSelector(false)
+                                    }
                                   >
                                     Cancel
                                   </Button>
@@ -1534,7 +1898,9 @@ export default function StakingPage() {
                                     className="flex-1 bg-green-600 hover:bg-green-700"
                                     onClick={() => openModal("donate")}
                                     disabled={
-                                      selectedMilestone === null || !donationAmount || Number(donationAmount) <= 0
+                                      selectedMilestone === null ||
+                                      !donationAmount ||
+                                      Number(donationAmount) <= 0
                                     }
                                   >
                                     Confirm Donation
@@ -1551,34 +1917,64 @@ export default function StakingPage() {
                                     key={milestone.id}
                                     className="border rounded-lg p-4 bg-white hover:bg-blue-50 transition-colors cursor-pointer"
                                     onClick={() => {
-                                      if (stakeInfo.active && Number(stakeInfo.estimatedReward) > 0) {
-                                        setSelectedMilestone(milestone.id)
-                                        setDonationAmount(stakeInfo.estimatedReward)
-                                        setShowMilestoneSelector(true)
+                                      if (
+                                        stakeInfo.active &&
+                                        Number(stakeInfo.estimatedReward) > 0
+                                      ) {
+                                        setSelectedMilestone(milestone.id);
+                                        setDonationAmount(
+                                          stakeInfo.estimatedReward
+                                        );
+                                        setShowMilestoneSelector(true);
                                       }
                                     }}
                                   >
                                     <div className="flex justify-between items-start mb-2">
-                                      <h5 className="font-medium">{milestone.description}</h5>
+                                      <h5 className="font-medium">
+                                        {milestone.description}
+                                      </h5>
                                       <div className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                        {milestone.released ? "Completed" : "Active"}
+                                        {milestone.released
+                                          ? "Completed"
+                                          : "Active"}
                                       </div>
                                     </div>
                                     <div className="mb-2">
                                       <div className="flex justify-between text-sm mb-1">
                                         <span>Progress</span>
-                                        <span>{milestone.progress.toFixed(0)}%</span>
+                                        <span>
+                                          {milestone.progress.toFixed(0)}%
+                                        </span>
                                       </div>
-                                      <Progress value={milestone.progress} className="h-2" />
+                                      <Progress
+                                        value={milestone.progress}
+                                        className="h-2"
+                                      />
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 text-sm">
                                       <div>
-                                        <span className="text-gray-500">Target:</span>{" "}
-                                        <span className="font-medium">{(Number(milestone.targetAmount) * ethToMyrRate).toLocaleString()} MYR ({milestone.targetAmount} ETH)</span>
+                                        <span className="text-gray-500">
+                                          Target:
+                                        </span>{" "}
+                                        <span className="font-medium">
+                                          {(
+                                            Number(milestone.targetAmount) *
+                                            ethToMyrRate
+                                          ).toLocaleString()}{" "}
+                                          MYR ({milestone.targetAmount} ETH)
+                                        </span>
                                       </div>
                                       <div>
-                                        <span className="text-gray-500">Raised:</span>{" "}
-                                        <span className="font-medium">{(Number(milestone.currentAmount) * ethToMyrRate).toLocaleString()} MYR ({milestone.currentAmount} ETH)</span>
+                                        <span className="text-gray-500">
+                                          Raised:
+                                        </span>{" "}
+                                        <span className="font-medium">
+                                          {(
+                                            Number(milestone.currentAmount) *
+                                            ethToMyrRate
+                                          ).toLocaleString()}{" "}
+                                          MYR ({milestone.currentAmount} ETH)
+                                        </span>
                                       </div>
                                     </div>
                                   </div>
@@ -1601,7 +1997,9 @@ export default function StakingPage() {
                     <BarChart3 className="h-6 w-6 text-blue-600 mr-2" />
                     Staking Analytics
                   </CardTitle>
-                  <CardDescription>Track your Shariah-compliant staking performance</CardDescription>
+                  <CardDescription>
+                    Track your Shariah-compliant staking performance
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {loading ? (
@@ -1613,11 +2011,16 @@ export default function StakingPage() {
                       <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
                         <BarChart3 className="h-8 w-8 text-blue-600" />
                       </div>
-                      <h3 className="text-xl font-medium text-gray-800 mb-2">Wallet Not Connected</h3>
+                      <h3 className="text-xl font-medium text-gray-800 mb-2">
+                        Wallet Not Connected
+                      </h3>
                       <p className="text-gray-600 text-center max-w-md mb-6">
                         Connect your wallet to view your staking analytics.
                       </p>
-                      <Button className="bg-blue-600 hover:bg-blue-700" onClick={connectWallet}>
+                      <Button
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={connectWallet}
+                      >
                         Connect Wallet
                       </Button>
                     </div>
@@ -1626,14 +2029,18 @@ export default function StakingPage() {
                       {/* Staking Summary */}
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-blue-50 p-4 rounded-lg">
-                          <div className="text-xs text-gray-500">Current Halal APR</div>
+                          <div className="text-xs text-gray-500">
+                            Current Halal APR
+                          </div>
                           <div className="font-semibold flex items-center text-lg">
                             <TrendingUp className="h-4 w-4 text-blue-600 mr-1" />
                             2-5%
                           </div>
                         </div>
                         <div className="bg-blue-50 p-4 rounded-lg">
-                          <div className="text-xs text-gray-500">Staking Status</div>
+                          <div className="text-xs text-gray-500">
+                            Staking Status
+                          </div>
                           <div className="font-semibold flex items-center text-lg">
                             {stakeInfo.active ? (
                               <>
@@ -1649,11 +2056,17 @@ export default function StakingPage() {
                           </div>
                         </div>
                         <div className="bg-blue-50 p-4 rounded-lg">
-                          <div className="text-xs text-gray-500">Reward Rate</div>
+                          <div className="text-xs text-gray-500">
+                            Reward Rate
+                          </div>
                           <div className="font-semibold flex items-center text-lg">
                             <Coins className="h-4 w-4 text-blue-600 mr-1" />
                             {stakeInfo.active
-                              ? ((Number(stakeInfo.estimatedReward) / Number(stakeInfo.duration)) * 365).toFixed(6)
+                              ? (
+                                  (Number(stakeInfo.estimatedReward) /
+                                    Number(stakeInfo.duration)) *
+                                  365
+                                ).toFixed(6)
                               : "0.000000"}{" "}
                             ETH/year
                           </div>
@@ -1662,7 +2075,9 @@ export default function StakingPage() {
 
                       {/* Staking Performance */}
                       <div className="bg-white p-6 rounded-lg border">
-                        <h4 className="text-sm font-medium text-gray-700 mb-4">Staking Performance</h4>
+                        <h4 className="text-sm font-medium text-gray-700 mb-4">
+                          Staking Performance
+                        </h4>
                         <div className="space-y-4">
                           <div>
                             <div className="flex justify-between text-sm mb-1">
@@ -1676,8 +2091,13 @@ export default function StakingPage() {
                               <span>Current Rewards</span>
                               <span>
                                 {stakeInfo.estimatedReward} ETH (
-                                {stakeInfo.amount && Number(stakeInfo.amount) > 0
-                                  ? ((Number(stakeInfo.estimatedReward) / Number(stakeInfo.amount)) * 100).toFixed(2)
+                                {stakeInfo.amount &&
+                                Number(stakeInfo.amount) > 0
+                                  ? (
+                                      (Number(stakeInfo.estimatedReward) /
+                                        Number(stakeInfo.amount)) *
+                                      100
+                                    ).toFixed(2)
                                   : "0.00"}
                                 %)
                               </span>
@@ -1685,7 +2105,9 @@ export default function StakingPage() {
                             <Progress
                               value={
                                 stakeInfo.amount && Number(stakeInfo.amount) > 0
-                                  ? (Number(stakeInfo.estimatedReward) / Number(stakeInfo.amount)) * 100
+                                  ? (Number(stakeInfo.estimatedReward) /
+                                      Number(stakeInfo.amount)) *
+                                    100
                                   : 0
                               }
                               className="h-2"
@@ -1695,10 +2117,17 @@ export default function StakingPage() {
                             <div className="flex justify-between text-sm mb-1">
                               <span>Total Value</span>
                               <span>
-                                {(Number(stakeInfo.amount) + Number(stakeInfo.estimatedReward)).toFixed(6)} ETH
+                                {(
+                                  Number(stakeInfo.amount) +
+                                  Number(stakeInfo.estimatedReward)
+                                ).toFixed(6)}{" "}
+                                ETH
                               </span>
                             </div>
-                            <Progress value={100} className="h-2 bg-gradient-to-r from-blue-500 to-green-500" />
+                            <Progress
+                              value={100}
+                              className="h-2 bg-gradient-to-r from-blue-500 to-green-500"
+                            />
                           </div>
                         </div>
                       </div>
@@ -1706,24 +2135,46 @@ export default function StakingPage() {
                       {/* Projected Rewards */}
                       {stakeInfo.active && (
                         <div className="bg-white p-6 rounded-lg border">
-                          <h4 className="text-sm font-medium text-gray-700 mb-4">Projected Rewards</h4>
+                          <h4 className="text-sm font-medium text-gray-700 mb-4">
+                            Projected Rewards
+                          </h4>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="bg-blue-50 p-4 rounded-lg">
-                              <div className="text-xs text-gray-500">1 Month</div>
+                              <div className="text-xs text-gray-500">
+                                1 Month
+                              </div>
                               <div className="font-semibold text-lg">
-                                {((Number(stakeInfo.amount) * annualRate) / 12 / 100).toFixed(6)} ETH
+                                {(
+                                  (Number(stakeInfo.amount) * annualRate) /
+                                  12 /
+                                  100
+                                ).toFixed(6)}{" "}
+                                ETH
                               </div>
                             </div>
                             <div className="bg-blue-50 p-4 rounded-lg">
-                              <div className="text-xs text-gray-500">6 Months</div>
+                              <div className="text-xs text-gray-500">
+                                6 Months
+                              </div>
                               <div className="font-semibold text-lg">
-                                {((Number(stakeInfo.amount) * annualRate) / 2 / 100).toFixed(6)} ETH
+                                {(
+                                  (Number(stakeInfo.amount) * annualRate) /
+                                  2 /
+                                  100
+                                ).toFixed(6)}{" "}
+                                ETH
                               </div>
                             </div>
                             <div className="bg-blue-50 p-4 rounded-lg">
-                              <div className="text-xs text-gray-500">1 Year</div>
+                              <div className="text-xs text-gray-500">
+                                1 Year
+                              </div>
                               <div className="font-semibold text-lg">
-                                {((Number(stakeInfo.amount) * annualRate) / 100).toFixed(6)} ETH
+                                {(
+                                  (Number(stakeInfo.amount) * annualRate) /
+                                  100
+                                ).toFixed(6)}{" "}
+                                ETH
                               </div>
                             </div>
                           </div>
@@ -1739,18 +2190,24 @@ export default function StakingPage() {
 
         <ShariahCompliantProtocols />
 
-
         {/* Contract Information */}
         <Card className="bg-white/90 backdrop-blur-sm border border-blue-100 max-w-8xl mx-auto mt-12">
           <CardHeader>
-            <CardTitle className="text-xl font-medium py-8">Contract Information</CardTitle>
-            <CardDescription>Verify this staking contract on the blockchain</CardDescription>
+            <CardTitle className="text-xl font-medium py-8">
+              Contract Information
+            </CardTitle>
+            <CardDescription>
+              Verify this staking contract on the blockchain
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Contract Address</span>
-                <span className="font-mono text-xs truncate max-w-[180px]" title={CONTRACT_ADDRESS}>
+                <span
+                  className="font-mono text-xs truncate max-w-[180px]"
+                  title={CONTRACT_ADDRESS}
+                >
                   {CONTRACT_ADDRESS.slice(0, 6)}...{CONTRACT_ADDRESS.slice(-4)}
                 </span>
               </div>
@@ -1771,7 +2228,9 @@ export default function StakingPage() {
                 <Info className="h-5 w-5 text-zinc-500" />
                 <div className="text-sm">
                   <div className="font-medium">Verified Contract</div>
-                  <div className="text-zinc-500 dark:text-zinc-400">View source code and details</div>
+                  <div className="text-zinc-500 dark:text-zinc-400">
+                    View source code and details
+                  </div>
                 </div>
               </div>
             </div>
@@ -1780,7 +2239,12 @@ export default function StakingPage() {
             <Button
               variant="outline"
               className="w-full cursor-pointer mb-8 mt-4"
-              onClick={() => window.open(`https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}`, "_blank")}
+              onClick={() =>
+                window.open(
+                  `https://sepolia.etherscan.io/address/${CONTRACT_ADDRESS}`,
+                  "_blank"
+                )
+              }
             >
               View on Etherscan
               <ExternalLink className="ml-2 h-4 w-4" />
@@ -1794,14 +2258,18 @@ export default function StakingPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {modalAction === "stake" ? "Stake ETH" : modalAction === "unstake" ? "Unstake ETH" : "Donate Rewards"}
+              {modalAction === "stake"
+                ? "Stake ETH"
+                : modalAction === "unstake"
+                ? "Unstake ETH"
+                : "Donate Rewards"}
             </DialogTitle>
             <DialogDescription>
               {modalAction === "stake"
                 ? `Stake your ETH to earn $2-5% annual rewards`
                 : modalAction === "unstake"
-                  ? "Unstake your ETH and claim your rewards"
-                  : "Donate your staking rewards to charity"}
+                ? "Unstake your ETH and claim your rewards"
+                : "Donate your staking rewards to charity"}
             </DialogDescription>
           </DialogHeader>
 
@@ -1828,7 +2296,9 @@ export default function StakingPage() {
                     />
                     {modalAmount && (
                       <div className="text-sm text-zinc-500">
-                        ≈ {(Number(modalAmount) * ethToMyrRate).toLocaleString()} MYR
+                        ≈{" "}
+                        {(Number(modalAmount) * ethToMyrRate).toLocaleString()}{" "}
+                        MYR
                       </div>
                     )}
                   </div>
@@ -1837,24 +2307,42 @@ export default function StakingPage() {
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium">Staked Amount</span>
                       <div className="text-right">
-                        <span className="font-mono text-sm">{stakeInfo.amount} ETH</span>
-                        <div className="text-xs text-zinc-500">≈ {myrValues.stakedAmount.toLocaleString()} MYR</div>
+                        <span className="font-mono text-sm">
+                          {stakeInfo.amount} ETH
+                        </span>
+                        <div className="text-xs text-zinc-500">
+                          ≈ {myrValues.stakedAmount.toLocaleString()} MYR
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Earned Rewards</span>
+                      <span className="text-sm font-medium">
+                        Earned Rewards
+                      </span>
                       <div className="text-right">
-                        <span className="font-mono text-sm">{stakeInfo.estimatedReward} ETH</span>
-                        <div className="text-xs text-zinc-500">≈ {myrValues.estimatedReward.toLocaleString()} MYR</div>
+                        <span className="font-mono text-sm">
+                          {stakeInfo.estimatedReward} ETH
+                        </span>
+                        <div className="text-xs text-zinc-500">
+                          ≈ {myrValues.estimatedReward.toLocaleString()} MYR
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center justify-between pt-2 border-t">
-                      <span className="text-sm font-medium">Total to Receive</span>
+                      <span className="text-sm font-medium">
+                        Total to Receive
+                      </span>
                       <div className="text-right">
                         <span className="font-mono text-sm font-bold">
-                          {(Number(stakeInfo.amount) + Number(stakeInfo.estimatedReward)).toFixed(6)} ETH
+                          {(
+                            Number(stakeInfo.amount) +
+                            Number(stakeInfo.estimatedReward)
+                          ).toFixed(6)}{" "}
+                          ETH
                         </span>
-                        <div className="text-xs text-zinc-500">≈ {myrValues.totalValue.toLocaleString()} MYR</div>
+                        <div className="text-xs text-zinc-500">
+                          ≈ {myrValues.totalValue.toLocaleString()} MYR
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1862,9 +2350,13 @@ export default function StakingPage() {
                   <div className="space-y-4">
                     <div className="rounded-md bg-green-50 p-4">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">Available Rewards</span>
+                        <span className="text-sm font-medium">
+                          Available Rewards
+                        </span>
                         <div className="text-right">
-                          <span className="font-mono text-sm">{stakeInfo.estimatedReward} ETH</span>
+                          <span className="font-mono text-sm">
+                            {stakeInfo.estimatedReward} ETH
+                          </span>
                           <div className="text-xs text-zinc-500">
                             ≈ {myrValues.estimatedReward.toLocaleString()} MYR
                           </div>
@@ -1882,8 +2374,12 @@ export default function StakingPage() {
                       <select
                         id="milestone-select"
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        value={selectedMilestone !== null ? selectedMilestone : ""}
-                        onChange={(e) => setSelectedMilestone(Number(e.target.value))}
+                        value={
+                          selectedMilestone !== null ? selectedMilestone : ""
+                        }
+                        onChange={(e) =>
+                          setSelectedMilestone(Number(e.target.value))
+                        }
                       >
                         <option value="" disabled>
                           Select a milestone
@@ -1892,7 +2388,8 @@ export default function StakingPage() {
                           .filter((m) => !m.released)
                           .map((milestone) => (
                             <option key={milestone.id} value={milestone.id}>
-                              {milestone.description} ({milestone.progress.toFixed(0)}% funded)
+                              {milestone.description} (
+                              {milestone.progress.toFixed(0)}% funded)
                             </option>
                           ))}
                       </select>
@@ -1918,7 +2415,11 @@ export default function StakingPage() {
                       />
                       {donationAmount && (
                         <div className="text-sm text-zinc-500">
-                          ≈ {(Number(donationAmount) * ethToMyrRate).toLocaleString()} MYR
+                          ≈{" "}
+                          {(
+                            Number(donationAmount) * ethToMyrRate
+                          ).toLocaleString()}{" "}
+                          MYR
                         </div>
                       )}
                     </div>
@@ -1927,21 +2428,33 @@ export default function StakingPage() {
               </div>
 
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setModalOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button
                   type="button"
                   onClick={handleModalAction}
                   className={`${
-                    modalAction === "donate" ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"
+                    modalAction === "donate"
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-blue-600 hover:bg-blue-700"
                   }`}
                   disabled={
                     modalAction === "donate" &&
-                    (selectedMilestone === null || !donationAmount || Number(donationAmount) <= 0)
+                    (selectedMilestone === null ||
+                      !donationAmount ||
+                      Number(donationAmount) <= 0)
                   }
                 >
-                  {modalAction === "stake" ? "Stake" : modalAction === "unstake" ? "Unstake & Claim" : "Donate"}
+                  {modalAction === "stake"
+                    ? "Stake"
+                    : modalAction === "unstake"
+                    ? "Unstake & Claim"
+                    : "Donate"}
                 </Button>
               </DialogFooter>
             </>
@@ -1950,9 +2463,12 @@ export default function StakingPage() {
           {isProcessing && (
             <div className="flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-4" />
-              <p className="text-center font-medium">Processing your request...</p>
+              <p className="text-center font-medium">
+                Processing your request...
+              </p>
               <p className="text-center text-sm text-muted-foreground mt-2">
-                Please confirm the transaction in your wallet and wait for it to be processed.
+                Please confirm the transaction in your wallet and wait for it to
+                be processed.
               </p>
             </div>
           )}
@@ -1980,7 +2496,11 @@ export default function StakingPage() {
                 </AlertDescription>
               </Alert>
               <div className="mt-6 flex justify-end">
-                <Button type="button" onClick={() => setModalOpen(false)} className="bg-blue-600 hover:bg-blue-700">
+                <Button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
                   Close
                 </Button>
               </div>
@@ -1998,11 +2518,17 @@ export default function StakingPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setTransactionResult({ status: null, message: "" })}
+                  onClick={() =>
+                    setTransactionResult({ status: null, message: "" })
+                  }
                 >
                   Try Again
                 </Button>
-                <Button type="button" onClick={() => setModalOpen(false)} variant="destructive">
+                <Button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  variant="destructive"
+                >
                   Close
                 </Button>
               </div>
@@ -2011,5 +2537,5 @@ export default function StakingPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
