@@ -1,7 +1,8 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
+import { useState, useRef } from "react";
+import Link from "next/link";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import {
   Award,
   BadgeCheck,
@@ -22,13 +23,25 @@ import {
   History,
   Trophy,
   Ticket,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useWallet } from "@/context/wallet-context"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useWallet } from "@/context/wallet-context";
 import {
   Dialog,
   DialogContent,
@@ -37,17 +50,26 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function DonationLevelsPage() {
-  const { ethBalance } = useWallet()
-  const [currentLevel] = useState(2) // This would be determined by user's donation history
+  const { ethBalance } = useWallet();
+  const [currentLevel] = useState(2); // This would be determined by user's donation history
 
   // Convert ETH balance to RM for display purposes
-  const rmBalance = ethBalance ? (Number.parseFloat(ethBalance) * 7000).toFixed(2) : "0.00"
+  const rmBalance = ethBalance
+    ? (Number.parseFloat(ethBalance) * 7000).toFixed(2)
+    : "0.00";
 
   const [userLevel, setUserLevel] = useState({
     level: 2,
@@ -62,10 +84,9 @@ export default function DonationLevelsPage() {
       { date: "2024-01-20", amount: 750, project: "Medical Relief" },
       { date: "2024-03-05", amount: 500, project: "Food Bank" },
     ],
-  })
+  });
 
-  // Add these new states for vouchers
-  const [isVoucherOpen, setIsVoucherOpen] = useState(false)
+  const [isVoucherOpen, setIsVoucherOpen] = useState(false);
   const [availableVouchers, setAvailableVouchers] = useState([
     {
       id: 1,
@@ -79,7 +100,7 @@ export default function DonationLevelsPage() {
       id: 2,
       name: "Grab RM15 Ride",
       points: 500,
-      category: "transportation", 
+      category: "transportation",
       image: "/images/voucher/grabv.jpg",
       description: "Valid for Grab rides in Klang Valley",
     },
@@ -110,74 +131,184 @@ export default function DonationLevelsPage() {
   ]);
 
   const [redeemedVouchers, setRedeemedVouchers] = useState([
-    { id: 5, name: "RM5 Food Voucher", redeemedOn: "2024-02-10", expiresOn: "2024-04-10" },
-  ])
+    {
+      id: 5,
+      name: "RM5 Food Voucher",
+      redeemedOn: "2024-02-10",
+      expiresOn: "2024-04-10",
+    },
+  ]);
 
-  // Add this function to handle voucher redemption
   const handleRedeemVoucher = (voucherId) => {
-    const voucher = availableVouchers.find((v) => v.id === voucherId)
+    const voucher = availableVouchers.find((v) => v.id === voucherId);
     if (voucher && userLevel.points >= voucher.points) {
-      // Update points
       setUserLevel({
         ...userLevel,
         points: userLevel.points - voucher.points,
-      })
+      });
 
-      // Move voucher from available to redeemed
-      setAvailableVouchers(availableVouchers.filter((v) => v.id !== voucherId))
+      setAvailableVouchers(availableVouchers.filter((v) => v.id !== voucherId));
       setRedeemedVouchers([
         ...redeemedVouchers,
         {
           id: voucher.id,
           name: voucher.name,
           redeemedOn: new Date().toISOString().split("T")[0],
-          expiresOn: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+          expiresOn: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0],
         },
-      ])
+      ]);
 
-      // Show success message or notification
-      alert(`Successfully redeemed ${voucher.name} for ${voucher.points} points!`)
+      alert(
+        `Successfully redeemed ${voucher.name} for ${voucher.points} points!`
+      );
     }
-  }
+  };
 
-  // Get level icon based on user level
   const getLevelIcon = () => {
     switch (userLevel.level) {
       case 1:
-        return <Heart className="h-4 w-4 mr-1 text-green-600" />
+        return <Heart className="h-4 w-4 mr-1 text-green-600" />;
       case 2:
-        return <Sparkles className="h-4 w-4 mr-1 text-amber-600" />
+        return <Sparkles className="h-4 w-4 mr-1 text-amber-600" />;
       case 3:
-        return <Gem className="h-4 w-4 mr-1 text-blue-600" />
+        return <Gem className="h-4 w-4 mr-1 text-blue-600" />;
       default:
-        return <Award className="h-4 w-4 mr-1" />
+        return <Award className="h-4 w-4 mr-1" />;
     }
-  }
+  };
+
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"],
+  });
+
+  const smoothScrollY = useSpring(scrollYProgress, {
+    damping: 50,
+    stiffness: 400,
+  });
+
+  const y1 = useTransform(smoothScrollY, [0, 1], [0, -100]);
+  const y2 = useTransform(smoothScrollY, [0, 1], [0, -200]);
+  const y3 = useTransform(smoothScrollY, [0, 1], [0, -50]);
+  const scale = useTransform(smoothScrollY, [0, 0.5], [1, 0.8]);
+  const opacity = useTransform(smoothScrollY, [0, 0.8], [1, 0.6]);
 
   return (
-    <div className="container relative max-w-6xl mx-auto py-12 px-4">
-      {/* Image on the right (only visible on md+ screens) */}
-      <img src="/steps.svg" alt="Steps Illustration" className="hidden md:block absolute right-0 top-10 w-66 h-auto" />
+    <div
+      className="container relative max-w-6xl mx-auto py-12 px-4 overflow-hidden"
+      ref={containerRef}
+    >
+      <motion.div
+        className="absolute top-20 left-[10%] w-64 h-64 bg-blue-300/10 rounded-full blur-3xl -z-10"
+        style={{ y: y1 }}
+      />
+      <motion.div
+        className="absolute top-40 right-[15%] w-96 h-96 bg-green-300/10 rounded-full blur-3xl -z-10"
+        style={{ y: y2 }}
+      />
+      <motion.div
+        className="absolute bottom-20 left-[25%] w-80 h-80 bg-purple-300/10 rounded-full blur-3xl -z-10"
+        style={{ y: y3 }}
+      />
 
-      {/* Header with Securities Commission Malaysia partnership */}
-      <div className="mb-12 text-center">
-        <div className="flex justify-center mb-4">
-          <Badge className="bg-blue-600 text-white px-4 py-1 text-sm">Shariah-Compliant Charity Platform</Badge>
-        </div>
-        <h1 className="text-3xl md:text-4xl font-bold mb-4">Donation Impact Levels</h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Increase your impact and unlock exclusive benefits with our Shariah-compliant donation levels, in partnership
-          with Securities Commission Malaysia.
-        </p>
-        <div className="flex items-center justify-center mt-4 text-sm text-muted-foreground">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.7 }}
+        className="flex justify-center mb-6 relative"
+        style={{ y: useTransform(smoothScrollY, [0, 1], [0, -30]) }}
+      >
+        <motion.img
+          src="/steps.svg"
+          alt="Steps Illustration"
+          className="hidden md:block absolute right-0 top-10 w-66 h-auto"
+          whileHover={{
+            y: -5,
+            scale: 1.03,
+            transition: { duration: 0.2, type: "spring", stiffness: 300 },
+          }}
+          animate={{
+            y: [0, -10, 0],
+            transition: {
+              repeat: Infinity,
+              duration: 3,
+              ease: "easeInOut",
+            },
+          }}
+        />
+        <motion.div
+          className="absolute top-1/2 w-40 h-40 bg-blue-400/20 rounded-full blur-xl -z-10"
+          animate={{
+            scale: [1, 1.1, 1],
+            opacity: [0.5, 0.7, 0.5],
+            transition: {
+              repeat: Infinity,
+              duration: 4,
+              ease: "easeInOut",
+            },
+          }}
+        />
+      </motion.div>
+
+      <motion.div
+        className="mb-12 text-center"
+        style={{ scale, opacity }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+      >
+        <motion.div
+          className="flex justify-center mb-4"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          <Badge className="bg-blue-600 text-white px-4 py-1 text-sm">
+            Shariah-Compliant Charity Platform
+          </Badge>
+        </motion.div>
+
+        <motion.h1
+          className="text-3xl md:text-4xl font-bold mb-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.7 }}
+          style={{ y: useTransform(smoothScrollY, [0, 1], [0, -20]) }}
+        >
+          Donation Impact Levels
+        </motion.h1>
+
+        <motion.p
+          className="text-lg text-muted-foreground max-w-2xl mx-auto"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.7 }}
+          style={{ y: useTransform(smoothScrollY, [0, 1], [0, -10]) }}
+        >
+          Increase your impact and unlock exclusive benefits with our
+          Shariah-compliant donation levels, in partnership with Securities
+          Commission Malaysia.
+        </motion.p>
+
+        <motion.div
+          className="flex items-center justify-center mt-4 text-sm text-muted-foreground"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+        >
           Verified by Securities Commission Malaysia
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
-      {/* Back to profile button */}
       <div className="mb-8">
         <Link href="/profile">
-          <Button variant="ghost" className="flex items-center gap-2 cursor-pointer">
+          <Button
+            variant="ghost"
+            className="flex items-center gap-2 cursor-pointer"
+          >
             <ChevronLeft className="h-4 w-4" /> Back to Profile
           </Button>
         </Link>
@@ -186,7 +317,6 @@ export default function DonationLevelsPage() {
       <Card className="mb-8 border-blue-100 bg-gradient-to-r from-blue-50 to-emerald-50">
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Left Column - Progress */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Badge className="bg-blue-100 text-blue-800 px-3 py-1 text-sm">
@@ -199,7 +329,8 @@ export default function DonationLevelsPage() {
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="max-w-xs">
-                        Levels are based on total donations and number of projects supported
+                        Levels are based on total donations and number of
+                        projects supported
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -209,29 +340,38 @@ export default function DonationLevelsPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
-                    RM{userLevel.totalDonated} / RM{userLevel.nextLevelRequirement}
+                    RM{userLevel.totalDonated} / RM
+                    {userLevel.nextLevelRequirement}
                   </span>
                   <span className="font-medium">{userLevel.progress}%</span>
                 </div>
                 <Progress value={userLevel.progress} className="h-2" />
                 <p className="text-sm text-muted-foreground">
-                  RM{userLevel.nextLevelRequirement - userLevel.totalDonated} needed for Level {userLevel.level + 1}
+                  RM{userLevel.nextLevelRequirement - userLevel.totalDonated}{" "}
+                  needed for Level {userLevel.level + 1}
                 </p>
               </div>
             </div>
 
-            {/* Right Column - Impact Metrics */}
             <div className="space-y-4 border-l pl-6 md:pl-8">
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold">Your Impact Summary</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white p-3 rounded-lg border">
-                    <div className="text-sm text-muted-foreground">Total Donated</div>
-                    <div className="text-xl font-bold mt-1">RM{userLevel.totalDonated}</div>
+                    <div className="text-sm text-muted-foreground">
+                      Total Donated
+                    </div>
+                    <div className="text-xl font-bold mt-1">
+                      RM{userLevel.totalDonated}
+                    </div>
                   </div>
                   <div className="bg-white p-3 rounded-lg border">
-                    <div className="text-sm text-muted-foreground">Projects Supported</div>
-                    <div className="text-xl font-bold mt-1">{userLevel.projectsSupported}</div>
+                    <div className="text-sm text-muted-foreground">
+                      Projects Supported
+                    </div>
+                    <div className="text-xl font-bold mt-1">
+                      {userLevel.projectsSupported}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -252,10 +392,13 @@ export default function DonationLevelsPage() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
             <h2 className="text-xl font-semibold mb-1">Your Donation Points</h2>
-            <p className="text-muted-foreground mb-2">Every RM1 donated equals 1 point</p>
+            <p className="text-muted-foreground mb-2">
+              Every RM1 donated equals 1 point
+            </p>
             <div className="flex items-center gap-2">
               <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">
-                <Coins className="h-4 w-4 mr-1" /> {userLevel.points} Points Available
+                <Coins className="h-4 w-4 mr-1" /> {userLevel.points} Points
+                Available
               </Badge>
               <TooltipProvider>
                 <Tooltip>
@@ -263,7 +406,9 @@ export default function DonationLevelsPage() {
                     <Info className="h-4 w-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="max-w-xs">Use your points to redeem exclusive vouchers and rewards.</p>
+                    <p className="max-w-xs">
+                      Use your points to redeem exclusive vouchers and rewards.
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -280,127 +425,183 @@ export default function DonationLevelsPage() {
                 <DialogHeader>
                   <DialogTitle>Redeem Your Points</DialogTitle>
                   <DialogDescription>
-                    You have {userLevel.points} points available - Select a category:
+                    You have {userLevel.points} points available - Select a
+                    category:
                   </DialogDescription>
                 </DialogHeader>
 
                 <Tabs defaultValue="f&b">
                   <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="f&b">Food & Beverage</TabsTrigger>
-                    <TabsTrigger value="transportation">Transportation</TabsTrigger>
+                    <TabsTrigger value="transportation">
+                      Transportation
+                    </TabsTrigger>
                     <TabsTrigger value="shopping">Shopping</TabsTrigger>
                     <TabsTrigger value="redeemed">Redeemed</TabsTrigger>
                   </TabsList>
 
-                  {/* F&B Category */}
                   <TabsContent value="f&b" className="mt-4">
                     <ScrollArea className="h-[400px] rounded-md border p-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {availableVouchers.filter(v => v.category === 'f&b').map((voucher) => (
-                          <Card key={voucher.id} className={userLevel.points >= voucher.points ? "" : "opacity-60"}>
-                            <CardContent className="flex items-center gap-4 p-4">
-                              <img
-                                src={voucher.image}
-                                alt={voucher.name}
-                                className="h-20 w-20 rounded-lg object-cover"
-                              />
-                              <div className="flex-1">
-                                <h3 className="font-semibold">{voucher.name}</h3>
-                                <p className="text-sm text-muted-foreground">{voucher.description}</p>
-                                <div className="mt-2 flex items-center justify-between">
-                                  <div className="flex items-center gap-1">
-                                    <Coins className="h-4 w-4 text-amber-600" />
-                                    <span className="font-medium">{voucher.points} points</span>
+                        {availableVouchers
+                          .filter((v) => v.category === "f&b")
+                          .map((voucher) => (
+                            <Card
+                              key={voucher.id}
+                              className={
+                                userLevel.points >= voucher.points
+                                  ? ""
+                                  : "opacity-60"
+                              }
+                            >
+                              <CardContent className="flex items-center gap-4 p-4">
+                                <img
+                                  src={voucher.image}
+                                  alt={voucher.name}
+                                  className="h-20 w-20 rounded-lg object-cover"
+                                />
+                                <div className="flex-1">
+                                  <h3 className="font-semibold">
+                                    {voucher.name}
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    {voucher.description}
+                                  </p>
+                                  <div className="mt-2 flex items-center justify-between">
+                                    <div className="flex items-center gap-1">
+                                      <Coins className="h-4 w-4 text-amber-600" />
+                                      <span className="font-medium">
+                                        {voucher.points} points
+                                      </span>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      onClick={() =>
+                                        handleRedeemVoucher(voucher.id)
+                                      }
+                                      disabled={
+                                        userLevel.points < voucher.points
+                                      }
+                                    >
+                                      Redeem
+                                    </Button>
                                   </div>
-                                  <Button 
-                                    size="sm" 
-                                    onClick={() => handleRedeemVoucher(voucher.id)}
-                                    disabled={userLevel.points < voucher.points}
-                                  >
-                                    Redeem
-                                  </Button>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                              </CardContent>
+                            </Card>
+                          ))}
                       </div>
                     </ScrollArea>
                   </TabsContent>
 
-                  {/* Transportation Category */}
                   <TabsContent value="transportation" className="mt-4">
                     <ScrollArea className="h-[400px] rounded-md border p-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {availableVouchers.filter(v => v.category === 'transportation').map((voucher) => (
-                          <Card key={voucher.id} className={userLevel.points >= voucher.points ? "" : "opacity-60"}>
-                            <CardContent className="flex items-center gap-4 p-4">
-                              <img
-                                src={voucher.image}
-                                alt={voucher.name}
-                                className="h-20 w-20 rounded-lg object-cover"
-                              />
-                              <div className="flex-1">
-                                <h3 className="font-semibold">{voucher.name}</h3>
-                                <p className="text-sm text-muted-foreground">{voucher.description}</p>
-                                <div className="mt-2 flex items-center justify-between">
-                                  <div className="flex items-center gap-1">
-                                    <Coins className="h-4 w-4 text-amber-600" />
-                                    <span className="font-medium">{voucher.points} points</span>
+                        {availableVouchers
+                          .filter((v) => v.category === "transportation")
+                          .map((voucher) => (
+                            <Card
+                              key={voucher.id}
+                              className={
+                                userLevel.points >= voucher.points
+                                  ? ""
+                                  : "opacity-60"
+                              }
+                            >
+                              <CardContent className="flex items-center gap-4 p-4">
+                                <img
+                                  src={voucher.image}
+                                  alt={voucher.name}
+                                  className="h-20 w-20 rounded-lg object-cover"
+                                />
+                                <div className="flex-1">
+                                  <h3 className="font-semibold">
+                                    {voucher.name}
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    {voucher.description}
+                                  </p>
+                                  <div className="mt-2 flex items-center justify-between">
+                                    <div className="flex items-center gap-1">
+                                      <Coins className="h-4 w-4 text-amber-600" />
+                                      <span className="font-medium">
+                                        {voucher.points} points
+                                      </span>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      onClick={() =>
+                                        handleRedeemVoucher(voucher.id)
+                                      }
+                                      disabled={
+                                        userLevel.points < voucher.points
+                                      }
+                                    >
+                                      Redeem
+                                    </Button>
                                   </div>
-                                  <Button 
-                                    size="sm" 
-                                    onClick={() => handleRedeemVoucher(voucher.id)}
-                                    disabled={userLevel.points < voucher.points}
-                                  >
-                                    Redeem
-                                  </Button>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                              </CardContent>
+                            </Card>
+                          ))}
                       </div>
                     </ScrollArea>
                   </TabsContent>
 
-                  {/* Shopping Category */}
                   <TabsContent value="shopping" className="mt-4">
                     <ScrollArea className="h-[400px] rounded-md border p-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {availableVouchers.filter(v => v.category === 'shopping').map((voucher) => (
-                          <Card key={voucher.id} className={userLevel.points >= voucher.points ? "" : "opacity-60"}>
-                            <CardContent className="flex items-center gap-4 p-4">
-                              <img
-                                src={voucher.image}
-                                alt={voucher.name}
-                                className="h-20 w-20 rounded-lg object-cover"
-                              />
-                              <div className="flex-1">
-                                <h3 className="font-semibold">{voucher.name}</h3>
-                                <p className="text-sm text-muted-foreground">{voucher.description}</p>
-                                <div className="mt-2 flex items-center justify-between">
-                                  <div className="flex items-center gap-1">
-                                    <Coins className="h-4 w-4 text-amber-600" />
-                                    <span className="font-medium">{voucher.points} points</span>
+                        {availableVouchers
+                          .filter((v) => v.category === "shopping")
+                          .map((voucher) => (
+                            <Card
+                              key={voucher.id}
+                              className={
+                                userLevel.points >= voucher.points
+                                  ? ""
+                                  : "opacity-60"
+                              }
+                            >
+                              <CardContent className="flex items-center gap-4 p-4">
+                                <img
+                                  src={voucher.image}
+                                  alt={voucher.name}
+                                  className="h-20 w-20 rounded-lg object-cover"
+                                />
+                                <div className="flex-1">
+                                  <h3 className="font-semibold">
+                                    {voucher.name}
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    {voucher.description}
+                                  </p>
+                                  <div className="mt-2 flex items-center justify-between">
+                                    <div className="flex items-center gap-1">
+                                      <Coins className="h-4 w-4 text-amber-600" />
+                                      <span className="font-medium">
+                                        {voucher.points} points
+                                      </span>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      onClick={() =>
+                                        handleRedeemVoucher(voucher.id)
+                                      }
+                                      disabled={
+                                        userLevel.points < voucher.points
+                                      }
+                                    >
+                                      Redeem
+                                    </Button>
                                   </div>
-                                  <Button 
-                                    size="sm" 
-                                    onClick={() => handleRedeemVoucher(voucher.id)}
-                                    disabled={userLevel.points < voucher.points}
-                                  >
-                                    Redeem
-                                  </Button>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                              </CardContent>
+                            </Card>
+                          ))}
                       </div>
                     </ScrollArea>
                   </TabsContent>
 
-                  {/* Redeemed Vouchers (Keep this existing tab) */}
                   <TabsContent value="redeemed" className="mt-4">
                     <ScrollArea className="h-[400px] rounded-md border p-4">
                       {redeemedVouchers.length === 0 ? (
@@ -414,27 +615,38 @@ export default function DonationLevelsPage() {
                               <TableHead>Voucher</TableHead>
                               <TableHead>Redeemed On</TableHead>
                               <TableHead>Expires On</TableHead>
-                              <TableHead className="text-right">Status</TableHead>
+                              <TableHead className="text-right">
+                                Status
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {redeemedVouchers.map((voucher) => {
-                              const isExpired = new Date(voucher.expiresOn) < new Date()
+                              const isExpired =
+                                new Date(voucher.expiresOn) < new Date();
                               return (
                                 <TableRow key={voucher.id}>
-                                  <TableCell className="font-medium">{voucher.name}</TableCell>
+                                  <TableCell className="font-medium">
+                                    {voucher.name}
+                                  </TableCell>
                                   <TableCell>{voucher.redeemedOn}</TableCell>
                                   <TableCell>{voucher.expiresOn}</TableCell>
                                   <TableCell className="text-right">
                                     <Badge
-                                      variant={isExpired ? "destructive" : "default"}
-                                      className={!isExpired ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}
+                                      variant={
+                                        isExpired ? "destructive" : "default"
+                                      }
+                                      className={
+                                        !isExpired
+                                          ? "bg-green-100 text-green-800 hover:bg-green-100"
+                                          : ""
+                                      }
                                     >
                                       {isExpired ? "Expired" : "Valid"}
                                     </Badge>
                                   </TableCell>
                                 </TableRow>
-                              )
+                              );
                             })}
                           </TableBody>
                         </Table>
@@ -444,7 +656,10 @@ export default function DonationLevelsPage() {
                 </Tabs>
 
                 <DialogFooter className="mt-4">
-                  <Button variant="outline" onClick={() => setIsVoucherOpen(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsVoucherOpen(false)}
+                  >
                     Close
                   </Button>
                 </DialogFooter>
@@ -460,7 +675,9 @@ export default function DonationLevelsPage() {
               <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
                   <DialogTitle>Points History</DialogTitle>
-                  <DialogDescription>Track your donation points history and transactions.</DialogDescription>
+                  <DialogDescription>
+                    Track your donation points history and transactions.
+                  </DialogDescription>
                 </DialogHeader>
 
                 <ScrollArea className="h-[400px] rounded-md border p-4 mt-4">
@@ -477,7 +694,9 @@ export default function DonationLevelsPage() {
                         <TableRow key={index}>
                           <TableCell>{entry.date}</TableCell>
                           <TableCell>{entry.project}</TableCell>
-                          <TableCell className="text-right">+{entry.amount}</TableCell>
+                          <TableCell className="text-right">
+                            +{entry.amount}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -488,7 +707,7 @@ export default function DonationLevelsPage() {
           </div>
         </div>
       </div>
-                    
+
       <div className="mt-12 mb-6">
         <h2 className="text-2xl font-bold flex items-center">
           <Award className="h-5 w-5 mr-2 text-green-600" />
@@ -499,11 +718,11 @@ export default function DonationLevelsPage() {
         </p>
       </div>
 
-      {/* Level cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Level 1 */}
         <Card
-          className={`relative overflow-hidden py-4 ${currentLevel >= 1 ? "border-green-500 shadow-md" : "opacity-90"}`}
+          className={`relative overflow-hidden py-4 ${
+            currentLevel >= 1 ? "border-green-500 shadow-md" : "opacity-90"
+          }`}
         >
           {currentLevel === 1 && (
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-green-600"></div>
@@ -524,7 +743,9 @@ export default function DonationLevelsPage() {
           <CardContent className="pb-6">
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Requirements</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                  Requirements
+                </h3>
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
                     <div className="h-5 w-5 flex-shrink-0 mt-0.5 text-green-600">
@@ -536,7 +757,9 @@ export default function DonationLevelsPage() {
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Perks</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                  Perks
+                </h3>
                 <ul className="space-y-3">
                   <li>
                     <TooltipProvider>
@@ -549,8 +772,8 @@ export default function DonationLevelsPage() {
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            Receive a unique NFT certificate recognizing your contribution to Shariah-compliant
-                            charitable causes.
+                            Receive a unique NFT certificate recognizing your
+                            contribution to Shariah-compliant charitable causes.
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -567,8 +790,9 @@ export default function DonationLevelsPage() {
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            Receive a RM10 voucher for SC Malaysia's InvestSmart platform to learn about
-                            Shariah-compliant investments.
+                            Receive a RM10 voucher for SC Malaysia's InvestSmart
+                            platform to learn about Shariah-compliant
+                            investments.
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -579,15 +803,20 @@ export default function DonationLevelsPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full" disabled={currentLevel < 1}>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={currentLevel < 1}
+            >
               {currentLevel >= 1 ? "Completed" : "Locked"}
             </Button>
           </CardFooter>
         </Card>
 
-        {/* Level 2 */}
         <Card
-          className={`relative overflow-hidden py-4 ${currentLevel >= 2 ? "border-amber-500 shadow-md" : "opacity-80"}`}
+          className={`relative overflow-hidden py-4 ${
+            currentLevel >= 2 ? "border-amber-500 shadow-md" : "opacity-80"
+          }`}
         >
           {currentLevel === 2 && (
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-amber-600"></div>
@@ -601,7 +830,8 @@ export default function DonationLevelsPage() {
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="flex items-center gap-2 text-xl">
-                  <Sparkles className="h-5 w-5 text-amber-600" /> Community Leader
+                  <Sparkles className="h-5 w-5 text-amber-600" /> Community
+                  Leader
                 </CardTitle>
                 <CardDescription>Level 2</CardDescription>
               </div>
@@ -619,7 +849,9 @@ export default function DonationLevelsPage() {
           <CardContent className="pb-6">
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Requirements</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                  Requirements
+                </h3>
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
                     <div className="h-5 w-5 flex-shrink-0 mt-0.5 text-amber-600">
@@ -637,7 +869,9 @@ export default function DonationLevelsPage() {
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Perks</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                  Perks
+                </h3>
                 <ul className="space-y-3">
                   <li>
                     <TooltipProvider>
@@ -650,8 +884,9 @@ export default function DonationLevelsPage() {
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            Receive two exclusive NFTs that showcase your commitment to multiple Shariah-compliant
-                            charitable projects.
+                            Receive two exclusive NFTs that showcase your
+                            commitment to multiple Shariah-compliant charitable
+                            projects.
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -668,8 +903,8 @@ export default function DonationLevelsPage() {
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            Enjoy a 20% discount on selected Takaful (Islamic insurance) products from our partner
-                            providers.
+                            Enjoy a 20% discount on selected Takaful (Islamic
+                            insurance) products from our partner providers.
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -686,8 +921,8 @@ export default function DonationLevelsPage() {
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            Get priority access to SC Malaysia's financial literacy workshops and Shariah investment
-                            seminars.
+                            Get priority access to SC Malaysia's financial
+                            literacy workshops and Shariah investment seminars.
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -698,15 +933,20 @@ export default function DonationLevelsPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full" disabled={currentLevel < 2}>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={currentLevel < 2}
+            >
               {currentLevel >= 2 ? "Current Level" : "Locked"}
             </Button>
           </CardFooter>
         </Card>
 
-        {/* Level 3 */}
         <Card
-          className={`relative overflow-hidden py-4 ${currentLevel >= 3 ? "border-blue-500 shadow-md" : "opacity-70"}`}
+          className={`relative overflow-hidden py-4 ${
+            currentLevel >= 3 ? "border-blue-500 shadow-md" : "opacity-70"
+          }`}
         >
           {currentLevel === 3 && (
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-purple-600"></div>
@@ -726,7 +966,9 @@ export default function DonationLevelsPage() {
               </div>
               <Badge
                 className={
-                  currentLevel >= 3 ? "bg-blue-100 text-blue-800 hover:bg-blue-100" : "bg-muted text-muted-foreground"
+                  currentLevel >= 3
+                    ? "bg-blue-100 text-blue-800 hover:bg-blue-100"
+                    : "bg-muted text-muted-foreground"
                 }
               >
                 {currentLevel >= 3 ? "Achieved" : "Locked"}
@@ -736,7 +978,9 @@ export default function DonationLevelsPage() {
           <CardContent className="pb-6">
             <div className="space-y-6">
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Requirements</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                  Requirements
+                </h3>
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
                     <div className="h-5 w-5 flex-shrink-0 mt-0.5 text-blue-600">
@@ -754,7 +998,9 @@ export default function DonationLevelsPage() {
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Perks</h3>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                  Perks
+                </h3>
                 <ul className="space-y-3">
                   <li>
                     <TooltipProvider>
@@ -767,8 +1013,8 @@ export default function DonationLevelsPage() {
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            Exclusive NFT that grants access to SC Malaysia's annual Islamic Finance Forum and
-                            networking events.
+                            Exclusive NFT that grants access to SC Malaysia's
+                            annual Islamic Finance Forum and networking events.
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -785,8 +1031,9 @@ export default function DonationLevelsPage() {
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            Receive a personalized report detailing the social impact of your donations across all
-                            supported projects.
+                            Receive a personalized report detailing the social
+                            impact of your donations across all supported
+                            projects.
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -803,8 +1050,9 @@ export default function DonationLevelsPage() {
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            30-minute virtual session with SC’s Islamic finance advisors or ESG specialists to help
-                            users align personal finances with Shariah principle
+                            30-minute virtual session with SC’s Islamic finance
+                            advisors or ESG specialists to help users align
+                            personal finances with Shariah principle
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -821,7 +1069,8 @@ export default function DonationLevelsPage() {
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            Enjoy all the benefits of Level 2, including Takaful discounts and priority workshop access.
+                            Enjoy all the benefits of Level 2, including Takaful
+                            discounts and priority workshop access.
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -832,24 +1081,29 @@ export default function DonationLevelsPage() {
             </div>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full" disabled={currentLevel < 3}>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={currentLevel < 3}
+            >
               {currentLevel >= 3 ? "Current Level" : "Locked"}
             </Button>
           </CardFooter>
         </Card>
       </div>
 
-      {/* Shariah compliance notice */}
       <div className="mt-12 bg-blue-50 border border-blue-100 rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-          <Shield className="h-5 w-5 text-blue-600" /> Shariah Compliance Statement
+          <Shield className="h-5 w-5 text-blue-600" /> Shariah Compliance
+          Statement
         </h3>
         <p className="text-muted-foreground">
-          All donation levels and rewards are certified Shariah-compliant by our panel of Islamic finance experts. Our
-          platform ensures that all charitable activities adhere to Islamic principles of transparency, ethical use of
-          funds, and prohibition of riba (interest).
+          All donation levels and rewards are certified Shariah-compliant by our
+          panel of Islamic finance experts. Our platform ensures that all
+          charitable activities adhere to Islamic principles of transparency,
+          ethical use of funds, and prohibition of riba (interest).
         </p>
       </div>
     </div>
-  )
+  );
 }

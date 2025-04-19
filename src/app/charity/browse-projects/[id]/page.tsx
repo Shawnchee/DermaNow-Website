@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { toast } from "sonner";
 import connectMetamask from "@/hooks/connectMetamask";
 import { contractABI } from "@/lib/contract-abi";
@@ -56,13 +56,9 @@ import { useParams } from "next/navigation";
 import SmartContractTransaction from "@/components/smart-contract-transaction";
 import { EthereumLivePrice } from "@/utils/ethLivePrice";
 
-// Contract address from deployment
-// const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
-
 export default function CharityPage() {
   const params = useParams();
   const id = params.id;
-  // Use the connectMetamask hook
   const { walletAddress, provider, signer, connectWallet } = connectMetamask();
   const [contract, setContract] = useState<ethers.Contract | null>(null);
   const [account, setAccount] = useState<string>("");
@@ -74,10 +70,10 @@ export default function CharityPage() {
     [key: number]: string;
   }>({});
   const [totalRaised, setTotalRaised] = useState(0);
-  const [targetAmount, setTargetAmount] = useState(10); // Default to 10 ETH
+  const [targetAmount, setTargetAmount] = useState(10);
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [ethToMyrRate, setEthToMyrRate] = useState(7200); // Default rate: 1 ETH = 12,500 MYR
-  const [rateLoading, setRateLoading] = useState(true); // Track if rate is still loading
+  const [ethToMyrRate, setEthToMyrRate] = useState(7200);
+  const [rateLoading, setRateLoading] = useState(true);
   const [myrValues, setMyrValues] = useState({
     totalRaised: 0,
     targetAmount: 0,
@@ -88,7 +84,6 @@ export default function CharityPage() {
   const [proofOfWorkModalOpen, setProofOfWorkModalOpen] = useState(false);
   const [selectedProofOfWork, setSelectedProofOfWork] = useState<any>(null);
 
-  // Modal states
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedMilestone, setSelectedMilestone] = useState<any>(null);
   const [modalDonationAmount, setModalDonationAmount] = useState("");
@@ -116,14 +111,28 @@ export default function CharityPage() {
     { step: number; color: string; title: string; desc: string }[]
   >([]);
 
-  // Create a consistent function for ETH to MYR conversion
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"],
+  });
+
+  const smoothScrollY = useSpring(scrollYProgress, {
+    damping: 50,
+    stiffness: 400,
+  });
+  const y1 = useTransform(smoothScrollY, [0, 1], [0, -100]);
+  const y2 = useTransform(smoothScrollY, [0, 1], [0, -200]);
+  const y3 = useTransform(smoothScrollY, [0, 1], [0, -50]);
+  const scale = useTransform(smoothScrollY, [0, 0.5], [1, 0.5]);
+  const opacity = useTransform(smoothScrollY, [0, 0.8], [1, 0.6]);
+
   const convertEthToMyr = (ethAmount) => {
     return Number(ethAmount) * ethToMyrRate;
   };
 
   useEffect(() => {
     if (id) {
-      // Fetch project details from Supabase
       const fetchProjectDetails = async () => {
         try {
           const { data, error } = await supabase
@@ -157,7 +166,6 @@ export default function CharityPage() {
     }
   }, [id]);
 
-  // Fetch ETH to MYR rate with proper error handling and consistent updates
   async function fetchEthToMyrRate() {
     try {
       setRateLoading(true);
@@ -165,19 +173,16 @@ export default function CharityPage() {
       setEthToMyrRate(ethPriceInMyr);
       console.log("Current ETH to MYR rate:", ethPriceInMyr);
 
-      // Update MYR values whenever the exchange rate changes
       if (totalRaised && targetAmount) {
         updateMyrValues(totalRaised, targetAmount);
       }
     } catch (error) {
       console.error("Error fetching ETH to MYR rate:", error);
-      // Keep the default value if there's an error
     } finally {
       setRateLoading(false);
     }
   }
 
-  // Update MYR values consistently
   const updateMyrValues = (raised, target) => {
     const remainingAmount = Math.max(target - raised, 0);
 
@@ -190,13 +195,11 @@ export default function CharityPage() {
 
   useEffect(() => {
     fetchEthToMyrRate();
-    // Set up periodic refresh of exchange rate (every 5 minutes)
     const intervalId = setInterval(fetchEthToMyrRate, 300000);
 
-    return () => clearInterval(intervalId); // Clean up on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
-  // Initialize contract when signer is available
   useEffect(() => {
     const initialize = async () => {
       if (signer && provider && contractAddress) {
@@ -209,7 +212,6 @@ export default function CharityPage() {
           setContract(charityContract);
           console.log("Contract initialized:", charityContract.address);
 
-          // Fetch contract data
           await fetchContractData(charityContract);
           console.log("Contract data initialized");
         } catch (error) {
@@ -221,15 +223,13 @@ export default function CharityPage() {
       }
     };
 
-    // Add a small delay to ensure signer and provider are loaded
     const timeout = setTimeout(() => {
       initialize();
-    }, 500); // 500ms delay
+    }, 500);
 
-    return () => clearTimeout(timeout); // Cleanup timeout on unmount
+    return () => clearTimeout(timeout);
   }, [signer, provider, contractAddress]);
 
-  // Auto-connect wallet if already connected
   useEffect(() => {
     if (!walletAddress) {
       const savedAddress = localStorage.getItem("walletAddress");
@@ -240,21 +240,18 @@ export default function CharityPage() {
     }
   }, [walletAddress, connectWallet]);
 
-  // Fetch all data from the contract
   const fetchContractData = async (contractInstance: ethers.Contract) => {
     try {
       setLoading(true);
 
-      // Fetch voting threshold
       try {
         const threshold = await contractInstance.votingThreshold();
         setVotingThreshold(threshold);
       } catch (error) {
         console.error("Error fetching voting threshold:", error);
-        setVotingThreshold(2); // Default threshold if error
+        setVotingThreshold(2);
       }
 
-      // Fetch milestones
       const milestoneCount = await contractInstance.milestoneCount();
       const milestonePromises = [];
 
@@ -276,7 +273,6 @@ export default function CharityPage() {
             (Number.parseFloat(formatEther(milestone.currentAmount)) /
               Number.parseFloat(formatEther(milestone.targetAmount))) *
             100,
-          // Add project title - in a real app, this would come from the contract
           projectTitle: projectTitle,
           image: image,
           proofOfWork: {
@@ -291,17 +287,14 @@ export default function CharityPage() {
         };
       });
 
-      // Sort milestones by ID to ensure sequential order
       formattedMilestones.sort((a, b) => a.id - b.id);
       setMilestones(formattedMilestones);
 
-      // Determine the active milestone (first unreleased milestone)
       const activeIndex = formattedMilestones.findIndex((m) => !m.released);
       setActiveMilestoneId(
         activeIndex !== -1 ? formattedMilestones[activeIndex].id : -1
       );
 
-      // Calculate total target and raised amounts
       let totalTarget = 0;
       let totalRaised = 0;
 
@@ -313,10 +306,8 @@ export default function CharityPage() {
       setTargetAmount(totalTarget);
       setTotalRaised(totalRaised);
 
-      // Update MYR values consistently
       updateMyrValues(totalRaised, totalTarget);
 
-      // Fetch recent transactions
       await fetchTransactionHistory(contractInstance);
 
       setLoading(false);
@@ -329,11 +320,8 @@ export default function CharityPage() {
     }
   };
 
-  // Fetch transaction history
   const fetchTransactionHistory = async (contractInstance: ethers.Contract) => {
     try {
-      // For this example, we'll use Etherscan API in a real implementation
-      // Here we'll create some mock transactions based on milestone data
       const mockTransactions = [];
 
       for (let i = 0; i < 5; i++) {
@@ -357,7 +345,6 @@ export default function CharityPage() {
     }
   };
 
-  // Donate to a milestone
   const donateToMilestone = async (milestoneId: number) => {
     if (!contract || !signer) return;
 
@@ -387,7 +374,6 @@ export default function CharityPage() {
         description: `Successfully donated ${amount} ETH to milestone: ${milestones[milestoneId].description}`,
       });
 
-      // Reset donation amount and refresh data
       setDonationAmount({ ...donationAmount, [milestoneId]: "" });
       await fetchContractData(contract);
 
@@ -413,7 +399,6 @@ export default function CharityPage() {
     }
   };
 
-  // Vote to release funds for a milestone
   const voteToRelease = async (milestoneId: number) => {
     if (!contract || !signer || !isCommittee) return;
 
@@ -456,7 +441,6 @@ export default function CharityPage() {
     }
   };
 
-  // Open donation modal
   const openDonationModal = (milestone: any) => {
     setSelectedMilestone(milestone);
     setModalDonationAmount("");
@@ -464,7 +448,6 @@ export default function CharityPage() {
     setModalOpen(true);
   };
 
-  // Handle modal donation
   const handleModalDonation = async () => {
     if (
       !selectedMilestone ||
@@ -495,7 +478,6 @@ export default function CharityPage() {
 
       const receipt = await tx.wait();
 
-      // Reset donation amount and refresh data
       await fetchContractData(contract);
 
       setTransactionResult({
@@ -517,16 +499,13 @@ export default function CharityPage() {
     }
   };
 
-  // Navigate to tax receipt page
   const navigateToTaxReceipt = () => {
     try {
-      // Create a mock transaction if needed for testing
       const mockTransaction = {
         txHash: `0x${Math.random().toString(16).substring(2, 42)}`,
         amount: modalDonationAmount || "1.0",
       };
 
-      // Use either the real transaction or the mock one
       const txData = {
         txHash: transactionResult.txHash || mockTransaction.txHash,
         amount: transactionResult.amount || mockTransaction.amount,
@@ -544,10 +523,8 @@ export default function CharityPage() {
       console.log("Storing donation data:", txData);
       localStorage.setItem("donationDetails", JSON.stringify(txData));
 
-      // Close the modal before navigation
       setModalOpen(false);
 
-      // Use window.location for more reliable navigation
       window.location.href = "/charity/tax-receipt";
     } catch (error) {
       console.error("Error navigating to tax receipt:", error);
@@ -562,14 +539,12 @@ export default function CharityPage() {
     milestonesRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Connect on component mount if wallet is already connected
   useEffect(() => {
     if (window.ethereum) {
       connectWallet();
     }
   }, []);
 
-  // Group milestones by project title
   const milestonesByProject = milestones.reduce((acc, milestone) => {
     if (!acc[milestone.projectTitle]) {
       acc[milestone.projectTitle] = [];
@@ -579,13 +554,30 @@ export default function CharityPage() {
   }, {});
 
   return (
-    <div className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
-      <div className="container mx-auto px-4 py-12">
+    <div
+      className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950 overflow-hidden relative"
+      ref={containerRef}
+    >
+      <motion.div
+        className="absolute top-20 left-[10%] w-64 h-64 bg-blue-300/10 rounded-full blur-3xl -z-10"
+        style={{ y: y1 }}
+      />
+      <motion.div
+        className="absolute top-40 right-[15%] w-96 h-96 bg-green-300/10 rounded-full blur-3xl -z-10"
+        style={{ y: y2 }}
+      />
+      <motion.div
+        className="absolute bottom-20 left-[25%] w-80 h-80 bg-purple-300/10 rounded-full blur-3xl -z-10"
+        style={{ y: y3 }}
+      />
+
+      <div className="container mx-auto px-4 py-12 relative z-10">
         <motion.div
           className="text-center max-w-4xl mx-auto mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
+          style={{ scale, opacity }}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -600,12 +592,38 @@ export default function CharityPage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.7 }}
-            className="flex justify-center mb-6"
+            className="flex justify-center mb-6 relative"
+            style={{ y: useTransform(smoothScrollY, [0, 1], [0, -30]) }}
           >
-            <img
+            <motion.img
               src="/icons/milestonebased.svg"
               alt="Milestone Icon"
-              className="h-56 w-h-56"
+              className="h-56 w-h-56 relative z-10"
+              whileHover={{
+                y: -5,
+                scale: 1.03,
+                transition: { duration: 0.2, type: "spring", stiffness: 300 },
+              }}
+              animate={{
+                y: [0, -10, 0],
+                transition: {
+                  repeat: Infinity,
+                  duration: 3,
+                  ease: "easeInOut",
+                },
+              }}
+            />
+            <motion.div
+              className="absolute top-1/2 w-40 h-40 bg-blue-400/20 rounded-full blur-xl -z-10"
+              animate={{
+                scale: [1, 1.1, 1],
+                opacity: [0.5, 0.7, 0.5],
+                transition: {
+                  repeat: Infinity,
+                  duration: 4,
+                  ease: "easeInOut",
+                },
+              }}
             />
           </motion.div>
 
@@ -614,6 +632,7 @@ export default function CharityPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.7 }}
+            style={{ y: useTransform(smoothScrollY, [0, 1], [0, -20]) }}
           >
             Milestone-Based Charity Projects
           </motion.h1>
@@ -623,20 +642,11 @@ export default function CharityPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.7 }}
+            style={{ y: useTransform(smoothScrollY, [0, 1], [0, -10]) }}
           >
             Support verified charity projects with transparent milestone
             tracking. Every donation is securely recorded on the blockchain.
           </motion.p>
-          {/* 
-          {!account && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-            >
-              <ConnectWallet onConnect={connectWallet} />
-            </motion.div>
-          )} */}
 
           {account && (
             <motion.div
@@ -644,9 +654,19 @@ export default function CharityPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.5 }}
+              whileHover={{
+                y: -5,
+                boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
+              }}
             >
               <div className="flex items-center gap-2">
-                <div className="h-3 w-3 bg-green-500 rounded-full"></div>
+                <motion.div
+                  className="h-3 w-3 bg-green-500 rounded-full"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    transition: { repeat: Infinity, duration: 2 },
+                  }}
+                ></motion.div>
                 <span className="text-gray-800 font-medium">
                   Connected: {account.slice(0, 6)}...{account.slice(-4)}
                 </span>
@@ -665,7 +685,6 @@ export default function CharityPage() {
           )}
         </motion.div>
 
-        {/* Campaign Progress Card */}
         <CampaignProgressCard
           totalRaised={totalRaised}
           targetAmount={targetAmount}
@@ -689,7 +708,6 @@ export default function CharityPage() {
 
         <HalalChecker description={overview.join(". ")} />
 
-        {/* Sequential Milestone Information */}
         <div className="my-8 ">
           <Alert className="bg-blue-50 border-blue-200">
             <AlertTriangle className="h-5 w-5 text-blue-600" />
@@ -703,7 +721,6 @@ export default function CharityPage() {
           </Alert>
         </div>
 
-        {/* Committee Voting Link for Committee Members */}
         {isCommittee && (
           <div className="mb-8">
             <Card className="bg-blue-50 border-blue-200">
@@ -792,7 +809,6 @@ export default function CharityPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Milestones Section */}
         <div className="mb-16" ref={milestonesRef}>
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold text-gray-800">
@@ -828,7 +844,6 @@ export default function CharityPage() {
               </CardContent>
             </Card>
           ) : (
-            // Display milestones grouped by project
             Object.entries(milestonesByProject as Record<string, any[]>).map(
               ([projectTitle, projectMilestones]) => (
                 <div key={projectTitle} className="mb-12">
@@ -852,7 +867,6 @@ export default function CharityPage() {
                               : "border-blue-100"
                           } overflow-hidden h-full flex flex-col relative p-2`}
                         >
-                          {/* Sequential indicator */}
                           {activeMilestoneId === milestone.id && (
                             <div className="absolute top-0 right-0 left-0 bg-green-500 text-white text-xs font-medium text-center py-1">
                               ACTIVE MILESTONE
@@ -914,7 +928,6 @@ export default function CharityPage() {
                                 <span className="font-medium">
                                   Service Provider:
                                 </span>{" "}
-                                {/* {milestone.serviceProviderName} */}
                               </div>
                               <div className="text-xs text-gray-500 font-mono">
                                 Address:{" "}
@@ -1029,8 +1042,8 @@ export default function CharityPage() {
                                     onClick={() => {
                                       setSelectedProofOfWork(
                                         milestone.proofOfWork
-                                      ); // Set proof of work data
-                                      setProofOfWorkModalOpen(true); // Open modal
+                                      );
+                                      setProofOfWorkModalOpen(true);
                                     }}
                                   >
                                     <ExternalLink className="h-4 w-4 mr-2 " />
@@ -1080,8 +1093,8 @@ export default function CharityPage() {
                                   onClick={() => {
                                     setSelectedProofOfWork(
                                       milestone.proofOfWork
-                                    ); // Set proof of work data
-                                    setProofOfWorkModalOpen(true); // Open modal
+                                    );
+                                    setProofOfWorkModalOpen(true);
                                   }}
                                 >
                                   <ExternalLink className="h-4 w-4 mr-2 " />
@@ -1100,7 +1113,6 @@ export default function CharityPage() {
           )}
         </div>
 
-        {/* Transaction History */}
         {contractAddress ? (
           <SmartContractTransaction smart_contract_address={contractAddress} />
         ) : (
@@ -1157,9 +1169,7 @@ export default function CharityPage() {
           </div>
         </div>
 
-        {/* Security and Verification Section */}
         <div className="mb-6 mt-12">
-          {/* Committee Verification */}
           <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
             <div className="flex items-start">
               <div className="bg-blue-50 p-3 rounded-full mr-4">
@@ -1181,7 +1191,6 @@ export default function CharityPage() {
           </div>
         </div>
 
-        {/* DAO Committee Application */}
         <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
           <div className="flex items-start">
             <div className="bg-green-50 p-3 rounded-full mr-4">
@@ -1219,7 +1228,6 @@ export default function CharityPage() {
           </div>
         </div>
 
-        {/* Shariah compliance badge */}
         <div className="container mx-auto px-6 pt-2 mt-4">
           <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
             <div className="flex items-center">
@@ -1247,7 +1255,6 @@ export default function CharityPage() {
         </div>
       </div>
 
-      {/* Donation Modal */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
