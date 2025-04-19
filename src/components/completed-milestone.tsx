@@ -146,7 +146,7 @@ export default function CompletedMilestones() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {completedMilestones.map((milestone, index) => (
-                <Card key={index} className="border border-blue-200 hover:shadow-md transition-shadow">
+                <Card key={index} className="border border-green-400 bg-green-50 hover:shadow-md transition-shadow">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg text-blue-800">{milestone.project_title}</CardTitle>
                     <CardDescription className="text-blue-700">{milestone.description}</CardDescription>
