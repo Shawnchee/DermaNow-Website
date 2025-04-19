@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { ethers, formatEther } from "ethers";
 import {
   Table,
@@ -19,25 +18,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Loader2 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import supabase from "@/utils/supabase/client";
 import { EthereumLivePrice } from "@/utils/ethLivePrice";
 
 export default function WalletTransaction() {
-  const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
-  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY || "";
   const walletAddress = "0x483bF34b4444dB73FB0b1b5EBDB0253A4E8b714f";
-
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -55,9 +44,7 @@ export default function WalletTransaction() {
 
   async function fetchTransactions(walletAddress) {
     try {
-      // Use the new API route instead of calling Etherscan directly
       const url = `/api/transactions?address=${walletAddress}`;
-
       const response = await fetch(url);
       const data = await response.json();
       console.log("Fetched transactions:", data);
@@ -67,7 +54,6 @@ export default function WalletTransaction() {
           (tx) => tx.from.toLowerCase() === walletAddress.toLowerCase()
         );
 
-        // Fetch contract addresses and project titles from Supabase
         const { data: walletData, error: walletError } = await supabase
           .from("charity_projects")
           .select("smart_contract_address, title");
@@ -88,7 +74,6 @@ export default function WalletTransaction() {
             )
           );
 
-        // Map project titles to transactions
         const transactionsWithTitles = filteredTransactions.map((tx) => {
           const project = walletData.find(
             (item) =>
@@ -122,20 +107,45 @@ export default function WalletTransaction() {
     fetchTransactions(walletAddress);
   }, []);
 
-  // Function to truncate long addresses/hashes
   const truncateAddress = (address) => {
     if (!address) return "Contract Creation";
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  // Function to format date
   const formatDate = (timestamp) => {
-    return new Date(parseInt(timestamp) * 1000).toLocaleString();
+    const date = new Date(parseInt(timestamp) * 1000);
+    return date.toISOString().replace("T", " ").split(".")[0]; // Format as "YYYY-MM-DD HH:MM:SS"
   };
 
-  // Function to convert ETH to MYR
   const convertEthToMyr = (ethValue) => {
     return (parseFloat(ethValue) * ethToMyr).toFixed(2);
+  };
+
+  // Function to export transactions as CSV
+  const exportToCSV = () => {
+    const csvRows = [
+      ["Date", "Project Title", "Hash", "To", "Value (MYR)", "Value (ETH)"], // Header row
+      ...transactions.map((tx) => [
+        formatDate(tx.timeStamp),
+        tx.project_title,
+        tx.hash,
+        tx.to || "Contract Creation",
+        convertEthToMyr(formatEther(tx.value)),
+        parseFloat(formatEther(tx.value)).toFixed(6),
+      ]),
+    ];
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      csvRows.map((row) => row.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "transactions.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -152,6 +162,14 @@ export default function WalletTransaction() {
             <code className="text-sm font-mono break-all text-blue-800">
               {walletAddress}
             </code>
+          </div>
+          <div className="flex justify-center mt-4">
+            <Button
+              onClick={exportToCSV}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Export to CSV
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
