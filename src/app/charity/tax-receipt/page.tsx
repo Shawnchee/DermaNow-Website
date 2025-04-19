@@ -83,7 +83,7 @@ export default function TaxReceiptPage() {
       } else {
         console.warn("No donation details found in localStorage");
         // If no donation details, redirect back to charity page
-        router.push("/charity/browse-projects");
+        router.push("/charity/browse-projects/");
       }
 
       // Generate a unique receipt number
@@ -148,7 +148,7 @@ export default function TaxReceiptPage() {
       <Button
         variant="outline"
         className="mb-6 print:hidden"
-        onClick={() => router.push("/charity/browse-projects")}
+        onClick={() => router.push("/charity/browse-projects/8")}
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Charity Page
