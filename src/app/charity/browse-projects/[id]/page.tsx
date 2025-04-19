@@ -45,6 +45,7 @@ import {
   BookOpen,
   Leaf,
   MoonStar,
+  Receipt,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import HalalChecker from "@/components/HalalChecker";
@@ -53,9 +54,10 @@ import supabase from "@/utils/supabase/client";
 import { useParams } from "next/navigation";
 import SmartContractTransaction from "@/components/smart-contract-transaction";
 import DiscussionSection from "@/components/discussion-section"
+import MockupSmartContractTransaction from "@/components/mockupsmartcontract";
 
 // Contract address from deployment
-const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
+// const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
 
 export default function CharityPage() {
   const params = useParams();
@@ -94,6 +96,7 @@ export default function CharityPage() {
     status: "success" | "error" | null;
     message: string;
     txHash?: string;
+    amount?: string;
   }>({ status: null, message: "" });
 
   const milestonesRef = useRef<HTMLDivElement>(null);
@@ -105,6 +108,7 @@ export default function CharityPage() {
   const [projectDescription, setProjectDescription] = useState<string>("");
   const [image, setImage] = useState<string>("");
   const [categories, setCategories] = useState<string[]>([""]);
+  const [contractAddress, setContractAddress] = useState<string>("");
 
   useEffect(() => {
     if (id) {
@@ -125,7 +129,9 @@ export default function CharityPage() {
             setProjectDescription(data?.description || eventDescription);
             setImage(data?.image || "/charity.jpg");
             setCategories(data?.category || [""]);
+            setContractAddress(data?.smart_contract_address || "");
           }
+          console.log("Smart Contract Address:", data?.smart_contract_address);
         } catch (err) {
           console.error("Error fetching project details:", err);
           setProjectTitle("Unknown Project");
@@ -138,10 +144,10 @@ export default function CharityPage() {
   // Initialize contract when signer is available
   useEffect(() => {
     const initialize = async () => {
-      if (signer && provider) {
+      if (signer && provider && contractAddress) {
         try {
           const charityContract = new ethers.Contract(
-            CONTRACT_ADDRESS,
+            contractAddress,
             contractABI,
             signer
           );
@@ -166,7 +172,7 @@ export default function CharityPage() {
     }, 500); // 500ms delay
 
     return () => clearTimeout(timeout); // Cleanup timeout on unmount
-  }, [signer, provider]);
+  }, [signer, provider, contractAddress]);
 
   // Auto-connect wallet if already connected
   useEffect(() => {
@@ -190,7 +196,7 @@ export default function CharityPage() {
         setVotingThreshold(threshold);
       } catch (error) {
         console.error("Error fetching voting threshold:", error);
-        setVotingThreshold(3); // Default threshold if error
+        setVotingThreshold(2); // Default threshold if error
       }
 
       // Fetch milestones
@@ -345,6 +351,7 @@ export default function CharityPage() {
         status: "success",
         message: `Successfully donated ${amount} ETH to milestone: ${milestones[milestoneId].description}`,
         txHash: receipt.transactionHash,
+        amount: amount,
       });
     } catch (error) {
       console.error("Donation error:", error);
@@ -451,6 +458,7 @@ export default function CharityPage() {
         status: "success",
         message: `Successfully donated ${modalDonationAmount} ETH to milestone: ${selectedMilestone.description}`,
         txHash: receipt.transactionHash,
+        amount: modalDonationAmount,
       });
     } catch (error) {
       console.error("Donation error:", error);
@@ -462,6 +470,47 @@ export default function CharityPage() {
       });
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Navigate to tax receipt page
+  const navigateToTaxReceipt = () => {
+    try {
+      // Create a mock transaction if needed for testing
+      const mockTransaction = {
+        txHash: `0x${Math.random().toString(16).substring(2, 42)}`,
+        amount: modalDonationAmount || "1.0",
+      };
+
+      // Use either the real transaction or the mock one
+      const txData = {
+        txHash: transactionResult.txHash || mockTransaction.txHash,
+        amount: transactionResult.amount || mockTransaction.amount,
+        amountMYR:
+          Number(transactionResult.amount || mockTransaction.amount) *
+          ethToMyrRate,
+        date: new Date().toISOString(),
+        milestoneDescription:
+          selectedMilestone?.description || "General Donation",
+        projectTitle:
+          selectedMilestone?.projectTitle ||
+          "Education for Kids in Rural Areas",
+      };
+
+      console.log("Storing donation data:", txData);
+      localStorage.setItem("donationDetails", JSON.stringify(txData));
+
+      // Close the modal before navigation
+      setModalOpen(false);
+
+      // Use window.location for more reliable navigation
+      window.location.href = "/charity/tax-receipt";
+    } catch (error) {
+      console.error("Error navigating to tax receipt:", error);
+      toast("Navigation Error", {
+        description:
+          "Failed to navigate to tax receipt page. Please try again.",
+      });
     }
   };
 
@@ -653,7 +702,7 @@ export default function CharityPage() {
                       (photo: string, index: number) => (
                         <img
                           key={index}
-                          src={photo}
+                          src={photo || "/placeholder.svg"}
                           alt={`Proof of Work Photo ${index + 1}`}
                           className="rounded-lg shadow-md"
                         />
@@ -764,7 +813,7 @@ export default function CharityPage() {
                             )}
 
                           <CardHeader
-                            className={`pb-2 ${
+                            className={`pb-2 pt-3 ${
                               activeMilestoneId !== -1 &&
                               activeMilestoneId === milestone.id
                                 ? "pt-8"
@@ -902,7 +951,7 @@ export default function CharityPage() {
                                 )}
                             </div>
                           </CardContent>
-                          <CardFooter className="flex flex-col gap-3 pt-0">
+                          <CardFooter className="flex flex-col gap-3 pt-0 pb-1">
                             {!milestone.released &&
                               activeMilestoneId === milestone.id && (
                                 <>
@@ -994,8 +1043,29 @@ export default function CharityPage() {
         <DiscussionSection walletAddress={walletAddress || ""} projectId={id as string} />
 
         {/* Transaction History */}
-        <SmartContractTransaction />
-
+        {/* {contractAddress ? (
+  <SmartContractTransaction smart_contract_address={contractAddress} />
+) : (
+  <div className="mb-12">
+    <Card className="bg-white/80 backdrop-blur-sm border border-blue-100">
+      
+      <CardContent className="flex flex-col items-center justify-center py-12">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+          <Clock className="h-8 w-8 text-blue-600" />
+          </div>
+          <h3 className="text-xl font-medium text-gray-800 mb-2">
+            No Transaction History Yet
+            </h3>
+            <p className="text-gray-600 text-center max-w-md">
+              There are currently no transaction history available. Check back
+                
+                later or contact the administrator.
+                </p>
+                </CardContent>
+                </Card>
+                </div>
+                )} */}
+        <MockupSmartContractTransaction />
         <div className="bg-blue-50 border-green-900 p-4 rounded-lg mt-4">
           <h3 className="font-medium text-blue-800 mb-2">Donation Types</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1031,9 +1101,8 @@ export default function CharityPage() {
           </div>
         </div>
 
-
         {/* Security and Verification Section */}
-        <div className="mb-12">
+        <div className="mb-6 mt-12">
           {/* Committee Verification */}
           <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
             <div className="flex items-start">
@@ -1056,41 +1125,50 @@ export default function CharityPage() {
           </div>
         </div>
 
-        {/* Organization Banner */}
-        <div className="container mx-auto px-6 pt-5">
-          <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-blue-400 dark:border-blue-700 bg-gradient-to-r from-blue-500 to-blue-600 shadow-sm">
-            <div className="flex items-center">
-              <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-                <Building className="h-5 w-5 text-blue-100" />
-              </div>
-              <div>
-                <div className="text-xs text-blue-100 mb-0.5 font-medium">
-                  Organization
-                </div>
-                <span className="font-semibold text-white">
-                  Charity Milestone DAO
-                </span>
+        {/* DAO Committee Application */}
+        <div className="bg-white rounded-lg shadow-md p-6 border border-blue-100">
+          <div className="flex items-start">
+            <div className="bg-green-50 p-3 rounded-full mr-4">
+              <Vote className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-2">
+                Apply to be a DAO Committee Member
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Help ensure transparency and accountability by joining our DAO
+                committee. As a committee member, you'll vote on milestone
+                completions and fund releases.
+              </p>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-700">
+                  <span className="font-medium">Requirements:</span> Active
+                  wallet with at least 0.1 ETH in transactions, commitment to
+                  review project milestones, and adherence to our ethical
+                  guidelines.
+                </p>
+                <Alert className="bg-blue-50 border-blue-200">
+                  <BadgeCheck className="h-5 w-5 text-blue-600" />
+                  <AlertTitle>Community Governance</AlertTitle>
+                  <AlertDescription>
+                    Committee members participate in decentralized governance
+                    through transparent voting on the blockchain.
+                  </AlertDescription>
+                </Alert>
+                <Button className="bg-green-500 hover:bg-green-600 text-white">
+                  Apply Now
+                </Button>
               </div>
             </div>
-
-            <a
-              href="https://github.com/charity-milestone-dao"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center ml-auto px-3 py-1.5 rounded-full bg-white bg-opacity-20 hover:bg-opacity-30 backdrop-blur-sm text-white text-sm transition-colors duration-200"
-            >
-              <span className="text-blue-500">View GitHub</span>
-              <ExternalLink className="h-3 w-3 ml-1.5 text-blue-500" />
-            </a>
           </div>
         </div>
 
         {/* Shariah compliance badge */}
-        <div className="container mx-auto px-6 pt-2">
+        <div className="container mx-auto px-6 pt-2 mt-4">
           <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
             <div className="flex items-center">
               <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-                <MoonStar className="h-5 w-5 text-green-100" />
+                <MoonStar className="h-5 w-5 text-green-500" />
               </div>
               <div>
                 <div className="text-xs text-green-100 mb-0.5 font-medium">
@@ -1290,7 +1368,15 @@ export default function CharityPage() {
                   )}
                 </AlertDescription>
               </Alert>
-              <div className="mt-6 flex justify-end">
+              <div className="mt-6 flex flex-col gap-4">
+                <Button
+                  type="button"
+                  onClick={navigateToTaxReceipt}
+                  className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2 py-6 text-lg"
+                >
+                  <Receipt className="h-5 w-5" />
+                  Generate Tax Relief Receipt
+                </Button>
                 <Button
                   type="button"
                   onClick={() => setModalOpen(false)}

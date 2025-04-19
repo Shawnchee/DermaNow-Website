@@ -29,9 +29,9 @@ import {
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function SmartContractTransaction() {
+export default function SmartContractTransaction({ smart_contract_address }: {smart_contract_address: string}) {
   const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
-  const contractAddress = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
+  const contractAddress = smart_contract_address
   const ETH_TO_MYR_RATE = 12500;
 
   const [transactions, setTransactions] = useState([]);
@@ -40,17 +40,14 @@ export default function SmartContractTransaction() {
 
   async function fetchTransactions(contractAddress) {
     try {
-      // Etherscan API endpoint for Sepolia testnet
-      const baseUrl = "https://api-sepolia.etherscan.io/api";
-
-      const url = `${baseUrl}?module=account&action=txlist&address=${contractAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${ETHERSCAN_API_KEY}`;
-
+      // Use your own API route instead of calling Etherscan directly
+      const url = `/api/transactions?address=${contractAddress}`;
+  
       const response = await fetch(url);
       const data = await response.json();
       console.log("Fetched transactions:", data);
-
+  
       if (data.status === "1") {
-        // Filter transactions to only include those where the contract is the recipient
         const receivedTransactions = data.result.filter(
           (tx) => tx.to.toLowerCase() === contractAddress.toLowerCase()
         );
@@ -65,6 +62,7 @@ export default function SmartContractTransaction() {
       setLoading(false);
     }
   }
+  
 
   useEffect(() => {
     fetchTransactions(contractAddress);
@@ -86,7 +84,7 @@ export default function SmartContractTransaction() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
+    <div className="flex flex-col items-center justify-center">
       <Card className="w-full max-w-9xl bg-white/90 backdrop-blur-sm border ">
         <CardHeader>
           <CardTitle className="text-2xl text-black">Donation History</CardTitle>
@@ -195,4 +193,4 @@ export default function SmartContractTransaction() {
       </Card>
     </div>
   );
-}
+  }

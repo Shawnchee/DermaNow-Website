@@ -40,6 +40,7 @@ import { useWallet } from "@/context/wallet-context"
 import WalletTransaction from "@/components/wallet-address-transaction"
 import { useParams } from "next/navigation";
 import supabase from "@/utils/supabase/client";
+import MockupWalletAddress from "@/components/mockupwalletaddress"
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
@@ -610,9 +611,9 @@ export default function ProfilePage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="history">
-        <WalletTransaction />
-        
+        <TabsContent value="history">        
+        {/* <WalletTransaction /> */}
+        <MockupWalletAddress />
 
         <Card className="mt-6">
           <CardHeader>
