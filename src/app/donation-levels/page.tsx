@@ -289,18 +289,8 @@ export default function DonationLevelsPage() {
           style={{ y: useTransform(smoothScrollY, [0, 1], [0, -10]) }}
         >
           Increase your impact and unlock exclusive benefits with our
-          Shariah-compliant donation levels, in partnership with Securities
-          Commission Malaysia.
+          Shariah-compliant donation levels.
         </motion.p>
-
-        <motion.div
-          className="flex items-center justify-center mt-4 text-sm text-muted-foreground"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-        >
-          Verified by Securities Commission Malaysia
-        </motion.div>
       </motion.div>
 
       <div className="mb-8">
@@ -917,12 +907,11 @@ export default function DonationLevelsPage() {
                           <div className="h-5 w-5 flex-shrink-0 mt-0.5 text-amber-600">
                             <Calendar className="h-5 w-5" />
                           </div>
-                          <span>Priority SCM's Workshop Access</span>
+                          <span>Monthly Free Workshop Access</span>
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            Get priority access to SC Malaysia's financial
-                            literacy workshops and Shariah investment seminars.
+                            Get access to various workshops including mental health, financial, meditation and many more. 
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -1013,7 +1002,7 @@ export default function DonationLevelsPage() {
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            Exclusive NFT that grants access to SC Malaysia's
+                            Exclusive NFT that grants access to 
                             annual Islamic Finance Forum and networking events.
                           </p>
                         </TooltipContent>
@@ -1046,13 +1035,11 @@ export default function DonationLevelsPage() {
                           <div className="h-5 w-5 flex-shrink-0 mt-0.5 text-blue-600">
                             <FileText className="h-5 w-5" />
                           </div>
-                          <span>1:1 Consultation with SC Experts</span>
+                          <span>Free CTOS Score Report </span>
                         </TooltipTrigger>
                         <TooltipContent side="right">
                           <p className="max-w-xs">
-                            30-minute virtual session with SC’s Islamic finance
-                            advisors or ESG specialists to help users align
-                            personal finances with Shariah principle
+                            Users can redeem a free comprehensive ctos score report (worth rm27.90) 
                           </p>
                         </TooltipContent>
                       </Tooltip>
