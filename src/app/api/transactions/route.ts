@@ -1,4 +1,3 @@
-import { Console } from 'console';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -6,7 +5,10 @@ export async function GET(request: Request) {
   const contractAddress = searchParams.get('address');
   
   // Use server-side env variable (without NEXT_PUBLIC prefix)
-  const apiKey = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY;
+  const apiKey = process.env.ETHERSCAN_API_KEY;
+
+  console.log('API Key:', apiKey); // Log the API key for debugging (remove in production)
+
   
   if (!contractAddress) {
     return NextResponse.json({ error: 'Contract address is required' }, { status: 400 });
