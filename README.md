@@ -11,9 +11,9 @@
 📚 For full details on the DermaNow project—including project overview, user guide, charity organization guide, admin panel, and developer setup—please refer to our official documentation:
 👉 [DermaNow Onboarding Documentation](https://dermanow.gitbook.io/dermanow-docs/)
 
-
-**Presentation Slide:**  
-🎞️ [View our Google Drive Link](https://drive.google.com/file/d/1glmER9PzY-VC7BEyiFT_V998fyDrLVvm/view?usp=sharing)
+### 🎞️ Presentation & Demo  
+- 📽️ **Video Demo**: [Watch Demo Video](https://drive.google.com/file/d/1-Q4cHwb8KDd5-XcRSITOKIPLNN05DtM5/view?usp=drive_link)  
+- 🖥️ **Pitching Slides**: [View Pitch Deck](https://drive.google.com/file/d/1ODmQ1zypmZp60RT3I7WqbzoiCTnjJWCh/view?usp=sharing)  
 
 ## Blockchain-Powered Shariah-Compliant Charity Platform
 
