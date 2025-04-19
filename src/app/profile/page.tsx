@@ -5,10 +5,26 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import {
-  User, History, Bell, Heart, Edit, ChevronRight, Wallet, ExternalLink, Copy, ArrowUpRight, Save, Camera, X, Award, Sparkles, Gem, ChevronUp,
+  User,
+  History,
+  Bell,
+  Heart,
+  Edit,
+  Wallet,
+  Copy,
+  ArrowUpRight,
+  Save,
+  Camera,
+  X,
+  Award,
+  Sparkles,
+  Gem,
+  ChevronUp,
   Droplet,
   LibraryBig,
-  Apple,} from "lucide-react"
+  Apple,
+  Users,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -22,6 +38,8 @@ import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 import { useWallet } from "@/context/wallet-context"
 import WalletTransaction from "@/components/wallet-address-transaction"
+import { useParams } from "next/navigation";
+import supabase from "@/utils/supabase/client";
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
@@ -32,12 +50,12 @@ export default function ProfilePage() {
 
   // User level data - in a real app, this would come from the backend
   const [userLevel, setUserLevel] = useState({
-      level: 2,
-      title: "Community Leader",
-      progress: 87.5, // percentage to next level
-      totalDonated: 1750, // in RM
-      projectsSupported: 3,
-      nextLevelRequirement: 2000, // in RM
+    level: 2,
+    title: "Community Leader",
+    progress: 87.5, // percentage to next level
+    totalDonated: 1750, // in RM
+    projectsSupported: 3,
+    nextLevelRequirement: 2000, // in RM
   })
 
   // Mock data
@@ -208,6 +226,35 @@ export default function ProfilePage() {
     }
   }
 
+  const { id } = useParams();
+  const [projectMilestones, setProjectMilestones] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchProjectMilestones = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("charity_projects")
+          .select("milestones")
+          .eq("id", id)
+          .single();
+  
+        if (error) throw error;
+        if (data?.milestones) {
+          setProjectMilestones(data.milestones);
+        }
+      } catch (error) {
+        console.error("Error fetching milestones:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load project milestones",
+          variant: "destructive",
+        });
+      }
+    };
+
+    if (id) fetchProjectMilestones();
+  }, [id]);
+
   // Show loading state
   if (isLoading) {
     return (
@@ -366,17 +413,17 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-          <Link href="/onramp">
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleDepositFunds}>
-              <ArrowUpRight className="mr-2 h-4 w-4" /> Deposit Funds
-            </Button>
-          </Link>
+            <Link href="/onramp">
+              <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleDepositFunds}>
+                <ArrowUpRight className="mr-2 h-4 w-4" /> Deposit Funds
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
 
       <Tabs defaultValue="wallet" className="w-full">
-        <TabsList className="grid grid-cols-4 mb-8">
+        <TabsList className="grid grid-cols-5 mb-8">
           <TabsTrigger value="wallet" className="flex items-center gap-2">
             <Wallet className="h-4 w-4" /> Wallet
           </TabsTrigger>
@@ -385,6 +432,9 @@ export default function ProfilePage() {
           </TabsTrigger>
           <TabsTrigger value="history" className="flex items-center gap-2">
             <History className="h-4 w-4" /> History
+          </TabsTrigger>
+          <TabsTrigger value="impact" className="flex items-center gap-2">
+            <Droplet className="h-4 w-4" /> Impact
           </TabsTrigger>
           <TabsTrigger value="preferences" className="flex items-center gap-2">
             <Bell className="h-4 w-4" /> Preferences
@@ -395,7 +445,7 @@ export default function ProfilePage() {
           <Card className="py-8">
             <CardHeader>
               <CardTitle>Token Balance</CardTitle>
-              <CardDescription>Your available  ETH for donations</CardDescription>
+              <CardDescription>Your available ETH for donations</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 mt-2">
@@ -438,8 +488,7 @@ export default function ProfilePage() {
                     <Progress value={project.progress} className="h-2" />
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>
-                        {project.raised.replace("ETH", " ETH")} raised of{" "}
-                        {project.goal.replace("ETH", " ETH")}
+                        {project.raised.replace("ETH", " ETH")} raised of {project.goal.replace("ETH", " ETH")}
                       </span>
                       <span>{project.contributors} contributors</span>
                     </div>
@@ -449,9 +498,9 @@ export default function ProfilePage() {
             </CardContent>
             <CardFooter>
               <Link href="/charity/browse-projects">
-              <Button variant="outline" className="w-full mt-4 cursor-pointer">
-                Explore More Projects
-              </Button>
+                <Button variant="outline" className="w-full mt-4 cursor-pointer">
+                  Explore More Projects
+                </Button>
               </Link>
             </CardFooter>
           </Card>
@@ -563,26 +612,91 @@ export default function ProfilePage() {
 
         <TabsContent value="history">
         <WalletTransaction />
+        
 
-          <Card className="mt-6">
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Project Milestones</CardTitle>
+            <CardDescription>Latest updates from projects you supported</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {projectMilestones?.map((milestone) => (
+              <div key={milestone.id} className="border rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-emerald-100 p-2 rounded-full">
+                    <Sparkles className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">{milestone.description}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Update: {new Date(milestone.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                {milestone.proofOfWork?.photos?.length > 0 && (
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {milestone.proofOfWork.photos.map((photo: string, index: number) => (
+                      <img
+                        key={index}
+                        src={photo}
+                        alt={`Milestone proof ${index + 1}`}
+                        className="rounded-lg object-cover h-55 w-full"
+                      />
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center justify-between mb-4">
+                  <Progress 
+                    value={(milestone.currentAmount / milestone.targetAmount) * 100} 
+                    className="h-2 flex-1 mr-4"
+                  />
+                  <span className="text-sm font-medium">
+                    {((milestone.currentAmount / milestone.targetAmount) * 100).toFixed(0)}% Funded
+                  </span>
+                </div>
+                <p className="text-muted-foreground">
+                  {milestone.updateDescription || "Progress update available soon"}
+                </p>
+                <div className="mt-4">
+                  <Link href={`/charity/browse-projects/${id}?milestone=${milestone.id}`}>
+                    <Button size="sm" variant="outline">
+                      View Full Details
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+        <TabsContent value="impact">
+          <Card>
             <CardHeader>
-              <CardTitle>Impact Summary</CardTitle>
-              <CardDescription>See the difference your donations have made</CardDescription>
+              <CardTitle>Your Impact Visualization</CardTitle>
+              <CardDescription>See the real difference you're making</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg text-center">
-                  <h3 className="text-2xl font-bold text-blue-700">0.25  ETH</h3>
-                  <p className="text-sm text-blue-600">Total Donated</p>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-emerald-50 p-6 rounded-lg text-center hover:shadow-md transition-shadow">
+                <div className="mx-auto bg-emerald-100 w-max p-3 rounded-full mb-3">
+                  <Users className="h-8 w-8 text-emerald-600" />
                 </div>
-                <div className="bg-emerald-50 p-4 rounded-lg text-center">
-                  <h3 className="text-2xl font-bold text-emerald-700">5</h3>
-                  <p className="text-sm text-emerald-600">Projects Supported</p>
+                <h3 className="text-2xl font-bold text-emerald-700">1,240</h3>
+                <p className="text-sm text-emerald-600">People Helped</p>
+              </div>
+              <div className="bg-blue-50 p-6 rounded-lg text-center hover:shadow-md transition-shadow">
+                <div className="mx-auto bg-blue-100 w-max p-3 rounded-full mb-3">
+                  <Droplet className="h-8 w-8 text-blue-600" />
                 </div>
-                <div className="bg-amber-50 p-4 rounded-lg text-center">
-                  <h3 className="text-2xl font-bold text-amber-700">4</h3>
-                  <p className="text-sm text-amber-600">Donation Campaigns</p>
+                <h3 className="text-2xl font-bold text-blue-700">45K L</h3>
+                <p className="text-sm text-blue-600">Clean Water Provided</p>
+              </div>
+              <div className="bg-amber-50 p-6 rounded-lg text-center hover:shadow-md transition-shadow">
+                <div className="mx-auto bg-amber-100 w-max p-3 rounded-full mb-3">
+                  <Apple className="h-8 w-8 text-amber-600" />
                 </div>
+                <h3 className="text-2xl font-bold text-amber-700">8,700</h3>
+                <p className="text-sm text-amber-600">Meals Served</p>
               </div>
             </CardContent>
           </Card>

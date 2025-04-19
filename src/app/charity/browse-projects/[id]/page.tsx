@@ -52,6 +52,7 @@ import CampaignProgressCard from "@/components/campaign-process-card";
 import supabase from "@/utils/supabase/client";
 import { useParams } from "next/navigation";
 import SmartContractTransaction from "@/components/smart-contract-transaction";
+import DiscussionSection from "@/components/discussion-section"
 
 // Contract address from deployment
 const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
@@ -988,6 +989,9 @@ export default function CharityPage() {
             )
           )}
         </div>
+
+        {/* Discussion Section */}
+        <DiscussionSection walletAddress={walletAddress || ""} projectId={id as string} />
 
         {/* Transaction History */}
         <SmartContractTransaction />

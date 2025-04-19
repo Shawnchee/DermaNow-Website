@@ -29,7 +29,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import supabase from "@/utils/supabase";
+import supabase from "@/utils/supabase/client";
 import { EthereumLivePrice } from "@/utils/ethLivePrice";
 
 export default function WalletTransaction() {
