@@ -407,7 +407,10 @@ export default function DonationLevelsPage() {
           <div className="flex items-center gap-2">
             <Dialog open={isVoucherOpen} onOpenChange={setIsVoucherOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-purple-600 hover:bg-purple-700 cursor-pointer">
+                <Button
+                  variant="default"
+                  className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
+                >
                   <Gift className="h-4 w-4 mr-2" /> Redeem Vouchers
                 </Button>
               </DialogTrigger>

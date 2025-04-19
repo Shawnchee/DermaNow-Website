@@ -148,7 +148,7 @@ export default function TaxReceiptPage() {
       <Button
         variant="outline"
         className="mb-6 print:hidden"
-        onClick={() => router.push("/charity/browse-projects/8")}
+        onClick={() => router.push("/charity/browse-projects/5")}
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Charity Page

@@ -95,11 +95,11 @@ const ProjectCard: React.FC<ProjectProps & { listView?: boolean }> = ({
           </span>
         </div>
       </div>
-      {confidence !== undefined && (
+      {/* {confidence !== undefined && (
         <div className="absolute top-2 right-2 z-10">
           <FireIcon confidence={confidence} />
         </div>
-      )}
+      )} */}
     </div>
     <div className={`p-4 ${listView ? "md:w-2/3" : "flex-1 flex flex-col"}`}>
       <div className="mb-2">
