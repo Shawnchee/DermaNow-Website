@@ -49,6 +49,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import HalalChecker from "@/components/HalalChecker";
+import Description from "@/components/description-component";
 import CampaignProgressCard from "@/components/campaign-process-card";
 import supabase from "@/utils/supabase/client";
 import { useParams } from "next/navigation";
@@ -107,6 +108,14 @@ export default function CharityPage() {
   const [image, setImage] = useState<string>("");
   const [categories, setCategories] = useState<string[]>([""]);
   const [contractAddress, setContractAddress] = useState<string>("");
+  const [overview, setOverview] = useState<string[]>([]);
+  const [objectives, setObjectives] = useState<string[]>([]);
+  const [impact, setImpact] = useState<
+    { icon: string; title: string; subtitle: string }[]
+  >([]);
+  const [timeline, setTimeline] = useState<
+    { step: number; color: string; title: string; desc: string }[]
+  >([]);
 
   useEffect(() => {
     if (id) {
@@ -128,6 +137,10 @@ export default function CharityPage() {
             setImage(data?.image || "/charity.jpg");
             setCategories(data?.category || [""]);
             setContractAddress(data?.smart_contract_address || "");
+            setOverview(data?.overview || []);
+            setObjectives(data?.objective || []);
+            setImpact(data?.impact_stats || []);
+            setTimeline(data?.timeline || []);
           }
           console.log("Smart Contract Address:", data?.smart_contract_address);
         } catch (err) {
@@ -532,6 +545,59 @@ export default function CharityPage() {
     return acc;
   }, {});
 
+  const exampleOverview = [
+    "This initiative aims to address the critical educational gap in rural Malaysian villages by establishing modern, well-equipped schools that provide quality education to underserved children.",
+    "The project takes a holistic approach, focusing on infrastructure, teaching quality, and community engagement.",
+  ];
+
+  const exampleObjectives = [
+    "Construct 5 modern school buildings in strategic rural locations",
+    "Equip schools with materials, tech, and resources",
+    "Recruit and train 25 local teachers",
+    "Balance academic and practical curriculum",
+    "Create community involvement programs",
+    "Ensure clean water and sanitation at each school",
+  ];
+
+  const exampleImpact = [
+    {
+      icon: <Users className="h-5 w-5 text-blue-600" />,
+      title: "1,200+ Students",
+      subtitle: "Will gain access to education",
+    },
+    {
+      icon: <Building className="h-5 w-5 text-blue-600" />,
+      title: "5 Schools",
+      subtitle: "Built in strategic locations",
+    },
+    {
+      icon: <BookOpen className="h-5 w-5 text-blue-600" />,
+      title: "25 Teachers",
+      subtitle: "Trained and employed",
+    },
+  ];
+
+  const exampleTimeline = [
+    {
+      step: 1,
+      color: "bg-blue-600",
+      title: "Providing Nutritious Breakfast Meals for Children",
+      desc: "To provide breakfast meals for children on a daily basis",
+    },
+    {
+      step: 2,
+      color: "bg-blue-500",
+      title: "Delivering Healthy Lunch Meals to Schools",
+      desc: "A nutritious lunch will be provided on every schooling day to students on campus",
+    },
+    {
+      step: 3,
+      color: "bg-blue-400",
+      title: "Providing Snacks and Drinks During After-School Programs",
+      desc: "Nutrition snacks and drinks will be provided to students before after-school programs",
+    },
+  ];
+
   return (
     <div className="min-h-screen pt-8 pb-8 px-6 bg-zinc-50 dark:bg-zinc-950">
       <div className="container mx-auto px-4 py-12">
@@ -632,7 +698,16 @@ export default function CharityPage() {
           categories={categories}
         />
 
-        <HalalChecker description={eventDescription} />
+        <Description
+          title={projectTitle}
+          description={projectDescription}
+          overview={overview}
+          objectives={objectives}
+          impactStats={impact}
+          timeline={timeline}
+        />
+
+        <HalalChecker description={overview.join(". ")} />
 
         {/* Sequential Milestone Information */}
         <div className="my-8 ">
