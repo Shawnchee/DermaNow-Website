@@ -116,3 +116,52 @@ furnished to do so, subject to the following conditions:
 
 > The above copyright notice and this permission notice shall  
 > be included in all copies or substantial portions of the Software.
+
+## 🚀 Dermanow Deployment Guide
+
+### ✅ Prerequisites
+- Node.js: Ensure you have Node.js (v16 or later) installed.
+- Supabase: Set up a Supabase project for database management.
+- MetaMask: Make sure you have a wallet for interacting with smart contracts.
+- Environment Variables: Prepare the required .env file.
+
+### 🧱 1. Clone the Repository
+   ```bash
+   git clone https://github.com/Shawnchee/DermaNow-Website.git
+   cd DermaNow-website
+   ```
+
+### 📦 2. Install Frontend Dependencies
+    npm install
+
+### 🖥️ 3. Run Frontend (Next.js)
+    npm run dev
+
+### 🧪 4. Set Up Python Backend
+  ```bash
+  cd python
+python -m venv .venv
+.venv/Scripts/activate  # For Windows
+# or
+source .venv/bin/activate  # For macOS/Linux
+
+pip install -r requirements.txt
+python download_model.py
+```
+
+### 🚀 5. Run Backend (FastAPI)
+```
+  uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+  ```
+Backend API will be available at: http://localhost:8000
+
+### 🔗 Related Repositories
+- ⚙️ **Airflow Automation (DAGs)**: [Airflow Flagging Repo](https://github.com/Shawnchee/flagging-airflow)
+- 🔗 **Smart Contract Project**: [DermaNow Smart Contract](https://github.com/Shawnchee/smart-contract-dermanow)
+
+
+
+
+
+
+
