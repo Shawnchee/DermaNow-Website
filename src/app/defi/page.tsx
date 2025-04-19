@@ -48,6 +48,7 @@ import { contractABI } from "@/lib/contract-abi"
 import { formatEther, parseEther } from "ethers"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import ShariahCompliantProtocols from "@/components/defi-shariah-protocols";
+import StakingHowItWorks from "@/components/staking-guide"
 
 
 // Contract address from deployment
@@ -674,7 +675,9 @@ export default function StakingPage() {
           )}
         </motion.div>
 
-         {/* Shariah Compliance Banner */}
+        <StakingHowItWorks />
+
+         {/* Shariah Compliance Banner
          <div className="max-w-5xl mx-auto mb-8">
           <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200">
             <CardContent className="pt-6">
@@ -703,10 +706,10 @@ export default function StakingPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         {/* Staking Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 mx-auto mt-6">
           <Card className="bg-white/90 backdrop-blur-sm border border-blue-100">
             <CardContent className="pt-2">
               <div className="flex items-center gap-3">

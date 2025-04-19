@@ -28,29 +28,40 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EthereumLivePrice } from "@/utils/ethLivePrice";
+
 
 export default function SmartContractTransaction({ smart_contract_address }: {smart_contract_address: string}) {
   const ETHERSCAN_API_KEY = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY || "";
   const contractAddress = smart_contract_address
-  const ETH_TO_MYR_RATE = 12500;
+  
 
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [ethToMyr, setEthToMyr] = useState(12500);
+
+  async function fetchEthToMyrRate() {
+    try {
+      const ethPriceInMyr = await EthereumLivePrice();
+      setEthToMyr(ethPriceInMyr);
+    } catch (error) {
+      console.error("Error fetching ETH to MYR rate:", error);
+      setEthToMyr(12500);
+    }
+  }
+
 
   async function fetchTransactions(contractAddress) {
     try {
-      // Etherscan API endpoint for Sepolia testnet
-      const baseUrl = "https://api-sepolia.etherscan.io/api";
-
-      const url = `${baseUrl}?module=account&action=txlist&address=${contractAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${ETHERSCAN_API_KEY}`;
-
+      // Use your own API route instead of calling Etherscan directly
+      const url = `/api/transactions?address=${contractAddress}`;
+  
       const response = await fetch(url);
       const data = await response.json();
       console.log("Fetched transactions:", data);
-
+  
       if (data.status === "1") {
-        // Filter transactions to only include those where the contract is the recipient
         const receivedTransactions = data.result.filter(
           (tx) => tx.to.toLowerCase() === contractAddress.toLowerCase()
         );
@@ -65,8 +76,10 @@ export default function SmartContractTransaction({ smart_contract_address }: {sm
       setLoading(false);
     }
   }
+  
 
   useEffect(() => {
+    fetchEthToMyrRate();
     fetchTransactions(contractAddress);
   }, [contractAddress]);
 
@@ -82,7 +95,7 @@ export default function SmartContractTransaction({ smart_contract_address }: {sm
   };
 
   const convertEthToMyr = (ethValue) => {
-    return (parseFloat(ethValue) * ETH_TO_MYR_RATE).toFixed(2);
+    return (parseFloat(ethValue) * ethToMyr).toFixed(2);
   };
 
   return (
@@ -195,4 +208,4 @@ export default function SmartContractTransaction({ smart_contract_address }: {sm
       </Card>
     </div>
   );
-}
+  }

@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { useState, useRef, useEffect } from "react";
+import { ethers } from "ethers";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,10 +36,20 @@ import {
   ChevronDown,
   ImageIcon,
   Smile,
+  Wallet,
+  AlertTriangle,
+  ExternalLink,
+  Loader2,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
+import { toast } from "sonner";
+import connectMetamask from "@/hooks/connectMetamask";
+import { contractABI } from "@/lib/contract-abi";
+import { parseEther } from "ethers";
+import supabase from "@/utils/supabase/client";
 
 // Types for chat messages
 type MessageType =
@@ -68,6 +79,8 @@ interface DonationOption {
   supporters?: number;
   amount?: number;
   categories?: string[];
+  contractAddress?: string;
+  milestoneId?: number;
 }
 
 // Map categories to icons
@@ -145,9 +158,58 @@ export function CharityChat() {
   const [showQuickDonations, setShowQuickDonations] = useState(false);
   const [typingEffect, setTypingEffect] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [fetchingMilestoneId, setFetchingMilestoneId] = useState(false);
+
+  // Blockchain related state
+  const { walletAddress, provider, signer, connectWallet } = connectMetamask();
+  const [contract, setContract] = useState<ethers.Contract | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [transactionResult, setTransactionResult] = useState<{
+    status: "success" | "error" | null;
+    message: string;
+    txHash?: string;
+    amount?: string;
+  }>({ status: null, message: "" });
+  const [contractAddress, setContractAddress] = useState<string>("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+
+  // Initialize contract when signer is available
+  useEffect(() => {
+    const initialize = async () => {
+      if (signer && provider && selectedDonation?.contractAddress) {
+        try {
+          const charityContract = new ethers.Contract(
+            selectedDonation.contractAddress,
+            contractABI,
+            signer
+          );
+          setContract(charityContract);
+          console.log("Contract initialized:", charityContract.address);
+        } catch (error) {
+          console.error("Error initializing contract:", error);
+          toast("Contract Error", {
+            description: "Failed to initialize the charity contract.",
+          });
+        }
+      }
+    };
+
+    // Add a small delay to ensure signer and provider are loaded
+    const timeout = setTimeout(() => {
+      initialize();
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timeout); // Cleanup timeout on unmount
+  }, [signer, provider, selectedDonation]);
+
+  // Auto-connect wallet if already connected
+  useEffect(() => {
+    if (window.ethereum) {
+      connectWallet();
+    }
+  }, []);
 
   // Auto-scroll
   useEffect(() => {
@@ -165,6 +227,53 @@ export function CharityChat() {
       return () => clearTimeout(timer);
     }
   }, [typingEffect]);
+
+  // Fetch active milestone ID from the contract
+  const fetchActiveMilestoneId = async (contractAddress: string) => {
+    if (!signer) {
+      console.error("Signer not available for fetching milestone ID");
+      return 0; // Default to first milestone
+    }
+
+    try {
+      setFetchingMilestoneId(true);
+
+      // Initialize contract if not already done
+      const charityContract = new ethers.Contract(
+        contractAddress,
+        contractABI,
+        signer
+      );
+
+      // Get milestone count
+      const milestoneCount = await charityContract.milestoneCount();
+
+      // Find the first unreleased milestone (active milestone)
+      for (let i = 0; i < milestoneCount; i++) {
+        const milestone = await charityContract.getMilestone(i);
+        if (!milestone.released) {
+          console.log(`Active milestone found: ID ${i}`);
+          return i;
+        }
+      }
+
+      // If all milestones are released, return the last one
+      const lastMilestoneId = milestoneCount > 0 ? milestoneCount - 1 : 0;
+      console.log(
+        `No active milestone found, using last milestone: ID ${lastMilestoneId}`
+      );
+      return lastMilestoneId;
+    } catch (error) {
+      console.error("Error fetching active milestone ID:", error);
+      toast("Error", {
+        description:
+          "Failed to fetch milestone information. Using default milestone.",
+      });
+      return 0; // Default to first milestone
+    } finally {
+      setFetchingMilestoneId(false);
+    }
+  };
 
   // Fetch chat response
   const fetchChatResponse = async (message: string) => {
@@ -196,7 +305,34 @@ export function CharityChat() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+
+      // If there's a donation intent, fetch the contract address from Supabase
+      if (data.donation_intent && data.charities && data.charities.length > 0) {
+        const topCharity = data.charities[0];
+
+        // The contract address should already be in the response from the API
+        // But we'll check if it exists first, then use it directly
+        if (topCharity.smart_contract_address) {
+          topCharity.contractAddress = topCharity.smart_contract_address;
+        } else {
+          try {
+            const { data: projectData, error } = await supabase
+              .from("charity_projects")
+              .select("smart_contract_address")
+              .eq("id", topCharity.id)
+              .single();
+
+            if (!error && projectData) {
+              topCharity.contractAddress = projectData.smart_contract_address;
+            }
+          } catch (err) {
+            console.error("Error fetching contract address:", err);
+          }
+        }
+      }
+
+      return data;
     } catch (error) {
       console.error("Error fetching chat response:", error);
       return {
@@ -247,6 +383,8 @@ export function CharityChat() {
         supporters: topCharity.supporters,
         amount: topCharity.amount,
         categories: topCharity.category,
+        contractAddress: topCharity.contractAddress,
+        milestoneId: 0, // Default to first milestone
       };
     }
 
@@ -279,10 +417,38 @@ export function CharityChat() {
   };
 
   // Handle selecting donation
-  const handleSelectDonation = (option: DonationOption) => {
+  const handleSelectDonation = async (option: DonationOption) => {
     setSelectedDonation(option);
     setDonationAmount(option.minAmount || 10);
     setDonationStep("amount");
+
+    // Fetch milestone ID if contract address is available
+    if (option.contractAddress) {
+      try {
+        const activeMilestoneId = await fetchActiveMilestoneId(
+          option.contractAddress
+        );
+
+        // Update the selected donation with the active milestone ID
+        option.milestoneId = activeMilestoneId;
+
+        // Initialize contract with the selected donation's contract address
+        if (signer) {
+          const charityContract = new ethers.Contract(
+            option.contractAddress,
+            contractABI,
+            signer
+          );
+          setContract(charityContract);
+          setContractAddress(option.contractAddress);
+          console.log("Contract initialized for donation:", option.name);
+          console.log("Using milestone ID:", activeMilestoneId);
+        }
+      } catch (error) {
+        console.error("Error fetching milestone ID:", error);
+        // Keep default milestone ID (0) if there's an error
+      }
+    }
 
     const selectionMessage: Message = {
       id: Date.now().toString(),
@@ -305,35 +471,135 @@ export function CharityChat() {
   };
 
   // Handle confirming donation
-  const handleConfirmDonation = () => {
-    if (!selectedDonation) return;
+  const handleConfirmDonation = async () => {
+    if (!selectedDonation) {
+      toast("Error", {
+        description: "No donation selected.",
+      });
+      return;
+    }
 
-    setDonationStep("success");
+    if (!selectedDonation.contractAddress) {
+      toast("Contract Error", {
+        description: "Contract address not found for this charity.",
+      });
+      console.error("Missing contract address:", selectedDonation);
+      return;
+    }
 
-    const confirmMessage: Message = {
-      id: Date.now().toString(),
-      content: `I confirm my donation of ${donationAmount} MYR to ${selectedDonation.name}`,
-      sender: "user",
-      type: "text",
-      timestamp: new Date(),
-    };
+    if (!signer) {
+      toast("Wallet Not Connected", {
+        description: "Please connect your wallet to make a donation.",
+      });
+      return;
+    }
 
-    const thankYouMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      content: `Thank you for your generous donation of ${donationAmount} MYR to ${selectedDonation.name}! Your contribution will make a real difference.`,
-      sender: "bot",
-      type: "donation-success",
-      timestamp: new Date(),
-      selectedDonation: selectedDonation,
-    };
+    try {
+      setIsProcessing(true);
 
-    setMessages((prev) => [...prev, confirmMessage, thankYouMessage]);
+      // Initialize contract if not already done
+      if (
+        !contract ||
+        String(contract.target).toLowerCase() !==
+          selectedDonation.contractAddress.toLowerCase()
+      ) {
+        const charityContract = new ethers.Contract(
+          selectedDonation.contractAddress,
+          contractABI,
+          signer
+        );
+        setContract(charityContract);
+      }
 
-    setTimeout(() => {
-      setDonationStep("select");
-      setSelectedDonation(null);
-      setDonationAmount(0);
-    }, 10000);
+      // Convert donation amount from MYR to ETH (simplified conversion)
+      const ethAmount = (donationAmount / 12500).toFixed(6); // Using a fixed rate of 1 ETH = 12,500 MYR
+
+      // Get milestone ID (either from fetched value or default to 0)
+      const milestoneId = selectedDonation.milestoneId || 0;
+      console.log(`Donating to milestone ID: ${milestoneId}`);
+
+      // Execute the transaction
+      const tx = await contract.donateToMilestone(milestoneId, {
+        value: parseEther(ethAmount),
+      });
+
+      toast("Donation Processing", {
+        description:
+          "Your donation is being processed. Please wait for confirmation.",
+      });
+
+      const receipt = await tx.wait();
+
+      // Add user confirmation message
+      const confirmMessage: Message = {
+        id: Date.now().toString(),
+        content: `I confirm my donation of ${donationAmount} MYR (${ethAmount} ETH) to ${selectedDonation.name} - Milestone #${milestoneId}`,
+        sender: "user",
+        type: "text",
+        timestamp: new Date(),
+      };
+
+      // Add success message
+      const thankYouMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: `Thank you for your generous donation of ${donationAmount} MYR (${ethAmount} ETH) to ${selectedDonation.name}! Your contribution will make a real difference. Your transaction has been confirmed on the blockchain.`,
+        sender: "bot",
+        type: "donation-success",
+        timestamp: new Date(),
+        selectedDonation: selectedDonation,
+      };
+
+      setMessages((prev) => [...prev, confirmMessage, thankYouMessage]);
+
+      setTransactionResult({
+        status: "success",
+        message: `Successfully donated ${ethAmount} ETH to ${selectedDonation.name}`,
+        txHash: receipt.transactionHash,
+        amount: ethAmount,
+      });
+
+      setDonationStep("success");
+
+      // Store donation details for tax receipt
+      const txData = {
+        txHash: receipt.transactionHash,
+        amount: ethAmount,
+        amountMYR: donationAmount,
+        date: new Date().toISOString(),
+        milestoneDescription: selectedDonation.description,
+        projectTitle: selectedDonation.name,
+        milestoneId: milestoneId,
+      };
+
+      localStorage.setItem("donationDetails", JSON.stringify(txData));
+    } catch (error) {
+      console.error("Donation error:", error);
+
+      toast("Donation Failed", {
+        description: "Failed to process your donation. Please try again.",
+      });
+
+      setTransactionResult({
+        status: "error",
+        message:
+          (error as any)?.reason || "Transaction failed. Please try again.",
+      });
+
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content: `I'm sorry, but there was an error processing your donation. ${
+          (error as any)?.reason || "Please try again or contact support."
+        }`,
+        sender: "bot",
+        type: "text",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Handle back in donation flow
@@ -604,6 +870,7 @@ export function CharityChat() {
                                     <img
                                       src={
                                         message.donationOption.image ||
+                                        "/placeholder.svg" ||
                                         "/placeholder.svg"
                                       }
                                       alt={message.donationOption.name}
@@ -717,6 +984,7 @@ export function CharityChat() {
                                     <img
                                       src={
                                         message.selectedDonation.image ||
+                                        "/placeholder.svg" ||
                                         "/placeholder.svg"
                                       }
                                       alt={message.selectedDonation.name}
@@ -743,77 +1011,132 @@ export function CharityChat() {
                                   </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-700 block mb-2">
-                                      Donation Amount (MYR)
-                                    </label>
-                                    <div className="flex items-center mb-3">
-                                      <div className="bg-white p-2 rounded-l-lg border border-r-0 border-gray-300">
-                                        <DollarSign className="h-5 w-5 text-gray-500" />
+                                {!walletAddress ? (
+                                  <div className="mb-4">
+                                    <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-3">
+                                      <div className="flex items-center">
+                                        <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
+                                        <p className="text-sm text-yellow-700">
+                                          You need to connect your wallet to
+                                          make a donation
+                                        </p>
                                       </div>
-                                      <Input
-                                        type="number"
-                                        value={donationAmount}
-                                        onChange={(e) =>
-                                          setDonationAmount(
-                                            Number(e.target.value)
-                                          )
+                                    </div>
+                                    <Button
+                                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                      onClick={connectWallet}
+                                    >
+                                      <Wallet className="h-4 w-4 mr-2" />
+                                      Connect Wallet
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-4">
+                                    <div className="bg-green-50 p-3 rounded-lg border border-green-200 mb-3">
+                                      <div className="flex items-center">
+                                        <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                                        <div>
+                                          <p className="text-sm text-green-700">
+                                            Wallet Connected
+                                          </p>
+                                          <p className="text-xs text-green-600 font-mono">
+                                            {walletAddress.substring(0, 6)}...
+                                            {walletAddress.substring(38)}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <label className="text-sm font-medium text-gray-700 block mb-2">
+                                        Donation Amount (MYR)
+                                      </label>
+                                      <div className="flex items-center mb-3">
+                                        <div className="bg-white p-2 rounded-l-lg border border-r-0 border-gray-300">
+                                          <DollarSign className="h-5 w-5 text-gray-500" />
+                                        </div>
+                                        <Input
+                                          type="number"
+                                          value={donationAmount}
+                                          onChange={(e) =>
+                                            setDonationAmount(
+                                              Number(e.target.value)
+                                            )
+                                          }
+                                          min={
+                                            message.selectedDonation.minAmount
+                                          }
+                                          className="bg-white rounded-l-none border-l-0"
+                                        />
+                                      </div>
+
+                                      <div className="grid grid-cols-4 gap-2 mb-3">
+                                        {predefinedAmounts.map((amount) => (
+                                          <Button
+                                            key={amount}
+                                            variant={
+                                              donationAmount === amount
+                                                ? "default"
+                                                : "outline"
+                                            }
+                                            className={cn(
+                                              "text-sm h-10",
+                                              donationAmount === amount
+                                                ? "bg-gradient-to-r from-blue-600 to-purple-600"
+                                                : "hover:bg-blue-50"
+                                            )}
+                                            onClick={() =>
+                                              setDonationAmount(amount)
+                                            }
+                                          >
+                                            {amount} MYR
+                                          </Button>
+                                        ))}
+                                      </div>
+
+                                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-3">
+                                        <p className="text-xs text-blue-700 mb-1">
+                                          Estimated ETH Amount:
+                                        </p>
+                                        <p className="text-sm font-mono font-medium text-blue-800">
+                                          {(donationAmount / 12500).toFixed(6)}{" "}
+                                          ETH
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-sm flex-1"
+                                        onClick={handleDonationBack}
+                                      >
+                                        <ArrowLeft className="h-4 w-4 mr-1" />
+                                        Back
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        className="text-sm flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                        onClick={handleConfirmDonation}
+                                        disabled={
+                                          donationAmount <
+                                            message.selectedDonation
+                                              .minAmount || isProcessing
                                         }
-                                        min={message.selectedDonation.minAmount}
-                                        className="bg-white rounded-l-none border-l-0"
-                                      />
-                                    </div>
-
-                                    <div className="grid grid-cols-4 gap-2 mb-3">
-                                      {predefinedAmounts.map((amount) => (
-                                        <Button
-                                          key={amount}
-                                          variant={
-                                            donationAmount === amount
-                                              ? "default"
-                                              : "outline"
-                                          }
-                                          className={cn(
-                                            "text-sm h-10",
-                                            donationAmount === amount
-                                              ? "bg-gradient-to-r from-blue-600 to-purple-600"
-                                              : "hover:bg-blue-50"
-                                          )}
-                                          onClick={() =>
-                                            setDonationAmount(amount)
-                                          }
-                                        >
-                                          {amount} MYR
-                                        </Button>
-                                      ))}
+                                      >
+                                        {isProcessing ? (
+                                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                        ) : (
+                                          <CheckCircle className="h-4 w-4 mr-1" />
+                                        )}
+                                        {isProcessing
+                                          ? "Processing..."
+                                          : "Confirm Donation"}
+                                      </Button>
                                     </div>
                                   </div>
-
-                                  <div className="flex gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-sm flex-1"
-                                      onClick={handleDonationBack}
-                                    >
-                                      <ArrowLeft className="h-4 w-4 mr-1" />
-                                      Back
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      className="text-sm flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                                      onClick={handleConfirmDonation}
-                                      disabled={
-                                        donationAmount <
-                                        message.selectedDonation.minAmount
-                                      }
-                                    >
-                                      <CheckCircle className="h-4 w-4 mr-1" />
-                                      Confirm Donation
-                                    </Button>
-                                  </div>
-                                </div>
+                                )}
                               </div>
                             </motion.div>
                           )}
@@ -855,20 +1178,38 @@ export function CharityChat() {
                                 </div>
                                 <div className="flex justify-between mb-2">
                                   <span className="text-sm text-gray-500">
+                                    ETH Amount:
+                                  </span>
+                                  <span className="text-sm font-bold text-gray-900">
+                                    {(donationAmount / 12500).toFixed(6)} ETH
+                                  </span>
+                                </div>
+                                <div className="flex justify-between mb-2">
+                                  <span className="text-sm text-gray-500">
                                     Recipient:
                                   </span>
                                   <span className="text-sm font-bold text-gray-900">
                                     {message.selectedDonation?.name}
                                   </span>
                                 </div>
-                                <div className="flex justify-between mb-2">
-                                  <span className="text-sm text-gray-500">
-                                    Transaction ID:
-                                  </span>
-                                  <span className="text-sm font-mono text-gray-900">
-                                    U1CDLX6U
-                                  </span>
-                                </div>
+                                {transactionResult.txHash && (
+                                  <div className="flex justify-between mb-2">
+                                    <span className="text-sm text-gray-500">
+                                      Transaction:
+                                    </span>
+                                    <a
+                                      href={`https://sepolia.etherscan.io/tx/${transactionResult.txHash}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm font-mono text-blue-600 hover:text-blue-800 flex items-center"
+                                    >
+                                      {transactionResult.txHash.substring(0, 6)}
+                                      ...
+                                      {transactionResult.txHash.substring(62)}
+                                      <ExternalLink className="h-3 w-3 ml-1" />
+                                    </a>
+                                  </div>
+                                )}
                                 <div className="flex justify-between">
                                   <span className="text-sm text-gray-500">
                                     Date:
@@ -894,6 +1235,16 @@ export function CharityChat() {
                                   Impact Verified
                                 </Badge>
                               </div>
+                              <Button
+                                className="w-full mt-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                                onClick={() =>
+                                  (window.location.href =
+                                    "/charity/tax-receipt")
+                                }
+                              >
+                                <Receipt className="h-4 w-4 mr-2" />
+                                View Tax Receipt
+                              </Button>
                             </div>
                           </motion.div>
                         )}
@@ -906,7 +1257,7 @@ export function CharityChat() {
                           message.sender === "user" ? "text-right" : "text-left"
                         )}
                       >
-                        <span className="flex items-center gap-1 inline-block">
+                        <span className="flex items-center gap-1">
                           {message.sender === "user" ? (
                             <>
                               {message.timestamp.toLocaleTimeString([], {

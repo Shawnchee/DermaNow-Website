@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/use-toast"
 import { useWallet } from "@/context/wallet-context"
 import WalletTransaction from "@/components/wallet-address-transaction"
+import MockupWalletAddress from "@/components/mockupwalletaddress"
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
@@ -562,6 +563,7 @@ export default function ProfilePage() {
 
         <TabsContent value="history">
         <WalletTransaction />
+        {/* <MockupWalletAddress /> */}
 
           <Card className="mt-6">
             <CardHeader>

@@ -54,6 +54,9 @@ import CampaignProgressCard from "@/components/campaign-process-card";
 import supabase from "@/utils/supabase/client";
 import { useParams } from "next/navigation";
 import SmartContractTransaction from "@/components/smart-contract-transaction";
+import MockupSmartContractTransaction from "@/components/mockupsmartcontract";
+import DiscussionSection from "@/components/discussion-section"
+
 
 // Contract address from deployment
 // const CONTRACT_ADDRESS = "0x3cd514BDC64330FF78Eff7c442987A8F5b7a6Aeb";
@@ -701,6 +704,7 @@ export default function CharityPage() {
             </Card>
           </div>
         )}
+
         <Dialog
           open={proofOfWorkModalOpen}
           onOpenChange={setProofOfWorkModalOpen}
@@ -833,7 +837,7 @@ export default function CharityPage() {
                             )}
 
                           <CardHeader
-                            className={`pb-2 ${
+                            className={`pb-2 pt-3 ${
                               activeMilestoneId !== -1 &&
                               activeMilestoneId === milestone.id
                                 ? "pt-8"
@@ -971,7 +975,7 @@ export default function CharityPage() {
                                 )}
                             </div>
                           </CardContent>
-                          <CardFooter className="flex flex-col gap-3 pt-0">
+                          <CardFooter className="flex flex-col gap-3 pt-0 pb-3">
                             {!milestone.released &&
                               activeMilestoneId === milestone.id && (
                                 <>
@@ -1059,28 +1063,33 @@ export default function CharityPage() {
           )}
         </div>
 
+        {/*Discussion Section */}
+        <DiscussionSection walletAddress={walletAddress || ""} projectId={id as string} />
+
         {/* Transaction History */}
         {contractAddress ? (
-          <SmartContractTransaction smart_contract_address={contractAddress} />
-        ) : (
-          <div className="mb-12">
-            <Card className="bg-white/80 backdrop-blur-sm border border-blue-100">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <Clock className="h-8 w-8 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-medium text-gray-800 mb-2">
-                  No Transaction History Yet
-                </h3>
-                <p className="text-gray-600 text-center max-w-md">
-                  There are currently no transaction history available. Check
-                  back later or contact the administrator.
-                </p>
-              </CardContent>
-            </Card>
+  <SmartContractTransaction smart_contract_address={contractAddress} />
+) : (
+  <div className="mb-12">
+    <Card className="bg-white/80 backdrop-blur-sm border border-blue-100">
+      
+      <CardContent className="flex flex-col items-center justify-center py-12">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+          <Clock className="h-8 w-8 text-blue-600" />
           </div>
-        )}
-
+          <h3 className="text-xl font-medium text-gray-800 mb-2">
+            No Transaction History Yet
+            </h3>
+            <p className="text-gray-600 text-center max-w-md">
+              There are currently no transaction history available. Check back
+                
+                later or contact the administrator.
+                </p>
+                </CardContent>
+                </Card>
+                </div>
+                )}
+        {/* <MockupSmartContractTransaction /> */}
         <div className="bg-blue-50 border-green-900 p-4 rounded-lg mt-4">
           <h3 className="font-medium text-blue-800 mb-2">Donation Types</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1183,7 +1192,7 @@ export default function CharityPage() {
           <div className="flex items-center flex-wrap gap-3 mb-4 p-4 rounded-lg border border-green-400 dark:border-green-700 bg-gradient-to-r from-green-500 to-green-600 shadow-sm">
             <div className="flex items-center">
               <div className="bg-white bg-opacity-20 backdrop-blur-sm p-2 rounded-full mr-3">
-                <MoonStar className="h-5 w-5 text-green-100" />
+                <MoonStar className="h-5 w-5 text-green-500" />
               </div>
               <div>
                 <div className="text-xs text-green-100 mb-0.5 font-medium">
