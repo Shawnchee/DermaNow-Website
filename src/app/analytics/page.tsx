@@ -48,6 +48,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import FlaggedTransactions from "@/components/flagging";
 
 // Define types for our data
 interface Project {
@@ -759,6 +760,15 @@ const AnalyticsPage = () => {
           </motion.div>
         </div>
 
+        {/* Flagging */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+        >
+          <FlaggedTransactions />
+        </motion.div>
+        
         {/* Milestone Tracking */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
