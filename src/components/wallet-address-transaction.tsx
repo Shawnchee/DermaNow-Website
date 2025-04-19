@@ -55,10 +55,8 @@ export default function WalletTransaction() {
 
   async function fetchTransactions(walletAddress) {
     try {
-      // Etherscan API endpoint for Sepolia testnet
-      const baseUrl = "https://api-sepolia.etherscan.io/api";
-
-      const url = `${baseUrl}?module=account&action=txlist&address=${walletAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${ETHERSCAN_API_KEY}`;
+      // Use the new API route instead of calling Etherscan directly
+      const url = `/api/transactions?address=${walletAddress}`;
 
       const response = await fetch(url);
       const data = await response.json();
