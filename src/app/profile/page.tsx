@@ -579,8 +579,7 @@ export default function ProfilePage() {
         </TabsContent>
 
         <TabsContent value="history">
-          {/* <WalletTransaction /> */}
-          <MockupWalletAddress />
+          <WalletTransaction />
         </TabsContent>
 
         <TabsContent value="impact">
