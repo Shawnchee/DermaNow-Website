@@ -64,6 +64,22 @@ search_charities_function = {
     },
 }
 
+fetch_dermanow_info_function = {
+    "name": "fetch_dermanow_info",
+    "description": "Fetch detailed information about the DermaNow platform, including its mission, blockchain usage, Shariah compliance, and functionalities.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "The user’s query about DermaNow (e.g., 'What is DermaNow?', 'How does DermaNow work?'). Used to tailor the response if specific aspects are requested.",
+            }
+        },
+        "required": ["query"],
+        "additionalProperties": False,
+    },
+}
+
 
 @chatbot_app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(request: ChatRequest):
@@ -80,9 +96,11 @@ You are DermaBot, helping users learn about and donate to Shariah-compliant char
    - Do not recommend external charities or platforms.
    - Politely decline questions unrelated to DermaNow.
 
-2. **Non-Donation Queries**:
-   - For general questions (e.g., "How does DermaNow work?"), give clear, concise answers about DermaNow’s mission or processes.
-   - Do not call search_charities unless donation intent is clear.
+2. **General DermaNow Queries**:
+    - For questions about DermaNow (e.g., "What is DermaNow?", "How does it work?", "Tell me about blockchain or Shariah compliance"), call fetch_dermanow_info with the user’s query.
+    - Present the response in a concise, engaging paragraph (150-200 words) summarizing DermaNow’s mission, blockchain usage, Shariah compliance, and key features (donations, staking, rewards).
+    - If the query specifies an aspect (e.g., "How does blockchain work in DermaNow?"), tailor the response to focus on that aspect while briefly mentioning others.
+    - End with a question like, "Want to explore more about DermaNow or its projects?"
 
 3. **Donation Queries**:
    - If the user wants to donate (e.g., "I want to donate to kids"), extract the sentence and call search_charities with it.
@@ -130,7 +148,10 @@ You are DermaBot, helping users learn about and donate to Shariah-compliant char
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
-            tools=[{"type": "function", "function": search_charities_function}],
+            tools=[
+                {"type": "function", "function": search_charities_function},
+                {"type": "function", "function": fetch_dermanow_info_function},
+            ],
             tool_choice="auto",
         )
 
@@ -167,7 +188,6 @@ You are DermaBot, helping users learn about and donate to Shariah-compliant char
                     # Fallback for empty query
                     if not query or query.strip() == "":
                         query = "charity"
-                        # Update the arguments to reflect the fallback
                         args["query"] = query
                         messages[-1]["tool_calls"][0]["function"]["arguments"] = (
                             json.dumps(args)
@@ -186,7 +206,6 @@ You are DermaBot, helping users learn about and donate to Shariah-compliant char
                             for charity in charities
                             if not charity.get("funding_complete", False)
                         ]
-                        # Take only the top result (or top N if desired, e.g., filtered_charities[:3])
                         charities = filtered_charities[:1]
 
                     # Append tool result
@@ -217,11 +236,93 @@ You are DermaBot, helping users learn about and donate to Shariah-compliant char
                             donation_intent = False
                             charities = None
 
+                elif tool_call.function.name == "fetch_dermanow_info":
+                    args = json.loads(tool_call.function.arguments)
+                    query = args.get("query", request.message)
+
+                    # Static DermaNow info based on the provided document
+                    dermanow_info = {
+                        "overview": """
+DermaNow is Malaysia’s first Shariah-compliant, blockchain-powered charity platform, designed to make donations transparent, efficient, and aligned with Islamic financial ethics. It bridges the trust gap in charitable giving by using Ethereum blockchain to ensure donors can track how, where, and when their funds are used.
+""",
+                        "mission_vision": """
+**Mission**: Create a Shariah-compliant ecosystem supporting Zakat, Sadaqah, Waqf, and Mudarabah, ensuring ethical and transparent fund use.
+**Vision**: Revolutionize charity by addressing transparency issues, high intermediary costs, and limited donor engagement.
+""",
+                        "blockchain_usage": """
+DermaNow uses Ethereum blockchain for:
+- **Transparency**: All transactions are recorded on-chain, verifiable via Etherscan.
+- **Milestone-Based Funding**: Funds are released only after verified milestones, reducing misuse.
+- **Direct Payments**: Donations go directly to verified service providers (e.g., caterers, construction teams).
+- **Security**: Smart contracts manage donations and staking, ensuring tamper-proof operations.
+""",
+                        "shariah_compliance": """
+DermaNow ensures compliance with Islamic principles:
+- **Ethical Guidelines**: Projects are vetted by Islamic authorities and an AI-powered compliance checker.
+- **Halal Investments**: Staking uses Mudarabah-based profit-sharing, investing in ethical platforms like Firoza Finance and HAQQ Blockchain.
+- **No Riba**: Returns are profit-based, not interest-based.
+- **Amanah (Trust)**: 100% of donations go to projects with no deductions.
+- **Periodic Reviews**: Shariah advisors regularly review the framework.
+""",
+                        "functionalities": """
+Key features include:
+- **Donations**: Browse verified projects, donate to milestones via local payments (e.g., Touch ‘n Go, converted to ETH), and generate tax relief receipts.
+- **Staking**: Stake ETH in a halal pool for 2-5% annual rewards, with at least 20% donated to charity.
+- **Rewards**: Earn points per RM donated, redeemable for vouchers, and progress through donor levels for NFTs and perks.
+- **DermaBot**: AI chatbot guides users, suggests projects, and facilitates donations.
+- **Transparency**: On-chain milestone tracking and DAO committee voting ensure accountability.
+""",
+                        "technical_architecture": """
+- **Frontend**: Next.js, TailwindCSS, Shadcn/UI.
+- **Backend**: Supabase (PostgreSQL), Python for AI/ML.
+- **Blockchain**: Solidity smart contracts on Ethereum (Sepolia testnet for development).
+- **AI**: OpenAI for DermaBot, Hugging Face for ML models.
+- **Infrastructure**: Cloudflare, Infura, Docker.
+""",
+                    }
+
+                    # Tailor response based on query focus (if specific)
+                    response_content = dermanow_info["overview"]
+                    if "mission" in query.lower() or "vision" in query.lower():
+                        response_content += dermanow_info["mission_vision"]
+                    elif "blockchain" in query.lower():
+                        response_content += dermanow_info["blockchain_usage"]
+                    elif "shariah" in query.lower() or "islamic" in query.lower():
+                        response_content += dermanow_info["shariah_compliance"]
+                    elif (
+                        "function" in query.lower()
+                        or "feature" in query.lower()
+                        or "work" in query.lower()
+                    ):
+                        response_content += dermanow_info["functionalities"]
+                    elif "tech" in query.lower() or "architecture" in query.lower():
+                        response_content += dermanow_info["technical_architecture"]
+                    else:
+                        # General query, include a bit of everything
+                        response_content += (
+                            dermanow_info["mission_vision"]
+                            + dermanow_info["blockchain_usage"]
+                            + dermanow_info["shariah_compliance"]
+                            + dermanow_info["functionalities"]
+                        )
+
+                    # Append tool result
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "content": json.dumps({"info": response_content}),
+                            "tool_call_id": tool_call.id,
+                        }
+                    )
+
             # Second completion with tool results
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=messages,
-                tools=[{"type": "function", "function": search_charities_function}],
+                tools=[
+                    {"type": "function", "function": search_charities_function},
+                    {"type": "function", "function": fetch_dermanow_info_function},
+                ],
                 tool_choice="auto",
             )
             message = response.choices[0].message
