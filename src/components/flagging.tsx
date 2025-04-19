@@ -162,10 +162,30 @@ export default function FlaggedTransactions() {
                       </TooltipProvider>
                     </td>
                     <td className="py-3 px-4 font-mono text-xs text-blue-800">
-                      {tx.from_address}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-2">
+                            {tx.from_address.slice(0, 10)}...
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="font-mono text-xs">
+                              {tx.from_address}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </td>
                     <td className="py-3 px-4 font-mono text-xs text-blue-800">
-                      {tx.to_address}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger className="cursor-help underline decoration-dotted underline-offset-2">
+                            {tx.to_address.slice(0, 10)}...
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="font-mono text-xs">{tx.to_address}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </td>
                     <td className="py-3 px-4 text-right text-blue-800">
                       {parseFloat(tx.value).toFixed(6)} ETH
