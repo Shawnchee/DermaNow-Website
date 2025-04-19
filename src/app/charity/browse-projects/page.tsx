@@ -42,6 +42,7 @@ interface ProjectProps {
   amount: number;
   category?: string[];
   featured?: boolean;
+  confidence?: number;
 }
 
 interface SearchResult {
@@ -61,6 +62,7 @@ const ProjectCard: React.FC<ProjectProps & { listView?: boolean }> = ({
   supporters,
   amount,
   listView = false,
+  confidence,
 }) => (
   <div
     className={`bg-white shadow-md rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 ${
@@ -82,15 +84,22 @@ const ProjectCard: React.FC<ProjectProps & { listView?: boolean }> = ({
       <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between p-2 bg-gradient-to-t from-black to-transparent pt-8">
         <div className="flex items-center space-x-2 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
           <Users className="h-4 w-4 text-white" />
-          <span className="text-sm font-medium text-white">{supporters}</span>
+          <span className="text-xs md:text-sm lg:text-base font-medium text-white">
+            {supporters}
+          </span>
         </div>
         <div className="flex items-center space-x-2 drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
           <Heart className="h-4 w-4 text-white" />
-          <span className="text-sm font-medium text-white">
+          <span className="text-xs md:text-sm lg:text-base font-medium text-white">
             {amount.toLocaleString()} MYR
           </span>
         </div>
       </div>
+      {confidence !== undefined && (
+        <div className="absolute top-2 right-2 z-10">
+          <FireIcon confidence={confidence} />
+        </div>
+      )}
     </div>
     <div className={`p-4 ${listView ? "md:w-2/3" : "flex-1 flex flex-col"}`}>
       <div className="mb-2">
@@ -110,7 +119,7 @@ const ProjectCard: React.FC<ProjectProps & { listView?: boolean }> = ({
             }}
           ></div>
         </div>
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
+        <div className="flex justify-between text-xs md:text-sm lg:text-base text-gray-500 mt-1">
           <span>
             {funding_percentage === 100
               ? funding_complete
@@ -123,13 +132,70 @@ const ProjectCard: React.FC<ProjectProps & { listView?: boolean }> = ({
           </span>
         </div>
       </div>
-      <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2">{title}</h3>
-      <p className="text-sm text-gray-600 line-clamp-3 mb-auto">
-        {description}
-      </p>
+      <div className="pl-2">
+        <h3
+          className={`font-semibold text-gray-800 mb-2 line-clamp-2 ${
+            listView
+              ? "text-base md:text-xl lg:text-2xl"
+              : "text-base md:text-lg lg:text-xl"
+          }`}
+        >
+          {title}
+        </h3>
+        <p
+          className={`text-gray-600 line-clamp-3 mb-auto ${
+            listView
+              ? "text-sm md:text-lg lg:text-xl"
+              : "text-sm md:text-base lg:text-lg"
+          }`}
+        >
+          {description}
+        </p>
+      </div>
     </div>
   </div>
 );
+
+const FireIcon = ({ confidence }: { confidence: number }) => {
+  // No icon for low confidence
+  if (confidence < 0.35) return null;
+
+  // Determine color based on confidence
+  const color =
+    confidence >= 0.4
+      ? "text-red-500"
+      : confidence < 0.4
+      ? "text-yellow-500"
+      : "text-green-500";
+
+  return (
+    <div className={`relative ${color}`}>
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0.8 }}
+        animate={{
+          scale: [0.8, 1, 0.9, 1.1, 0.9],
+          opacity: [0.8, 1, 0.9, 1, 0.9],
+        }}
+        transition={{
+          repeat: Number.POSITIVE_INFINITY,
+          duration: 1.5,
+          ease: "easeInOut",
+        }}
+        className="absolute -top-1 -right-1"
+      >
+        <svg
+          width="42"
+          height="42"
+          viewBox="0 0 12 20"
+          fill="currentColor"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16m0-1c-1.657 0-3-1-3-2.75 0-.75.25-2 1.25-3C6.125 10 7 10.5 7 10.5c-.375-1.25.5-3.25 2-3.5-.179 1-.25 2 1 3 .625.5 1 1.364 1 2.25C11 14 9.657 15 8 15" />
+        </svg>
+      </motion.div>
+    </div>
+  );
+};
 
 const FeaturedProjectCard: React.FC<ProjectProps> = ({
   id,
@@ -455,8 +521,16 @@ const PageContent = () => {
         const projectMap = new Map(projects.map((p) => [p.id, p]));
 
         const sortedProjects = results
-          .map((result) => projectMap.get(result.id))
-          .filter((p): p is ProjectProps => p !== undefined);
+          .map((result) => {
+            const project = projectMap.get(result.id);
+            if (project) {
+              return { ...project, confidence: result.confidence };
+            }
+            return undefined;
+          })
+          .filter(
+            (p): p is ProjectProps & { confidence: number } => p !== undefined
+          );
 
         setFilteredProjects(sortedProjects);
       } catch (error) {
@@ -690,7 +764,11 @@ const PageContent = () => {
               key={project.id}
               className={searchQuery.trim() ? "block w-full" : ""}
             >
-              <ProjectCard {...project} listView={!!searchQuery.trim()} />
+              <ProjectCard
+                {...project}
+                listView={!!searchQuery.trim()}
+                confidence={project.confidence}
+              />
             </Link>
           ))}
         </div>
